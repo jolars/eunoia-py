@@ -10,9 +10,15 @@
       tags (`v*`) and `workflow_dispatch`.
 - [x] In repo settings → Pages, set Source = "GitHub Actions" so the
       `github-pages` environment is created (one-time manual step).
-- [ ] Verify `release.yml` aarch64 + musl wheels actually build on a dry-run
-      (workflow_dispatch trigger is wired up---push a `v0.1.0-rc1` test tag to a
-      fork first).
+- [ ] Verify `publish.yml` aarch64 + musl wheels actually build on a dry-run
+      (`gh workflow run publish.yml --ref main` — `publish` job is gated on
+      `refs/tags/v*` so PyPI is not touched).
+- [ ] Register pending **Trusted Publisher** on test.pypi.org for `eunoia`
+      (workflow `publish-test.yml`, environment `testpypi`). Separate
+      registration from prod pypi.org.
+- [ ] Run `publish-test.yml` (`gh workflow run publish-test.yml --ref main`)
+      and verify the wheels install from TestPyPI:
+      `pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ eunoia`.
 
 ## v0.2 — surface expansion
 

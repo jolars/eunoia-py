@@ -53,7 +53,8 @@ docs/conf.py                     Sphinx + MyST + furo (mirrored from sortedl1)
 docs/exts/github_link.py         linkcode helper (BSD-3, ported from scikit-learn)
 tests/test_*.py                  fit / plot / repr / smoke tests
 .github/workflows/ci.yml         lint + typecheck + test matrix + docs build
-.github/workflows/release.yml    multi-platform wheels → PyPI trusted publishing
+.github/workflows/publish.yml    multi-platform wheels → PyPI trusted publishing (tag-triggered)
+.github/workflows/publish-test.yml  same matrix → TestPyPI (workflow_dispatch only)
 .github/workflows/docs.yml       sphinx → GitHub Pages (env `github-pages`)
 ```
 
@@ -80,7 +81,7 @@ tests/test_*.py                  fit / plot / repr / smoke tests
   `reportPrivateUsage`. If you want it actually private, switch to a
   module-level `WeakValueDictionary` keyed by `id(fit)`.
 - **abi3-py311** → one wheel per platform covers Python 3.11--3.14. Don't add
-  per-Python-version wheel rows to `release.yml`.
+  per-Python-version wheel rows to `publish.yml`.
 - **Single `EunoiaError(ValueError)`** for all `DiagramError` variants. The Rust
   binding prefixes the message with the variant name (`undefined_set: ...`,
   `invalid_value: ...`) so users can string-match. Subclass hierarchy can be
@@ -125,8 +126,11 @@ moves, re-verify before changing the binding.)
 
 1. Create GitHub repo `jolars/eunoia-py`, push.
 2. On pypi.org, register a **pending Trusted Publisher** for `eunoia` (workflow
-   `release.yml`, environment `pypi-publish`).
-3. In the GitHub repo settings, under **Pages**, set Source = "GitHub Actions".
+   `publish.yml`, environment `pypi`).
+3. On test.pypi.org, register a separate pending Trusted Publisher for
+   `eunoia` (workflow `publish-test.yml`, environment `testpypi`). Used by
+   the `publish-test.yml` dispatch workflow for pre-release verification.
+4. In the GitHub repo settings, under **Pages**, set Source = "GitHub Actions".
    This auto-creates the `github-pages` environment that `docs.yml` deploys to.
    (We host docs on GitHub Pages via Actions, not on ReadTheDocs.)
 
