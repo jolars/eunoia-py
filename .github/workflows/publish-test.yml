@@ -1,4 +1,4 @@
-name: Release (TestPyPI)
+name: Publish on TestPyPI
 
 # Manual-only workflow for uploading to test.pypi.org. Mirrors the build
 # matrix in `publish.yml` so the wheels published to TestPyPI are exactly
