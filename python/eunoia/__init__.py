@@ -9,7 +9,7 @@ from eunoia._eunoia import EunoiaError
 from eunoia._fit import euler
 from eunoia._models import Circle, Ellipse, EulerFit, Point
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 
 __all__ = [
     "Circle",
