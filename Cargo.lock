@@ -119,7 +119,7 @@ dependencies = [
 
 [[package]]
 name = "eunoia-py"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "eunoia",
  "pyo3",
