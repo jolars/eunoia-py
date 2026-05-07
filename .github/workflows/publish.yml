@@ -1,0 +1,133 @@
+name: Release
+
+# NOTE before first release:
+#   1. Register a pending Trusted Publisher on pypi.org for project `eunoia`
+#      (workflow=release.yml, environment=pypi-publish).
+#   2. Pin `PyO3/maturin-action` to a commit SHA — use a tag like `v1` for
+#      now; replace with a SHA before tagging your first real release.
+#
+# Triggered on tag push (`v*`); produces wheels for linux x86_64/aarch64
+# (manylinux_2_28 + musllinux_1_2), macOS x86_64/arm64, windows x86_64,
+# plus an sdist; smoke-tests an installed wheel before publishing.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - target: x86_64-unknown-linux-gnu
+            manylinux: "2_28"
+          - target: aarch64-unknown-linux-gnu
+            manylinux: "2_28"
+          - target: x86_64-unknown-linux-musl
+            manylinux: musllinux_1_2
+          - target: aarch64-unknown-linux-musl
+            manylinux: musllinux_1_2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          args: --release --out dist --strip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.platform.target }}
+          path: dist
+
+  macos:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64-apple-darwin, aarch64-apple-darwin]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist --strip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.target }}
+          path: dist
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
+        with:
+          target: x86_64-pc-windows-msvc
+          args: --release --out dist --strip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-windows-x86_64
+          path: dist
+
+  sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-sdist
+          path: dist
+
+  smoke-test:
+    needs: [linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-x86_64-unknown-linux-gnu
+          path: dist
+          merge-multiple: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install built wheel
+        run: pip install dist/eunoia-*.whl
+      - name: Smoke test
+        run: |
+          python -c "
+          import matplotlib
+          matplotlib.use('Agg')
+          import eunoia as eu
+          fit = eu.euler({'A': 10, 'B': 5, 'A&B': 3})
+          assert fit.diag_error < 0.01, f'diag_error too high: {fit.diag_error}'
+          fit.plot()
+          print('eunoia', eu.__version__, 'wheel smoke test OK')
+          "
+
+  publish:
+    name: Publish to PyPI
+    needs: [linux, macos, windows, sdist, smoke-test]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: pypi
+      url: https://pypi.org/p/eunoia
+    permissions:
+      id-token: write # required for trusted publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: pypa/gh-action-pypi-publish@release/v1
