@@ -2,8 +2,24 @@
   "$schema": "https://raw.githubusercontent.com/jolars/versionary/main/schemas/config.json",
   "version": 1,
   "review-mode": "review",
-  "release-type": "python",
+  "release-type": ["python", "rust"],
   "bump-minor-pre-major": true,
   "include-commit-authors": true,
-  "release-reference-comments": "best-effort"
+  "release-reference-comments": "best-effort",
+  "packages": {
+    ".": {
+      "extra-files": [
+        {
+          "type": "regex",
+          "path": "python/eunoia/__init__.py",
+          "pattern": "__version__\\s*=\\s*\"([^\"]+)\""
+        },
+        {
+          "type": "regex",
+          "path": "tests/test_smoke.py",
+          "pattern": "eunoia\\.__version__\\s*==\\s*\"([^\"]+)\""
+        }
+      ]
+    }
+  }
 }
