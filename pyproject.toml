@@ -1,0 +1,86 @@
+[build-system]
+requires = ["maturin>=1.13,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "eunoia"
+version = "0.1.0"
+description = "Area-proportional Euler and Venn diagrams"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+authors = [{ name = "Johan Larsson", email = "johan@jolars.co" }]
+keywords = ["euler", "venn", "diagram", "visualization", "set"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Rust",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Typing :: Typed",
+]
+dependencies = [
+    "matplotlib>=3.8",
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+docs = [
+    "sphinx>=7",
+    "furo",
+    "myst-nb",
+    "sphinx-copybutton",
+    "sphinx-autobuild",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "mypy>=1.10",
+    "pyright>=1.1",
+    "maturin>=1.13",
+]
+
+[project.urls]
+Repository = "https://github.com/jolars/eunoia-py"
+Documentation = "https://eunoia.readthedocs.io"
+Issues = "https://github.com/jolars/eunoia-py/issues"
+
+[tool.maturin]
+module-name = "eunoia._eunoia"
+python-source = "python"
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+extend-exclude = ["docs/_build"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["python/eunoia"]
+
+[tool.pyright]
+include = ["python/eunoia"]
+pythonVersion = "3.11"
+typeCheckingMode = "strict"
+# matplotlib's stubs have many `Unknown` kwarg types that propagate to
+# `partially unknown` warnings for routine calls (subplots, ax.text, ...);
+# trust mypy strict instead.
+reportUnknownMemberType = "none"
+reportUnknownVariableType = "none"
+reportUnknownArgumentType = "none"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

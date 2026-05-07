@@ -1,0 +1,64 @@
+version: "3"
+
+tasks:
+  build:
+    desc: Build the extension in develop mode
+    cmds:
+      - maturin develop --uv
+
+  build-release:
+    desc: Build the extension in release mode
+    cmds:
+      - maturin develop --release --uv
+
+  test:
+    desc: Run pytest
+    cmds:
+      - pytest
+
+  fmt:
+    desc: Format Python and Rust code
+    cmds:
+      - ruff format python tests
+      - ruff check --fix python tests
+      - cargo fmt
+
+  lint:
+    desc: Lint with ruff (fast)
+    cmds:
+      - ruff check python tests
+      - ruff format --check python tests
+
+  typecheck:
+    desc: Run mypy and pyright
+    cmds:
+      - mypy
+      - pyright
+
+  ci:
+    desc: Run lint + typecheck + tests
+    cmds:
+      - task: lint
+      - task: typecheck
+      - task: test
+
+  docs:
+    desc: Build Sphinx docs
+    cmds:
+      - sphinx-build -b html docs docs/_build/html
+
+  docs-serve:
+    desc: Serve docs with auto-reload
+    cmds:
+      - sphinx-autobuild docs docs/_build/html
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - cargo clean
+      - rm -rf python/eunoia/_eunoia*.so dist *.egg-info docs/_build
+
+  wheel:
+    desc: Build a release wheel locally (for profiling/testing)
+    cmds:
+      - maturin build --release

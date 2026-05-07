@@ -1,0 +1,22 @@
+[package]
+name = "eunoia-py"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+authors = ["Johan Larsson <johan@jolars.co>"]
+license = "MIT"
+repository = "https://github.com/jolars/eunoia-py"
+description = "Python bindings for the eunoia area-proportional Euler/Venn diagram engine"
+publish = false
+
+[lib]
+name = "_eunoia"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.28", features = ["extension-module", "abi3-py311"] }
+eunoia = { version = "0.12", features = ["plotting"] }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
