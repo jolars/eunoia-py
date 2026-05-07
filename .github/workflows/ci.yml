@@ -32,8 +32,8 @@ jobs:
 
       - name: Ruff check
         run: |
-          uvx run ruff check
-          uvx run ruff format --check --diff
+          uvx ruff check
+          uvx ruff format --check --diff
 
       - name: mypy
         run: uv run mypy
