@@ -88,6 +88,10 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
       - id: versionary
         uses: jolars/versionary@v0
         with:
