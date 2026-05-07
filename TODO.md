@@ -5,17 +5,14 @@
 - [x] Create GitHub repo `jolars/eunoia-py` and push.
 - [x] Register pending **Trusted Publisher** on pypi.org for `eunoia` (workflow
       `release.yml`, environment `pypi-publish`).
-- [ ] SHA-pin `PyO3/maturin-action` in `.github/workflows/release.yml`
-      (currently `@v1`).
-- [ ] Add `.github/workflows/docs.yml` that builds Sphinx and deploys to
-      GitHub Pages (env `github-pages`, `actions/deploy-pages`). Trigger on
-      push to `main` and on tag. In repo settings → Pages, set
-      Source = "GitHub Actions" so the env exists. Hosting docs on Pages,
-      not ReadTheDocs.
+- [x] Add `.github/workflows/docs.yml` that builds Sphinx and deploys to GitHub
+      Pages (env `github-pages`, `actions/deploy-pages`). Triggers on version
+      tags (`v*`) and `workflow_dispatch`.
+- [x] In repo settings → Pages, set Source = "GitHub Actions" so the
+      `github-pages` environment is created (one-time manual step).
 - [ ] Verify `release.yml` aarch64 + musl wheels actually build on a dry-run
-      (workflow_dispatch trigger is wired up --- push a `v0.1.0-rc1` test tag to
-      a fork first).
-- [ ] `git tag v0.1.0 && git push --tags` → wheels + sdist on PyPI.
+      (workflow_dispatch trigger is wired up---push a `v0.1.0-rc1` test tag to a
+      fork first).
 
 ## v0.2 — surface expansion
 
