@@ -1,0 +1,130 @@
+name: Release (TestPyPI)
+
+# Manual-only workflow for uploading to test.pypi.org. Mirrors the build
+# matrix in `publish.yml` so the wheels published to TestPyPI are exactly
+# what would ship to prod, then uploads to TestPyPI via Trusted Publishing
+# (separate registration on test.pypi.org from the prod one).
+#
+# `skip-existing: true` so re-running for the same version is idempotent;
+# TestPyPI will refuse to overwrite an existing file otherwise.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - target: x86_64-unknown-linux-gnu
+            manylinux: "2_28"
+          - target: aarch64-unknown-linux-gnu
+            manylinux: "2_28"
+          - target: x86_64-unknown-linux-musl
+            manylinux: musllinux_1_2
+          - target: aarch64-unknown-linux-musl
+            manylinux: musllinux_1_2
+    steps:
+      - uses: actions/checkout@v6
+      - uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          args: --release --out dist --strip
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels-${{ matrix.platform.target }}
+          path: dist
+
+  macos:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64-apple-darwin, aarch64-apple-darwin]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist --strip
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels-${{ matrix.target }}
+          path: dist
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: PyO3/maturin-action@v1
+        with:
+          target: x86_64-pc-windows-msvc
+          args: --release --out dist --strip
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels-windows-x86_64
+          path: dist
+
+  sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels-sdist
+          path: dist
+
+  smoke-test:
+    needs: [linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: wheels-x86_64-unknown-linux-gnu
+          path: dist
+          merge-multiple: true
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install built wheel
+        run: pip install dist/eunoia-*.whl
+      - name: Smoke test
+        run: |
+          python -c "
+          import matplotlib
+          matplotlib.use('Agg')
+          import eunoia as eu
+          fit = eu.euler({'A': 10, 'B': 5, 'A&B': 3})
+          assert fit.diag_error < 0.01, f'diag_error too high: {fit.diag_error}'
+          fit.plot()
+          print('eunoia', eu.__version__, 'wheel smoke test OK')
+          "
+
+  publish-testpypi:
+    name: Publish to TestPyPI
+    needs: [linux, macos, windows, sdist, smoke-test]
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/eunoia
+    permissions:
+      id-token: write # required for trusted publishing
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
