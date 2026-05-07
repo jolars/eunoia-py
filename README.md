@@ -31,14 +31,14 @@ fit.plot()
 plt.show()
 ```
 
-### Union (inclusive) input
+### Inclusive input
 
 If your numbers are set sizes that already include their overlaps, pass
-`input="union"` and the eunoia core handles the inclusion-exclusion
+`input="inclusive"` and the eunoia core handles the inclusion-exclusion
 conversion:
 
 ```python
-fit = eu.euler({"A": 13, "B": 8, "A&B": 3}, input="union")
+fit = eu.euler({"A": 13, "B": 8, "A&B": 3}, input="inclusive")
 ```
 
 ### Ellipses
@@ -79,7 +79,7 @@ fit.plot(
 ## Status & roadmap (v0.1.0 → v0.2)
 
 In v0.1.0:
-- `dict` input only, with `input="disjoint"` / `"union"`
+- `dict` input only, with `input="exclusive"` / `"inclusive"`
 - `circle` and `ellipse` shapes
 - matplotlib-based plotting
 

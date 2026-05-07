@@ -34,16 +34,16 @@ def test_three_set_eulerr_readme_ellipses() -> None:
     assert all(isinstance(s, eu.Ellipse) for s in fit.shapes)
 
 
-def test_disjoint_input_preserves_original_values() -> None:
-    fit = eu.euler({"A": 10, "B": 5, "A&B": 3}, input="disjoint")
+def test_exclusive_input_preserves_original_values() -> None:
+    fit = eu.euler({"A": 10, "B": 5, "A&B": 3}, input="exclusive")
     assert fit.original_values["A"] == 10.0
     assert fit.original_values["B"] == 5.0
     assert fit.original_values["A&B"] == 3.0
 
 
-def test_union_input_inclusive_scale() -> None:
+def test_inclusive_input_scale() -> None:
     # If A=13 includes the 3 in overlap, exclusive A_only = 10.
-    fit = eu.euler({"A": 13, "B": 8, "A&B": 3}, input="union")
+    fit = eu.euler({"A": 13, "B": 8, "A&B": 3}, input="inclusive")
     assert fit.original_values["A"] == 13.0
     # fitted A should be in inclusive scale, close to 13
     assert math.isclose(fit.fitted_values["A"], 13.0, abs_tol=0.5)

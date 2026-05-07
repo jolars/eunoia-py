@@ -28,14 +28,14 @@ print(fit)
 fit.plot();
 ```
 
-## Inclusive (union) input
+## Inclusive input
 
-By default, values are interpreted as **disjoint** per-region areas. If your
-numbers are total set sizes that include overlaps, pass `input="union"` and
-the eunoia core converts internally:
+By default, values are interpreted as **exclusive** per-region areas. If
+your numbers are total set sizes that include overlaps, pass
+`input="inclusive"` and the eunoia core converts internally:
 
 ```{code-cell} ipython3
-fit = eu.euler({"A": 13, "B": 8, "A&B": 3}, input="union")
+fit = eu.euler({"A": 13, "B": 8, "A&B": 3}, input="inclusive")
 fit.original_values, fit.fitted_values
 ```
 

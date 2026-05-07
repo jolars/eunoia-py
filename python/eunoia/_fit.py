@@ -14,7 +14,7 @@ from eunoia._parse import canonicalize, parse_dict_input, to_inclusive
 def euler(
     values: Mapping[str, float],
     *,
-    input: Literal["disjoint", "union"] = ...,
+    input: Literal["exclusive", "inclusive"] = ...,
     shape: Literal["circle"] = ...,
     seed: int | None = ...,
 ) -> EulerFit[Circle]: ...
@@ -24,7 +24,7 @@ def euler(
 def euler(
     values: Mapping[str, float],
     *,
-    input: Literal["disjoint", "union"] = ...,
+    input: Literal["exclusive", "inclusive"] = ...,
     shape: Literal["ellipse"],
     seed: int | None = ...,
 ) -> EulerFit[Ellipse]: ...
@@ -33,7 +33,7 @@ def euler(
 def euler(
     values: Mapping[str, float],
     *,
-    input: Literal["disjoint", "union"] = "disjoint",
+    input: Literal["exclusive", "inclusive"] = "exclusive",
     shape: Literal["circle", "ellipse"] = "circle",
     seed: int | None = None,
 ) -> EulerFit[Circle] | EulerFit[Ellipse]:
@@ -45,8 +45,9 @@ def euler(
         Mapping from set-combination labels (e.g. ``"A"``, ``"A&B"``) to
         their areas.
     input:
-        ``"disjoint"`` (default): values are exclusive per-region areas.
-        ``"union"``: values are inclusive set sizes (overlaps included);
+        ``"exclusive"`` (default): values are per-region areas, with no
+        overlap from other sets included.
+        ``"inclusive"``: values are total set sizes that include overlaps;
         the eunoia core converts internally.
     shape:
         ``"circle"`` (default) or ``"ellipse"``.
@@ -81,7 +82,7 @@ def euler(
             for s in result["shapes"]
         )
         fitted_exclusive = result["fitted_exclusive"]
-        if input == "disjoint":
+        if input == "exclusive":
             fitted_values = {
                 ck: float(fitted_exclusive.get(ck, 0.0)) for ck in canonical_keys
             }
@@ -120,7 +121,7 @@ def euler(
         for s in result_e["shapes"]
     )
     fitted_exclusive_e = result_e["fitted_exclusive"]
-    if input == "disjoint":
+    if input == "exclusive":
         fitted_values_e = {
             ck: float(fitted_exclusive_e.get(ck, 0.0)) for ck in canonical_keys
         }

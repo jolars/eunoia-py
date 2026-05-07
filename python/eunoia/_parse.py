@@ -30,7 +30,7 @@ def to_inclusive(
 ) -> dict[str, float]:
     """For each key X, sum the fitted exclusive areas of every region that is
     a superset of X. Used to express fitted areas in the user's input scale
-    when ``input="union"``."""
+    when ``input="inclusive"``."""
     result: dict[str, float] = {}
     for k in keys:
         x_sets = frozenset(s.strip() for s in k.split("&") if s.strip())

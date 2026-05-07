@@ -54,7 +54,7 @@ class EulerFit(Generic[S]):
         The values originally passed in. Keys are canonical (sorted) form.
     fitted_values:
         The fitted areas, expressed in the same scale as ``original_values``
-        (disjoint or union, depending on ``input``).
+        (exclusive or inclusive, depending on ``input``).
     residuals:
         ``original_values - fitted_values`` per region.
     region_error:

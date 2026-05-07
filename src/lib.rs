@@ -26,10 +26,10 @@ fn map_err(e: DiagramError) -> PyErr {
 
 fn parse_input_kind(input_kind: &str) -> PyResult<InputType> {
     match input_kind {
-        "disjoint" | "exclusive" => Ok(InputType::Exclusive),
-        "union" | "inclusive" => Ok(InputType::Inclusive),
+        "exclusive" => Ok(InputType::Exclusive),
+        "inclusive" => Ok(InputType::Inclusive),
         other => Err(EunoiaError::new_err(format!(
-            "invalid_input: input must be 'disjoint' or 'union', got '{other}'"
+            "invalid_input: input must be 'exclusive' or 'inclusive', got '{other}'"
         ))),
     }
 }

@@ -66,7 +66,7 @@ tests/test_*.py                  fit / plot / repr / smoke tests
   `_fit_rectangles` and an extra dataclass.
 - **Inclusion-exclusion is handled by the core**, not Python. We pass
   `InputType::Inclusive` to `DiagramSpecBuilder::input_type()` when
-  `input="union"`. `_parse.to_inclusive` is only used to express *fitted* values
+  `input="inclusive"`. `_parse.to_inclusive` is only used to express *fitted* values
   in the user's input scale (since `Layout::fitted()` is always per-region
   exclusive).
 - **Canonical keys** everywhere in returned dicts: `"B&A"` becomes `"A&B"` via
