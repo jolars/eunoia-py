@@ -26,31 +26,17 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Visualization",
     "Typing :: Typed",
 ]
-dependencies = [
-    "matplotlib>=3.8",
-    "numpy>=1.26",
-]
+dependencies = ["matplotlib>=3.8", "numpy>=1.26"]
 
 [project.optional-dependencies]
-docs = [
-    "sphinx>=7",
-    "furo",
-    "myst-nb",
-    "sphinx-copybutton",
-    "sphinx-autobuild",
-]
+docs = ["sphinx>=7", "furo", "myst-nb", "sphinx-copybutton", "sphinx-autobuild"]
 
 [dependency-groups]
-dev = [
-    "pytest>=8",
-    "mypy>=1.10",
-    "pyright>=1.1",
-    "maturin>=1.13",
-]
+dev = ["pytest>=8", "mypy>=1.10", "pyright>=1.1", "maturin>=1.13"]
 
 [project.urls]
 Repository = "https://github.com/jolars/eunoia-py"
-Documentation = "https://eunoia.readthedocs.io"
+Documentation = "https://jolars.github.io/eunoia-py"
 Issues = "https://github.com/jolars/eunoia-py/issues"
 
 [tool.maturin]
