@@ -30,12 +30,10 @@ jobs:
 
       - run: uv run maturin develop --uv
 
-      - run: uv install ruff
-
       - name: Ruff check
         run: |
-          uv run ruff check
-          uv run ruff format --check --diff
+          uvx run ruff check
+          uvx run ruff format --check --diff
 
       - name: mypy
         run: uv run mypy
