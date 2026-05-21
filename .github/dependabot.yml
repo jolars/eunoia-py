@@ -1,26 +1,15 @@
 version: 2
+
 updates:
-  - package-ecosystem: github-actions
+  - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: weekly
-    groups:
-      actions:
-        patterns: ["*"]
-
-  - package-ecosystem: cargo
+      interval: "weekly"
+  - package-ecosystem: "uv"
     directory: "/"
     schedule:
-      interval: weekly
-    groups:
-      cargo:
-        patterns: ["*"]
-        exclude-patterns: ["eunoia"]
-
-  - package-ecosystem: uv
+      interval: "weekly"
+  - package-ecosystem: "cargo"
     directory: "/"
     schedule:
-      interval: weekly
-    groups:
-      python:
-        patterns: ["*"]
+      interval: "weekly"
