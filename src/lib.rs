@@ -1,8 +1,8 @@
-use eunoia::geometry::shapes::{Circle, Ellipse};
+use eunoia::geometry::shapes::{Circle, Ellipse, Rectangle, Square};
 use eunoia::geometry::traits::{DiagramShape, Polygonize};
 use eunoia::plotting::PlotOptions;
 use eunoia::spec::DiagramSpec;
-use eunoia::{DiagramError, DiagramSpecBuilder, Fitter, InputType, Layout};
+use eunoia::{DiagramError, DiagramSpecBuilder, Fitter, InputType, Layout, VennDiagram};
 use pyo3::create_exception;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -34,7 +34,11 @@ fn parse_input_kind(input_kind: &str) -> PyResult<InputType> {
     }
 }
 
-fn build_spec(combinations: &[(String, f64)], input_kind: &str) -> PyResult<DiagramSpec> {
+fn build_spec(
+    combinations: &[(String, f64)],
+    input_kind: &str,
+    complement: Option<f64>,
+) -> PyResult<DiagramSpec> {
     let input_type = parse_input_kind(input_kind)?;
     let mut builder = DiagramSpecBuilder::new().input_type(input_type);
     for (combo_str, value) in combinations {
@@ -48,7 +52,32 @@ fn build_spec(combinations: &[(String, f64)], input_kind: &str) -> PyResult<Diag
             many => builder.intersection(many, *value),
         };
     }
+    if let Some(c) = complement {
+        builder = builder.complement(c);
+    }
     builder.build().map_err(map_err)
+}
+
+fn fill_container<'py, S>(
+    py: Python<'py>,
+    layout: &Layout<S>,
+    dict: &Bound<'py, PyDict>,
+) -> PyResult<()>
+where
+    S: DiagramShape + Copy + 'static,
+{
+    match layout.container() {
+        Some(rect) => {
+            let c = PyDict::new(py);
+            c.set_item("x", rect.center().x())?;
+            c.set_item("y", rect.center().y())?;
+            c.set_item("width", rect.width())?;
+            c.set_item("height", rect.height())?;
+            dict.set_item("container", c)?;
+        }
+        None => dict.set_item("container", py.None())?,
+    }
+    Ok(())
 }
 
 fn fill_metrics<'py, S>(
@@ -145,72 +174,201 @@ where
     Ok(())
 }
 
+fn ser_circle<'py>(py: Python<'py>, name: &str, s: &Circle) -> PyResult<Bound<'py, PyDict>> {
+    let d = PyDict::new(py);
+    d.set_item("set", name)?;
+    d.set_item("x", s.center().x())?;
+    d.set_item("y", s.center().y())?;
+    d.set_item("radius", s.radius())?;
+    Ok(d)
+}
+
+fn ser_ellipse<'py>(py: Python<'py>, name: &str, s: &Ellipse) -> PyResult<Bound<'py, PyDict>> {
+    let d = PyDict::new(py);
+    d.set_item("set", name)?;
+    d.set_item("x", s.center().x())?;
+    d.set_item("y", s.center().y())?;
+    d.set_item("semi_major", s.semi_major())?;
+    d.set_item("semi_minor", s.semi_minor())?;
+    d.set_item("rotation", s.rotation())?;
+    Ok(d)
+}
+
+fn ser_square<'py>(py: Python<'py>, name: &str, s: &Square) -> PyResult<Bound<'py, PyDict>> {
+    let d = PyDict::new(py);
+    d.set_item("set", name)?;
+    d.set_item("x", s.center().x())?;
+    d.set_item("y", s.center().y())?;
+    d.set_item("side", s.side())?;
+    Ok(d)
+}
+
+fn ser_rectangle<'py>(py: Python<'py>, name: &str, s: &Rectangle) -> PyResult<Bound<'py, PyDict>> {
+    let d = PyDict::new(py);
+    d.set_item("set", name)?;
+    d.set_item("x", s.center().x())?;
+    d.set_item("y", s.center().y())?;
+    d.set_item("width", s.width())?;
+    d.set_item("height", s.height())?;
+    Ok(d)
+}
+
+/// Build the full result dict shared by `_fit_*` and `_venn`: per-set shapes
+/// (via `ser`), fit metrics, plot data, and the optional container box.
+fn build_result<'py, S, F>(
+    py: Python<'py>,
+    spec: &DiagramSpec,
+    layout: &Layout<S>,
+    ser: F,
+) -> PyResult<Bound<'py, PyDict>>
+where
+    S: DiagramShape + Copy + Polygonize + 'static,
+    F: Fn(Python<'py>, &str, &S) -> PyResult<Bound<'py, PyDict>>,
+{
+    let result = PyDict::new(py);
+
+    let shapes = PyList::empty(py);
+    for (name, shape) in spec.set_names().iter().zip(layout.shapes().iter()) {
+        shapes.append(ser(py, name, shape)?)?;
+    }
+    result.set_item("shapes", shapes)?;
+
+    fill_metrics(py, layout, &result)?;
+    fill_plot_data(py, spec, layout, &result)?;
+    fill_container(py, layout, &result)?;
+    Ok(result)
+}
+
 #[pyfunction]
-#[pyo3(signature = (combinations, input_kind, seed=None))]
+#[pyo3(signature = (combinations, input_kind, complement=None, seed=None))]
 fn _fit_circles<'py>(
     py: Python<'py>,
     combinations: Vec<(String, f64)>,
     input_kind: &str,
+    complement: Option<f64>,
     seed: Option<u64>,
 ) -> PyResult<Bound<'py, PyDict>> {
-    let spec = build_spec(&combinations, input_kind)?;
+    let spec = build_spec(&combinations, input_kind, complement)?;
     let mut fitter = Fitter::<Circle>::new(&spec);
     if let Some(s) = seed {
         fitter = fitter.seed(s);
     }
     let layout = fitter.fit().map_err(map_err)?;
-
-    let result = PyDict::new(py);
-
-    let shapes = PyList::empty(py);
-    for (name, shape) in spec.set_names().iter().zip(layout.shapes().iter()) {
-        let s = PyDict::new(py);
-        s.set_item("set", name)?;
-        s.set_item("x", shape.center().x())?;
-        s.set_item("y", shape.center().y())?;
-        s.set_item("radius", shape.radius())?;
-        shapes.append(s)?;
-    }
-    result.set_item("shapes", shapes)?;
-
-    fill_metrics(py, &layout, &result)?;
-    fill_plot_data(py, &spec, &layout, &result)?;
-    Ok(result)
+    build_result(py, &spec, &layout, ser_circle)
 }
 
 #[pyfunction]
-#[pyo3(signature = (combinations, input_kind, seed=None))]
+#[pyo3(signature = (combinations, input_kind, complement=None, seed=None))]
 fn _fit_ellipses<'py>(
     py: Python<'py>,
     combinations: Vec<(String, f64)>,
     input_kind: &str,
+    complement: Option<f64>,
     seed: Option<u64>,
 ) -> PyResult<Bound<'py, PyDict>> {
-    let spec = build_spec(&combinations, input_kind)?;
+    let spec = build_spec(&combinations, input_kind, complement)?;
     let mut fitter = Fitter::<Ellipse>::new(&spec);
     if let Some(s) = seed {
         fitter = fitter.seed(s);
     }
     let layout = fitter.fit().map_err(map_err)?;
+    build_result(py, &spec, &layout, ser_ellipse)
+}
 
-    let result = PyDict::new(py);
-
-    let shapes = PyList::empty(py);
-    for (name, shape) in spec.set_names().iter().zip(layout.shapes().iter()) {
-        let s = PyDict::new(py);
-        s.set_item("set", name)?;
-        s.set_item("x", shape.center().x())?;
-        s.set_item("y", shape.center().y())?;
-        s.set_item("semi_major", shape.semi_major())?;
-        s.set_item("semi_minor", shape.semi_minor())?;
-        s.set_item("rotation", shape.rotation())?;
-        shapes.append(s)?;
+#[pyfunction]
+#[pyo3(signature = (combinations, input_kind, complement=None, seed=None))]
+fn _fit_squares<'py>(
+    py: Python<'py>,
+    combinations: Vec<(String, f64)>,
+    input_kind: &str,
+    complement: Option<f64>,
+    seed: Option<u64>,
+) -> PyResult<Bound<'py, PyDict>> {
+    let spec = build_spec(&combinations, input_kind, complement)?;
+    let mut fitter = Fitter::<Square>::new(&spec);
+    if let Some(s) = seed {
+        fitter = fitter.seed(s);
     }
-    result.set_item("shapes", shapes)?;
+    let layout = fitter.fit().map_err(map_err)?;
+    build_result(py, &spec, &layout, ser_square)
+}
 
-    fill_metrics(py, &layout, &result)?;
-    fill_plot_data(py, &spec, &layout, &result)?;
-    Ok(result)
+#[pyfunction]
+#[pyo3(signature = (combinations, input_kind, complement=None, seed=None))]
+fn _fit_rectangles<'py>(
+    py: Python<'py>,
+    combinations: Vec<(String, f64)>,
+    input_kind: &str,
+    complement: Option<f64>,
+    seed: Option<u64>,
+) -> PyResult<Bound<'py, PyDict>> {
+    let spec = build_spec(&combinations, input_kind, complement)?;
+    let mut fitter = Fitter::<Rectangle>::new(&spec);
+    if let Some(s) = seed {
+        fitter = fitter.seed(s);
+    }
+    let layout = fitter.fit().map_err(map_err)?;
+    build_result(py, &spec, &layout, ser_rectangle)
+}
+
+fn venn_layout<S>(
+    n: usize,
+    names: Option<Vec<String>>,
+    complement: Option<f64>,
+) -> PyResult<(Layout<S>, DiagramSpec)>
+where
+    S: DiagramShape + Copy + 'static,
+{
+    let mut vd = VennDiagram::<S>::new(n).map_err(map_err)?;
+    if let Some(c) = complement {
+        vd = vd.complement(c).map_err(map_err)?;
+    }
+    if let Some(names) = names {
+        let refs: Vec<&str> = names.iter().map(String::as_str).collect();
+        vd = vd.with_names(&refs);
+    }
+    Ok(vd.into_layout_and_spec())
+}
+
+#[pyfunction]
+#[pyo3(signature = (n, shape, names=None, complement=None))]
+fn _venn<'py>(
+    py: Python<'py>,
+    n: usize,
+    shape: &str,
+    names: Option<Vec<String>>,
+    complement: Option<f64>,
+) -> PyResult<Bound<'py, PyDict>> {
+    if let Some(ref names) = names {
+        if names.len() != n {
+            return Err(EunoiaError::new_err(format!(
+                "invalid_value: expected {n} names, got {}",
+                names.len()
+            )));
+        }
+    }
+    match shape {
+        "circle" => {
+            let (layout, spec) = venn_layout::<Circle>(n, names, complement)?;
+            build_result(py, &spec, &layout, ser_circle)
+        }
+        "ellipse" => {
+            let (layout, spec) = venn_layout::<Ellipse>(n, names, complement)?;
+            build_result(py, &spec, &layout, ser_ellipse)
+        }
+        "square" => {
+            let (layout, spec) = venn_layout::<Square>(n, names, complement)?;
+            build_result(py, &spec, &layout, ser_square)
+        }
+        "rectangle" => {
+            let (layout, spec) = venn_layout::<Rectangle>(n, names, complement)?;
+            build_result(py, &spec, &layout, ser_rectangle)
+        }
+        other => Err(EunoiaError::new_err(format!(
+            "invalid_shape: shape must be 'circle', 'ellipse', 'square' or \
+             'rectangle', got '{other}'"
+        ))),
+    }
 }
 
 #[pyfunction]
@@ -224,5 +382,8 @@ fn _eunoia(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(_smoke, m)?)?;
     m.add_function(wrap_pyfunction!(_fit_circles, m)?)?;
     m.add_function(wrap_pyfunction!(_fit_ellipses, m)?)?;
+    m.add_function(wrap_pyfunction!(_fit_squares, m)?)?;
+    m.add_function(wrap_pyfunction!(_fit_rectangles, m)?)?;
+    m.add_function(wrap_pyfunction!(_venn, m)?)?;
     Ok(())
 }

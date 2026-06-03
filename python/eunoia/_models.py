@@ -38,7 +38,41 @@ class Ellipse:
     rotation: float
 
 
-S = TypeVar("S", Circle, Ellipse)
+@dataclass(frozen=True)
+class Square:
+    """A fitted axis-aligned square for one input set."""
+
+    set: str
+    center: Point
+    side: float
+
+
+@dataclass(frozen=True)
+class Rectangle:
+    """A fitted axis-aligned rectangle for one input set."""
+
+    set: str
+    center: Point
+    width: float
+    height: float
+
+
+@dataclass(frozen=True)
+class Container:
+    """The fitted universe box drawn around a diagram fit with ``complement``.
+
+    The container's area minus the (clipped) union of the shapes equals the
+    requested complement area. The leftover region inside the container but
+    outside every set is the *complement region*, keyed under the empty
+    string in the plot data.
+    """
+
+    center: Point
+    width: float
+    height: float
+
+
+S = TypeVar("S", Circle, Ellipse, Square, Rectangle)
 
 
 @dataclass(frozen=True, repr=False)
@@ -66,6 +100,9 @@ class EulerFit(Generic[S]):
         venneuler-style stress metric.
     loss:
         Final value of the objective the optimizer minimized.
+    container:
+        The fitted universe box, when the diagram was fit with
+        ``complement``; otherwise ``None``.
     """
 
     shapes: tuple[S, ...]
@@ -76,6 +113,7 @@ class EulerFit(Generic[S]):
     diag_error: float
     stress: float
     loss: float
+    container: Container | None = None
     plot_data: dict[str, Any] = field(default_factory=dict, repr=False, compare=False)
 
     def __repr__(self) -> str:
@@ -115,6 +153,7 @@ class EulerFit(Generic[S]):
         edges: dict[str, Any] | None = None,
         labels: bool = True,
         quantities: bool | Literal["original", "fitted"] = False,
+        complement: dict[str, Any] | None = None,
     ) -> Axes:
         """Render the fitted diagram with matplotlib.
 
@@ -139,6 +178,10 @@ class EulerFit(Generic[S]):
             Show fitted/original values per region. ``True`` and
             ``"original"`` show the input values; ``"fitted"`` shows the
             fitted values. ``False`` (default) shows nothing.
+        complement:
+            Style overrides (``Rectangle`` patch kwargs) for the universe
+            container box, drawn only when the fit has a ``container``.
+            Ignored otherwise.
 
         Returns
         -------
@@ -155,4 +198,22 @@ class EulerFit(Generic[S]):
             edges=edges,
             labels=labels,
             quantities=quantities,
+            complement=complement,
         )
+
+
+class VennFit(EulerFit[S]):
+    """Result of laying out a (non-proportional) Venn diagram.
+
+    Shares :class:`EulerFit`'s structure and ``plot()`` method, but the
+    diagram is *topological*: every set intersection is drawn regardless of
+    its area, so the area-proportional error metrics are not meaningful and
+    are left at zero. ``fitted_values`` holds the geometric area of each
+    region; ``original_values`` is empty (a Venn layout has no requested
+    areas).
+    """
+
+    def __repr__(self) -> str:
+        names = [s.set for s in self.shapes]
+        kind = type(self.shapes[0]).__name__.lower() if self.shapes else "shape"
+        return f"VennFit ({len(names)} sets [{kind}]: {', '.join(names)})"

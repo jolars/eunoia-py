@@ -62,7 +62,51 @@ def test_invalid_input_kind_raises_eunoia_error() -> None:
 
 def test_invalid_shape_raises_value_error() -> None:
     with pytest.raises(ValueError):
-        eu.euler({"A": 10, "B": 5}, shape="square")  # type: ignore[arg-type]
+        eu.euler({"A": 10, "B": 5}, shape="hexagon")  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("shape", ["square", "rectangle"])
+def test_square_and_rectangle_shapes(shape: str) -> None:
+    fit = eu.euler({"A": 10, "B": 8, "A&B": 4}, shape=shape)  # type: ignore[arg-type]
+    assert len(fit.shapes) == 2
+    assert type(fit.shapes[0]).__name__.lower() == shape
+    # Axis-aligned shapes fit two-set overlaps well.
+    assert fit.diag_error < 0.1
+
+
+def test_square_shape_fields() -> None:
+    fit = eu.euler({"A": 10, "B": 8, "A&B": 4}, shape="square")
+    sq = fit.shapes[0]
+    assert isinstance(sq, eu.Square)
+    assert sq.side > 0
+
+
+def test_rectangle_shape_fields() -> None:
+    fit = eu.euler({"A": 10, "B": 8, "A&B": 4}, shape="rectangle")
+    rect = fit.shapes[0]
+    assert isinstance(rect, eu.Rectangle)
+    assert rect.width > 0
+    assert rect.height > 0
+
+
+@pytest.mark.parametrize("shape", ["circle", "ellipse", "square", "rectangle"])
+def test_complement_returns_container(shape: str) -> None:
+    fit = eu.euler({"A": 10, "B": 8, "A&B": 4}, shape=shape, complement=20)  # type: ignore[arg-type]
+    assert fit.container is not None
+    assert isinstance(fit.container, eu.Container)
+    assert fit.container.width > 0
+    assert fit.container.height > 0
+
+
+def test_no_complement_has_no_container() -> None:
+    fit = eu.euler({"A": 10, "B": 8, "A&B": 4})
+    assert fit.container is None
+
+
+def test_complement_with_disjoint_sets_raises() -> None:
+    # A and B don't overlap, so a single shared container is rejected.
+    with pytest.raises(eu.EunoiaError):
+        eu.euler({"A": 10, "B": 5}, complement=5)
 
 
 def test_canonical_keys_in_output() -> None:

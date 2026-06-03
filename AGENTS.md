@@ -60,11 +60,26 @@ tests/test_*.py                  fit / plot / repr / smoke tests
 
 ## Key decisions worth remembering
 
-- **One Rust fn per shape**: `_fit_circles`, `_fit_ellipses`. Each also returns
-  `region_pieces`, `region_anchors`, `set_anchors`, `shape_outlines` in the same
-  call so `fit.plot()` doesn't refit. Mirror the WASM crate's per-shape dispatch
-  idiom. To add `Square`/`Rectangle` (v0.2), add `_fit_squares` /
-  `_fit_rectangles` and an extra dataclass.
+- **One Rust fn per shape**: `_fit_circles`, `_fit_ellipses`, `_fit_squares`,
+  `_fit_rectangles`, plus `_venn`. Each returns `shapes`, metrics,
+  `region_pieces`, `region_anchors`, `set_anchors`, `shape_outlines`, and
+  `container` in the same call so `fit.plot()` doesn't refit. In `src/lib.rs` the
+  shared `build_result` generic + per-shape `ser_*` closures assemble the dict;
+  `_fit_*` and `_venn` both call it. All four shapes map to a frozen dataclass
+  (`Circle`/`Ellipse`/`Square`/`Rectangle`) and a `shape=` overload in
+  `_fit.euler`; `_fit._finish` shares the fitted/residual assembly, and the
+  `build_circles`/`build_ellipses`/… + `build_container`/`build_plot_data`
+  helpers in `_fit.py` are reused by `_venn.venn`.
+- **`complement=`** (euler & venn): threaded through `build_spec` to
+  `DiagramSpecBuilder::complement`; the jointly-fitted box comes back as
+  `EulerFit.container` (a `Container` dataclass) and `_plot` draws it behind
+  everything, skipping the empty-combination region (which serializes to `""`).
+  Rejected by the core for multi-cluster specs (surfaces as `EunoiaError`).
+- **`venn()`** returns a `VennFit(EulerFit)` (custom repr; topological, so
+  `original_values` is empty and `fitted_values` holds geometric region areas).
+  Accepts `int` / list-of-names / mapping. **Circle Venn is unsupported in core
+  0.15** (no `canonical_venn_layout` impl — trait default returns `None`); only
+  ellipse (1–5) and square/rectangle (1–3). Re-enable circle after the 0.18 bump.
 - **Inclusion-exclusion is handled by the core**, not Python. We pass
   `InputType::Inclusive` to `DiagramSpecBuilder::input_type()` when
   `input="inclusive"`. `_parse.to_inclusive` is only used to express *fitted* values
@@ -108,8 +123,12 @@ tests/test_*.py                  fit / plot / repr / smoke tests
 
 ## Eunoia core API we bind against
 
-(Verified against `/home/jola/projects/eunoia` at version 0.12.0; if upstream
-moves, re-verify before changing the binding.)
+(We pin `eunoia = "0.15"` in `Cargo.toml`; the binding is verified against the
+published 0.15.0 crate. The local checkout at `/home/jola/projects/eunoia` has
+since moved ahead (0.18.0), so re-verify the API surface below before bumping the
+pin. Note: the published crate is a single crate — its sources live under `src/…`,
+not the workspace `crates/eunoia/src/…` paths cited below, which point at the
+local checkout.)
 
 - `DiagramSpecBuilder::new().set(name, val).intersection(&[names], val).input_type(InputType::{Exclusive,Inclusive}).build()`
   (`crates/eunoia/src/spec/spec_builder.rs`)

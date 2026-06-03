@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 from matplotlib.patches import PathPatch
+from matplotlib.patches import Rectangle as MplRectangle
 from matplotlib.path import Path
 
 if TYPE_CHECKING:
@@ -27,10 +28,27 @@ def render(
     edges: dict[str, Any] | None = None,
     labels: bool = True,
     quantities: bool | Literal["original", "fitted"] = False,
+    complement: dict[str, Any] | None = None,
 ) -> Axes:
     """Draw an EulerFit. See ``EulerFit.plot`` for parameter docs."""
     if ax is None:
         _, ax = plt.subplots()
+
+    # Universe container box (drawn first, behind everything).
+    container = fit.container
+    if container is not None:
+        w, h = container.width, container.height
+        x0 = container.center.x - w / 2.0
+        y0 = container.center.y - h / 2.0
+        container_kwargs: dict[str, Any] = {
+            "facecolor": "#f0f0f0",
+            "edgecolor": "0.4",
+            "linewidth": 1.0,
+            "zorder": 0,
+        }
+        if complement:
+            container_kwargs.update(complement)
+        ax.add_patch(MplRectangle((x0, y0), w, h, **container_kwargs))
 
     plot_data = fit.plot_data
     region_pieces = cast(
@@ -51,6 +69,10 @@ def render(
 
     # Region fills
     for combo, pieces in region_pieces.items():
+        # The empty combination is the complement region; the container box
+        # already provides its background.
+        if combo == "":
+            continue
         region_color = _blend_region_color(combo, set_colors)
         fill_kwargs: dict[str, Any] = {
             "facecolor": region_color,

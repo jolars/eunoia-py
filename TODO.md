@@ -24,15 +24,17 @@
 
 Deferred from v0.1.0; pick whichever is most user-requested first.
 
-- [ ] **`venn(n, names=...)`** --- non-proportional 1--5 set Venn diagrams
-      (eunoia core has `VennDiagram`).
+- [x] **`venn(n, names=...)`** --- non-proportional Venn diagrams (eunoia core
+      `VennDiagram`). Done: `venn()` takes int / list-of-names / mapping, returns
+      `VennFit`. Ellipse 1--5, square/rectangle 1--3; **circle Venn unsupported in
+      core 0.15** (re-enable after the 0.18 bump).
 - [ ] **`error_plot(fit)`** --- diagnostic plot of region errors.
 - [ ] **`eunoia.options(...)`** --- global plotting defaults (eulerr's
       `eulerr_options` analogue).
-- [ ] **More shapes**: `shape="square"`, `shape="rectangle"` (eunoia core
-      already supports them; plan was to differentiate from eulerr here).
-- [ ] **`complement=`kwarg** --- universe area outside all sets. Spec builder
-      already has `.complement(value)`; just expose.
+- [x] **More shapes**: `shape="square"`, `shape="rectangle"`. Done.
+- [x] **`complement=`kwarg** --- universe area outside all sets. Done for both
+      `euler()` and `venn()`; container surfaces as `EulerFit.container` and is
+      drawn by `.plot()`.
 - [ ] **List-of-sets input**: `eu.euler({"A": ["x", "y"], "B": ["y", "z"]})` ---
       count exclusive overlaps per region from membership lists.
 - [ ] **DataFrame input** (pandas first, polars cheap follow-up via the
@@ -86,6 +88,7 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
 
 ## Eunoia core upstream tracking
 
-- [ ] Bump `eunoia = "0.12"` in `Cargo.toml` when 0.13 / 1.0 ships. Pre-1.0
-      means minor bumps may break --- track tightly. Re-verify the bound API
-      surface listed in `AGENTS.md`.
+- [ ] Bump `eunoia` pin (currently `"0.15"` in `Cargo.toml`) toward upstream
+      (local checkout is already at 0.18.0). Pre-1.0 means minor bumps may
+      break --- track tightly. Re-verify the bound API surface listed in
+      `AGENTS.md`.

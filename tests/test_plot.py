@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import pytest
 from matplotlib.axes import Axes
 from matplotlib.patches import PathPatch
+from matplotlib.patches import Rectangle as MplRectangle
 
 
 @pytest.fixture
@@ -64,6 +65,34 @@ def test_plot_ellipses() -> None:
     ax = fit.plot()
     patches = [p for p in ax.patches if isinstance(p, PathPatch)]
     assert len(patches) >= 4
+    plt.close(ax.figure)
+
+
+@pytest.mark.parametrize("shape", ["square", "rectangle"])
+def test_plot_squares_and_rectangles(shape: str) -> None:
+    fit = eu.euler({"A": 10, "B": 5, "A&B": 3}, shape=shape)  # type: ignore[arg-type]
+    ax = fit.plot()
+    patches = [p for p in ax.patches if isinstance(p, PathPatch)]
+    assert len(patches) >= 4
+    plt.close(ax.figure)
+
+
+def test_plot_complement_draws_container() -> None:
+    fit = eu.euler({"A": 10, "B": 8, "A&B": 4}, complement=20)
+    ax = fit.plot()
+    rects = [p for p in ax.patches if isinstance(p, MplRectangle)]
+    assert len(rects) == 1  # the universe container box
+    plt.close(ax.figure)
+
+
+def test_plot_complement_style_override() -> None:
+    fit = eu.euler({"A": 10, "B": 8, "A&B": 4}, complement=20)
+    ax = fit.plot(complement={"facecolor": "lightblue"})
+    rects = [p for p in ax.patches if isinstance(p, MplRectangle)]
+    assert rects
+    assert rects[0].get_facecolor()[:3] == pytest.approx(
+        matplotlib.colors.to_rgb("lightblue")
+    )
     plt.close(ax.figure)
 
 
