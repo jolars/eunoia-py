@@ -78,7 +78,7 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
 
 ## Eunoia core upstream tracking
 
-- [ ] Bump `eunoia` pin (currently `"0.15"` in `Cargo.toml`) toward upstream
+- [x] Bump `eunoia` pin (currently `"0.15"` in `Cargo.toml`) toward upstream
       (local checkout is already at 0.18.0). Pre-1.0 means minor bumps may break
       --- track tightly. Re-verify the bound API surface listed in `AGENTS.md`.
 
