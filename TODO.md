@@ -25,10 +25,9 @@
 Deferred from v0.1.0; pick whichever is most user-requested first.
 
 - [x] **`venn(n, names=...)`** --- non-proportional Venn diagrams (eunoia core
-      `VennDiagram`). Done: `venn()` takes int / list-of-names / mapping, returns
-      `VennFit`. Ellipse 1--5, square/rectangle 1--3; **circle Venn unsupported in
-      core 0.15** (re-enable after the 0.18 bump).
-- [ ] **`error_plot(fit)`** --- diagnostic plot of region errors.
+      `VennDiagram`). Done: `venn()` takes int / list-of-names / mapping,
+      returns `VennFit`. Ellipse 1--5, square/rectangle 1--3; **circle Venn
+      unsupported in core 0.15** (re-enable after the 0.18 bump).
 - [ ] **`eunoia.options(...)`** --- global plotting defaults (eulerr's
       `eulerr_options` analogue).
 - [x] **More shapes**: `shape="square"`, `shape="rectangle"`. Done.
@@ -83,12 +82,13 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
 - [ ] **Pyright config**: `reportUnknownMemberType / Variable / Argument` are
       disabled because matplotlib's stubs leak `Unknown`. Re-enable when
       matplotlib stubs improve, or migrate to typed wrappers.
-- [ ] **devenv.nix unused packages**: `pkgs.cmake`, `pkgs.ninja`, `pkgs.eigen`
-      aren't used by our toolchain. Confirm safe to drop.
 
 ## Eunoia core upstream tracking
 
 - [ ] Bump `eunoia` pin (currently `"0.15"` in `Cargo.toml`) toward upstream
-      (local checkout is already at 0.18.0). Pre-1.0 means minor bumps may
-      break --- track tightly. Re-verify the bound API surface listed in
-      `AGENTS.md`.
+      (local checkout is already at 0.18.0). Pre-1.0 means minor bumps may break
+      --- track tightly. Re-verify the bound API surface listed in `AGENTS.md`.
+
+## Defer until later
+
+- [ ] **`error_plot(fit)`** --- diagnostic plot of region errors.
