@@ -55,8 +55,6 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
 - [ ] Parity test against eulerr README/vignette numbers --- record specific
       `diag_error` values and assert match within 1e-6 (circles) / 1e-9
       (ellipses).
-- [ ] `examples/quickstart.ipynb` (mentioned in original plan, deferred to
-      reduce scope; the executed `docs/quickstart.md` covers most of it).
 - [ ] `CHANGELOG.md` (and a release process note: bump version in `Cargo.toml`,
       `pyproject.toml`, `python/eunoia/__init__.py`, `tests/test_smoke.py`).
 - [ ] Pre-commit hooks: ruff is in devenv git-hooks but not enforced
