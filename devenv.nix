@@ -6,10 +6,7 @@
 {
   packages = [
     pkgs.bashInteractive
-    pkgs.cmake
-    pkgs.eigen
     pkgs.go-task
-    pkgs.ninja
     pkgs.ruff
     pkgs.stdenv.cc.cc.lib
     pkgs.zlib
