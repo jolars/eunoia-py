@@ -34,7 +34,7 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
 - [x] **`complement=`kwarg** --- universe area outside all sets. Done for both
       `euler()` and `venn()`; container surfaces as `EulerFit.container` and is
       drawn by `.plot()`.
-- [ ] **List-of-sets input**: `eu.euler({"A": ["x", "y"], "B": ["y", "z"]})` ---
+- [x] **List-of-sets input**: `eu.euler({"A": ["x", "y"], "B": ["y", "z"]})` ---
       count exclusive overlaps per region from membership lists.
 - [ ] **DataFrame input** (pandas first, polars cheap follow-up via the
       `__dataframe__` protocol).

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import string
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from typing import Any, Literal, overload
 
 from eunoia._eunoia import EunoiaError
@@ -19,7 +19,7 @@ from eunoia._fit import (
 from eunoia._models import Circle, Ellipse, Rectangle, S, Square, VennFit
 from eunoia._parse import canonicalize
 
-VennInput = int | Sequence[str] | Mapping[str, float]
+VennInput = int | Sequence[str] | Mapping[str, float] | Mapping[str, Collection[str]]
 
 
 @overload

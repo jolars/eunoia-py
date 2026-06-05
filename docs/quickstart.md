@@ -39,6 +39,31 @@ fit = eu.euler({"A": 13, "B": 8, "A&B": 3}, input="inclusive")
 fit.original_values, fit.fitted_values
 ```
 
+## Membership lists
+
+Instead of region areas, you can pass each set its members. Every element is
+counted into the region of the sets it belongs to, giving **exclusive**
+per-region counts:
+
+```{code-cell} ipython3
+fit = eu.euler(
+    {
+        "A": ["x", "y", "z"],
+        "B": ["y", "z", "w"],
+        "C": ["z", "w", "q"],
+    }
+)
+fit.original_values
+```
+
+Elements are deduplicated within a set and stringified, so sets, tuples and
+non-string labels all work. `venn()` accepts the same shape (it only needs the
+set names):
+
+```{code-cell} ipython3
+eu.venn({"A": ["x", "y"], "B": ["y", "z"]});
+```
+
 ## Three sets with ellipses
 
 Ellipses are more flexible than circles and can fit many three-set

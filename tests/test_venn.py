@@ -91,3 +91,8 @@ def test_venn_rejects_bad_input() -> None:
         eu.venn("ABC")  # type: ignore[arg-type]
     with pytest.raises(ValueError):
         eu.venn(["A", "A"])  # duplicate names
+
+
+def test_venn_membership_dict_extracts_base_sets() -> None:
+    v = eu.venn({"A": ["x", "y"], "B": ["y", "z"]})
+    assert [s.set for s in v.shapes] == ["A", "B"]

@@ -125,3 +125,55 @@ def test_residuals_match_original_minus_fitted() -> None:
             fit.original_values[k] - fit.fitted_values[k],
             abs_tol=1e-12,
         )
+
+
+def test_membership_list_input_counts_exclusive_regions() -> None:
+    fit = eu.euler({"A": ["x", "y"], "B": ["y", "z"]})
+    assert fit.original_values == {"A": 1.0, "B": 1.0, "A&B": 1.0}
+
+
+def test_membership_three_sets_with_triple_overlap() -> None:
+    fit = eu.euler(
+        {
+            "A": ["x", "shared"],
+            "B": ["y", "shared"],
+            "C": ["z", "shared"],
+        }
+    )
+    assert fit.original_values["A&B&C"] == 1.0
+    assert fit.original_values["A"] == 1.0
+    assert fit.original_values["B"] == 1.0
+    assert fit.original_values["C"] == 1.0
+
+
+def test_membership_dedupes_within_set() -> None:
+    fit = eu.euler({"A": ["x", "x", "y"], "B": ["z"]})
+    assert fit.original_values["A"] == 2.0
+    assert fit.original_values["B"] == 1.0
+
+
+def test_membership_non_string_elements_stringified() -> None:
+    fit = eu.euler({"A": [1, 2], "B": [2, 3]})
+    assert fit.original_values == {"A": 1.0, "B": 1.0, "A&B": 1.0}
+
+
+def test_membership_set_and_tuple_values() -> None:
+    fit = eu.euler({"A": {"x", "y"}, "B": ("y", "z")})
+    assert fit.original_values == {"A": 1.0, "B": 1.0, "A&B": 1.0}
+
+
+def test_membership_mixed_values_raises() -> None:
+    with pytest.raises(eu.EunoiaError):
+        eu.euler({"A": ["x"], "B": 3})  # type: ignore[dict-item]
+
+
+def test_membership_str_value_not_treated_as_membership() -> None:
+    # A bare string value is ambiguous; treated as an area and rejected when it
+    # cannot be coerced to a float (ValueError, which EunoiaError subclasses).
+    with pytest.raises(ValueError):
+        eu.euler({"A": "xy"})  # type: ignore[dict-item]
+
+
+def test_membership_with_inclusive_input_raises() -> None:
+    with pytest.raises(eu.EunoiaError):
+        eu.euler({"A": ["x", "y"], "B": ["y", "z"]}, input="inclusive")

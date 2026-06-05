@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from typing import Any, Literal, overload
 
 from eunoia._eunoia import (
@@ -22,12 +22,22 @@ from eunoia._models import (
     S,
     Square,
 )
-from eunoia._parse import canonicalize, parse_dict_input, to_inclusive
+from eunoia._parse import (
+    canonicalize,
+    is_membership_input,
+    parse_dict_input,
+    parse_membership_input,
+    to_inclusive,
+)
+
+EulerInput = Mapping[str, float] | Mapping[str, Collection[str]]
+"""Either region areas (``{"A&B": 3}``) or membership lists
+(``{"A": ["x", "y"]}``)."""
 
 
 @overload
 def euler(
-    values: Mapping[str, float],
+    values: EulerInput,
     *,
     input: Literal["exclusive", "inclusive"] = ...,
     shape: Literal["circle"] = ...,
@@ -38,7 +48,7 @@ def euler(
 
 @overload
 def euler(
-    values: Mapping[str, float],
+    values: EulerInput,
     *,
     input: Literal["exclusive", "inclusive"] = ...,
     shape: Literal["ellipse"],
@@ -49,7 +59,7 @@ def euler(
 
 @overload
 def euler(
-    values: Mapping[str, float],
+    values: EulerInput,
     *,
     input: Literal["exclusive", "inclusive"] = ...,
     shape: Literal["square"],
@@ -60,7 +70,7 @@ def euler(
 
 @overload
 def euler(
-    values: Mapping[str, float],
+    values: EulerInput,
     *,
     input: Literal["exclusive", "inclusive"] = ...,
     shape: Literal["rectangle"],
@@ -70,7 +80,7 @@ def euler(
 
 
 def euler(
-    values: Mapping[str, float],
+    values: EulerInput,
     *,
     input: Literal["exclusive", "inclusive"] = "exclusive",
     shape: Literal["circle", "ellipse", "square", "rectangle"] = "circle",
@@ -82,8 +92,12 @@ def euler(
     Parameters
     ----------
     values:
-        Mapping from set-combination labels (e.g. ``"A"``, ``"A&B"``) to
-        their areas.
+        Either a mapping from set-combination labels (e.g. ``"A"``, ``"A&B"``)
+        to their areas, or a mapping from set names to membership collections
+        (``{"A": ["x", "y"], "B": ["y", "z"]}``). In the latter case each
+        element is counted into the canonical region of the sets it belongs to,
+        yielding exclusive per-region counts (so ``input`` must stay
+        ``"exclusive"``).
     input:
         ``"exclusive"`` (default): values are per-region areas, with no
         overlap from other sets included.
@@ -111,11 +125,26 @@ def euler(
             f"'rectangle', got {shape!r}"
         )
 
-    combinations = parse_dict_input(values)
-    canonical_keys = [canonicalize(k) for k in values]
-    original_values = {
-        ck: float(v) for ck, v in zip(canonical_keys, values.values(), strict=True)
-    }
+    try:
+        membership = is_membership_input(values)
+    except ValueError as exc:
+        raise EunoiaError(str(exc)) from exc
+
+    if membership:
+        if input != "exclusive":
+            raise EunoiaError(
+                "invalid_input: membership-list input is always exclusive; "
+                "do not pass input='inclusive'"
+            )
+        combinations = parse_membership_input(values)  # type: ignore[arg-type]
+        canonical_keys = [c for c, _ in combinations]  # already canonical
+        original_values = {c: v for c, v in combinations}
+    else:
+        combinations = parse_dict_input(values)  # type: ignore[arg-type]
+        canonical_keys = [canonicalize(k) for k in values]
+        original_values = {
+            ck: v for ck, (_, v) in zip(canonical_keys, combinations, strict=True)
+        }
 
     if shape == "circle":
         result = _fit_circles(combinations, input, complement, seed)
