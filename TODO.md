@@ -55,9 +55,6 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
 - [ ] Parity test against eulerr README/vignette numbers --- record specific
       `diag_error` values and assert match within 1e-6 (circles) / 1e-9
       (ellipses).
-- [ ] Pre-commit hooks: ruff is in devenv git-hooks but not enforced
-      cross-platform. Consider a `.pre-commit-config.yaml` with ruff + mypy +
-      cargo fmt for non-Nix contributors.
 - [ ] Codecov or `coverage` in CI.
 - [ ] Subclass `EunoiaError` (e.g. `UndefinedSetError`, `EmptySetsError`) *only
       when a real user reports needing to discriminate*. Adding is non-breaking;
