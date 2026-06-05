@@ -39,7 +39,7 @@
     rust = {
       enable = true;
       channel = "stable";
-      version = "1.85.0";
+      version = "1.88.0";
     };
   };
 

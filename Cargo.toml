@@ -1,8 +1,8 @@
 [package]
 name = "eunoia-py"
 version = "0.1.0"
-edition = "2021"
-rust-version = "1.85"
+edition = "2024"
+rust-version = "1.88.0"
 authors = ["Johan Larsson <johan@jolars.co>"]
 license = "MIT"
 repository = "https://github.com/jolars/eunoia-py"
@@ -15,7 +15,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.28", features = ["extension-module", "abi3-py311"] }
-eunoia = { version = "0.15", features = ["plotting"] }
+eunoia = "0.18"
 
 [profile.release]
 lto = "thin"
