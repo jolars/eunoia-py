@@ -17,6 +17,7 @@ from eunoia._models import (
     Square,
     VennFit,
 )
+from eunoia._options import get_options, options, reset_options
 from eunoia._venn import venn
 
 __version__ = "0.1.0"
@@ -33,5 +34,8 @@ __all__ = [
     "VennFit",
     "__version__",
     "euler",
+    "get_options",
+    "options",
+    "reset_options",
     "venn",
 ]

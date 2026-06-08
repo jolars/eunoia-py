@@ -28,8 +28,13 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
       `VennDiagram`). Done: `venn()` takes int / list-of-names / mapping,
       returns `VennFit`. Ellipse 1--5, square/rectangle 1--3; **circle Venn
       unsupported in core 0.15** (re-enable after the 0.18 bump).
-- [ ] **`eunoia.options(...)`** --- global plotting defaults (eulerr's
-      `eulerr_options` analogue).
+- [x] **`eunoia.options(...)`** --- global plotting defaults (eulerr's
+      `eulerr_options` analogue). Done: single callable that reads (no args) /
+      sets (category kwargs) and doubles as a context manager for scoped
+      overrides; `reset_options()` restores defaults. Categories mirror
+      `_plot.render`'s kwargs dicts (`fills`/`edges`/`labels`/`quantities`/
+      `legend`/`complement` + `palette`). State in a `ContextVar`. See
+      `_options.py`.
 - [x] **More shapes**: `shape="square"`, `shape="rectangle"`. Done.
 - [x] **`complement=`kwarg** --- universe area outside all sets. Done for both
       `euler()` and `venn()`; container surfaces as `EulerFit.container` and is

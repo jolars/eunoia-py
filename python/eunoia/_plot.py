@@ -11,6 +11,8 @@ from matplotlib.patches import Patch, PathPatch
 from matplotlib.patches import Rectangle as MplRectangle
 from matplotlib.path import Path
 
+from eunoia._options import get_options
+
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
@@ -35,18 +37,17 @@ def render(
     if ax is None:
         _, ax = plt.subplots()
 
+    # Global defaults (eunoia.options). Each call's explicit kwargs win over
+    # these, which in turn win over matplotlib's own defaults.
+    opts = get_options()
+
     # Universe container box (drawn first, behind everything).
     container = fit.container
     if container is not None:
         w, h = container.width, container.height
         x0 = container.center.x - w / 2.0
         y0 = container.center.y - h / 2.0
-        container_kwargs: dict[str, Any] = {
-            "facecolor": "#f0f0f0",
-            "edgecolor": "0.4",
-            "linewidth": 1.0,
-            "zorder": 0,
-        }
+        container_kwargs: dict[str, Any] = {"zorder": 0, **opts["complement"]}
         if complement:
             container_kwargs.update(complement)
         ax.add_patch(MplRectangle((x0, y0), w, h, **container_kwargs))
@@ -66,7 +67,7 @@ def render(
     )
 
     set_names = [shape.set for shape in fit.shapes]
-    set_colors = _resolve_set_colors(set_names, colors)
+    set_colors = _resolve_set_colors(set_names, colors, opts["palette"])
     set_edges = _resolve_set_edges(set_names, edges)
 
     # In-diagram set labels default off when a legend is shown (the legend
@@ -90,7 +91,7 @@ def render(
         fill_kwargs: dict[str, Any] = {
             "facecolor": region_color,
             "edgecolor": "none",
-            "alpha": 0.5,
+            **opts["fills"],
         }
         if fills and combo in fills:
             fill_kwargs.update(fills[combo])
@@ -101,15 +102,14 @@ def render(
             if path is not None:
                 ax.add_patch(PathPatch(path, **fill_kwargs))
 
-    # Set boundaries
-    edge_defaults: dict[str, Any] = {
-        "facecolor": "none",
-        "linewidth": 1.0,
-    }
+    # Set boundaries. Computed set color is the base edge color; a global
+    # ``edges`` option (and then a per-call override) layers on top, so an
+    # explicit ``edgecolor`` in either replaces the computed one.
     for name, outline in shape_outlines.items():
         if len(outline) < 3:
             continue
-        ek: dict[str, Any] = {**edge_defaults, "edgecolor": set_colors[name]}
+        ek: dict[str, Any] = {"facecolor": "none", "edgecolor": set_colors[name]}
+        ek.update(opts["edges"])
         ek.update(set_edges.get(name, {}))
         path = _make_compound_path(outline, [])
         if path is not None:
@@ -154,7 +154,7 @@ def render(
             text_kwargs: dict[str, Any] = {
                 "ha": "center",
                 "va": va,
-                "fontsize": 11,
+                **opts["labels"],
             }
             text_kwargs.update(style)
             ax.text(x, y, text, **text_kwargs)
@@ -165,29 +165,29 @@ def render(
             if combo not in values:
                 continue
             va = "top" if (x, y) in label_points else "center"
-            ax.text(
-                x,
-                y,
-                f"{values[combo]:.3g}",
-                ha="center",
-                va=va,
-                fontsize=9,
-                color="dimgray",
-            )
+            quantity_kwargs: dict[str, Any] = {
+                "ha": "center",
+                "va": va,
+                **opts["quantities"],
+            }
+            ax.text(x, y, f"{values[combo]:.3g}", **quantity_kwargs)
 
     # Legend: color-keyed swatches matching the region fills (same color and
     # alpha), one per set in shape order.
     if legend:
+        swatch_alpha = opts["fills"].get("alpha", 0.5)
         handles = [
             Patch(
                 facecolor=set_colors[name],
                 edgecolor=set_colors[name],
-                alpha=0.5,
+                alpha=swatch_alpha,
                 label=name,
             )
             for name in set_names
         ]
-        legend_kwargs: dict[str, Any] = dict(legend) if isinstance(legend, dict) else {}
+        legend_kwargs: dict[str, Any] = {**opts["legend"]}
+        if isinstance(legend, dict):
+            legend_kwargs.update(legend)
         ax.legend(handles=handles, **legend_kwargs)
 
     ax.relim()
@@ -221,10 +221,20 @@ def _make_compound_path(
 def _resolve_set_colors(
     set_names: list[str],
     colors: Sequence[Any] | dict[str, Any] | None,
+    palette: Any,
 ) -> dict[str, RGBA]:
     if colors is None:
-        cmap = plt.get_cmap("tab10")
-        return {name: cmap(i % 10) for i, name in enumerate(set_names)}
+        # ``palette`` (eunoia.options) is either a colormap name or a sequence
+        # of colors to cycle through, in shape order.
+        if isinstance(palette, str):
+            cmap = plt.get_cmap(palette)
+            return {name: cmap(i % cmap.N) for i, name in enumerate(set_names)}
+        seq = list(palette)
+        if not seq:
+            raise ValueError("palette sequence is empty")
+        return {
+            name: mcolors.to_rgba(seq[i % len(seq)]) for i, name in enumerate(set_names)
+        }
     if isinstance(colors, dict):
         return {name: mcolors.to_rgba(colors[name]) for name in set_names}
     if isinstance(colors, str):

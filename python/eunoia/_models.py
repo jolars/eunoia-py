@@ -166,7 +166,8 @@ class EulerFit(Generic[S]):
         colors:
             Per-set colors. Either a sequence of colors (one per set, in
             shape order) or a dict mapping set name to color. ``None`` uses
-            matplotlib's ``tab10`` palette.
+            the ``palette`` global option (matplotlib's ``tab10`` by default;
+            see :func:`eunoia.options`).
         fills:
             Per-region fill style overrides. Maps canonical region key to a
             dict of ``PathPatch`` keyword arguments.

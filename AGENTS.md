@@ -44,6 +44,7 @@ python/eunoia/_models.py         dataclasses: Point, Circle, Ellipse, EulerFit[S
 python/eunoia/_fit.py            public euler() with @overload on shape kwarg
 python/eunoia/_parse.py          dict → list[(combo, area)], canonicalize, to_inclusive
 python/eunoia/_plot.py           matplotlib renderer (PathPatch + compound Path)
+python/eunoia/_options.py        global plotting defaults: options() / get_options() / reset_options()
 python/eunoia/_eunoia.pyi        hand-written stubs for the compiled module
 python/eunoia/py.typed           PEP 561 marker
 docs/conf.py                     Sphinx + MyST + furo (mirrored from sortedl1)
@@ -93,6 +94,15 @@ tests/test_*.py                  fit / plot / repr / smoke tests
   strict flags cross-module access to single-underscore names as
   `reportPrivateUsage`. If you want it actually private, switch to a
   module-level `WeakValueDictionary` keyed by `id(fit)`.
+- **Global plotting options** (`eunoia.options`, the `eulerr_options` analogue):
+  one callable that reads (no args → snapshot) or sets (category kwargs → merge,
+  returns a context manager that restores prior state on exit); `reset_options()`
+  reverts to built-ins. Categories mirror `_plot.render`'s kwargs dicts —
+  `fills`/`edges`/`labels`/`quantities`/`legend`/`complement` (each a dict,
+  merged key-by-key) and `palette` (a cmap name or color sequence, replaced
+  wholesale). `_DEFAULTS` in `_options.py` is the fallback layer; `render`
+  reads `get_options()` and layers per-call kwargs on top (explicit kwarg >
+  option > built-in). State is a `ContextVar`, so scoping is thread/async-safe.
 - **abi3-py311** → one wheel per platform covers Python 3.11--3.14. Don't add
   per-Python-version wheel rows to `publish.yml`.
 - **Single `EunoiaError(ValueError)`** for all `DiagramError` variants. The Rust

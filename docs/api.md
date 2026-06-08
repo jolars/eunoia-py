@@ -11,6 +11,10 @@
    :toctree: generated/
 
    euler
+   venn
+   options
+   get_options
+   reset_options
 ```
 
 ## Result and shape classes
