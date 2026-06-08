@@ -60,6 +60,42 @@ def test_plot_with_quantities(simple_fit: eu.EulerFit[eu.Circle]) -> None:
     plt.close(ax.figure)
 
 
+def test_plot_legend_lists_sets(simple_fit: eu.EulerFit[eu.Circle]) -> None:
+    ax = simple_fit.plot(legend=True)
+    legend = ax.get_legend()
+    assert legend is not None
+    entries = [t.get_text() for t in legend.get_texts()]
+    assert entries == ["A", "B"]
+    plt.close(ax.figure)
+
+
+def test_plot_legend_hides_inline_labels(simple_fit: eu.EulerFit[eu.Circle]) -> None:
+    # With a legend, in-diagram set labels default off.
+    ax = simple_fit.plot(legend=True)
+    text_strings = [t.get_text() for t in ax.texts]
+    assert "A" not in text_strings
+    assert "B" not in text_strings
+    plt.close(ax.figure)
+
+
+def test_plot_legend_with_labels_shows_both(
+    simple_fit: eu.EulerFit[eu.Circle],
+) -> None:
+    ax = simple_fit.plot(legend=True, labels=True)
+    assert ax.get_legend() is not None
+    text_strings = [t.get_text() for t in ax.texts]
+    assert any(t in text_strings for t in ("A", "B"))
+    plt.close(ax.figure)
+
+
+def test_plot_legend_forwards_kwargs(simple_fit: eu.EulerFit[eu.Circle]) -> None:
+    ax = simple_fit.plot(legend={"loc": "upper right", "title": "Sets"})
+    legend = ax.get_legend()
+    assert legend is not None
+    assert legend.get_title().get_text() == "Sets"
+    plt.close(ax.figure)
+
+
 def test_plot_ellipses() -> None:
     fit = eu.euler({"A": 10, "B": 5, "A&B": 3}, shape="ellipse")
     ax = fit.plot()

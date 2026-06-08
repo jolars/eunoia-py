@@ -81,10 +81,9 @@ def venn(
           set names are extracted; values are ignored, since a Venn layout is
           non-proportional).
     shape:
-        ``"ellipse"`` (default), ``"square"`` or ``"rectangle"``. Ellipses
-        support 1--5 sets; squares and rectangles 1--3. ``"circle"`` is
-        accepted but the pinned eunoia core (0.15) has no canonical circular
-        Venn layout, so it raises :class:`EunoiaError` for now; use ellipses.
+        ``"ellipse"`` (default), ``"circle"``, ``"square"`` or
+        ``"rectangle"``. Ellipses support 1--5 sets; circles, squares and
+        rectangles 1--3. An unsupported set count raises :class:`EunoiaError`.
     complement:
         Optional universe area outside every set. For a Venn diagram this only
         adds a visual container box (the padded bounding box); it does not

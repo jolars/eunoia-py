@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
-from matplotlib.patches import PathPatch
+from matplotlib.patches import Patch, PathPatch
 from matplotlib.patches import Rectangle as MplRectangle
 from matplotlib.path import Path
 
@@ -26,13 +26,19 @@ def render(
     colors: Sequence[Any] | dict[str, Any] | None = None,
     fills: dict[str, dict[str, Any]] | None = None,
     edges: dict[str, Any] | Sequence[dict[str, Any]] | None = None,
-    labels: bool = True,
+    labels: bool | None = None,
     quantities: bool | Literal["original", "fitted"] = False,
+    legend: bool | dict[str, Any] = False,
     complement: dict[str, Any] | None = None,
 ) -> Axes:
     """Draw an EulerFit. See ``EulerFit.plot`` for parameter docs."""
     if ax is None:
         _, ax = plt.subplots()
+
+    # In-diagram set labels default off when a legend is shown (the legend
+    # carries the names instead); an explicit ``labels=`` always wins.
+    if labels is None:
+        labels = not bool(legend)
 
     # Universe container box (drawn first, behind everything).
     container = fit.container
@@ -148,6 +154,21 @@ def render(
                 fontsize=9,
                 color="dimgray",
             )
+
+    # Legend: color-keyed swatches matching the region fills (same color and
+    # alpha), one per set in shape order.
+    if legend:
+        handles = [
+            Patch(
+                facecolor=set_colors[name],
+                edgecolor=set_colors[name],
+                alpha=0.5,
+                label=name,
+            )
+            for name in set_names
+        ]
+        legend_kwargs: dict[str, Any] = dict(legend) if isinstance(legend, dict) else {}
+        ax.legend(handles=handles, **legend_kwargs)
 
     ax.relim()
     ax.autoscale_view()

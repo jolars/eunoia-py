@@ -43,8 +43,8 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
       `n_restarts=`, `max_iterations=`.
 - [ ] **`labels=dict`for plot** --- per-set custom label text/style (math text
       via mathtext, since that's why we picked matplotlib).
-- [ ] **`legend=True`for plot** --- eulerr has it; deferred because Euler
-      diagrams self-label via region anchors.
+- [x] **`legend=True`for plot** --- color-keyed swatches via `ax.legend`;
+      accepts `bool | dict` and defaults inline `labels` off when shown.
 - [ ] **`quantities` display types** --- widen the kwarg to mirror eulerr's
       `quantities = list(type = ...)`: support `"percent"` (share of total) and
       a count+percent combination in addition to the current raw value, plus

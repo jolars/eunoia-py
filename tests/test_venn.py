@@ -73,10 +73,15 @@ def test_venn_unsupported_counts_raise() -> None:
         eu.venn(4, shape="square")
 
 
-def test_venn_circle_unsupported_in_pinned_core() -> None:
-    # eunoia 0.15 has no canonical circular Venn layout.
+def test_venn_circle_supported_up_to_three() -> None:
+    # eunoia 0.18 added a canonical circular Venn layout for 1--3 sets.
+    for n in (1, 2, 3):
+        fit = eu.venn(n, shape="circle")
+        assert all(isinstance(s, eu.Circle) for s in fit.shapes)
+        assert len(fit.shapes) == n
+    # Four or more circles has no canonical layout.
     with pytest.raises(eu.EunoiaError):
-        eu.venn(3, shape="circle")
+        eu.venn(4, shape="circle")
 
 
 def test_venn_invalid_shape_raises() -> None:

@@ -286,6 +286,20 @@ fit = eu.euler(
 fit.plot(colors={"A": "#e41a1c", "B": "#377eb8", "C": "#4daf4a"});
 ```
 
+### A legend instead of inline labels
+
+When sets are small or crowded their inline labels can overlap. Passing
+`legend=True` moves the set names into a color-keyed legend and turns the inline
+labels off by default (pass `labels=True` to keep both). A dict is forwarded to
+matplotlib's `Axes.legend`, so you can control placement and title.
+
+```{code-cell}
+fit = eu.euler(
+    {"A": 10, "B": 7, "C": 8, "A&B": 3, "A&C": 4, "B&C": 2, "A&B&C": 1}
+)
+fit.plot(legend={"loc": "upper right", "title": "Sets"});
+```
+
 ### Original versus fitted quantities
 
 Drawing into axes we create ourselves lets us place two diagrams side by side to

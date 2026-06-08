@@ -74,9 +74,10 @@ tests/test_*.py                  fit / plot / repr / smoke tests
   Rejected by the core for multi-cluster specs (surfaces as `EunoiaError`).
 - **`venn()`** returns a `VennFit(EulerFit)` (custom repr; topological, so
   `original_values` is empty and `fitted_values` holds geometric region areas).
-  Accepts `int` / list-of-names / mapping. **Circle Venn is unsupported in core
-  0.15** (no `canonical_venn_layout` impl — trait default returns `None`); only
-  ellipse (1–5) and square/rectangle (1–3). Re-enable circle after the 0.18 bump.
+  Accepts `int` / list-of-names / mapping. Supported set counts: ellipse
+  (1–5), circle/square/rectangle (1–3). Circle Venn gained a
+  `canonical_venn_layout` impl in core 0.18; an unsupported count surfaces as
+  `EunoiaError`.
 - **Inclusion-exclusion is handled by the core**, not Python. We pass
   `InputType::Inclusive` to `DiagramSpecBuilder::input_type()` when
   `input="inclusive"`. `_parse.to_inclusive` is only used to express *fitted* values
@@ -120,12 +121,10 @@ tests/test_*.py                  fit / plot / repr / smoke tests
 
 ## Eunoia core API we bind against
 
-(We pin `eunoia = "0.15"` in `Cargo.toml`; the binding is verified against the
-published 0.15.0 crate. The local checkout at `/home/jola/projects/eunoia` has
-since moved ahead (0.18.0), so re-verify the API surface below before bumping the
-pin. Note: the published crate is a single crate — its sources live under `src/…`,
-not the workspace `crates/eunoia/src/…` paths cited below, which point at the
-local checkout.)
+(We pin `eunoia = "0.18"` in `Cargo.toml`; the binding is verified against the
+published 0.18.0 crate. Note: the published crate is a single crate — its
+sources live under `src/…`, not the workspace `crates/eunoia/src/…` paths cited
+below, which point at the local checkout at `/home/jola/projects/eunoia`.)
 
 - `DiagramSpecBuilder::new().set(name, val).intersection(&[names], val).input_type(InputType::{Exclusive,Inclusive}).build()`
   (`crates/eunoia/src/spec/spec_builder.rs`)

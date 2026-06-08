@@ -151,8 +151,9 @@ class EulerFit(Generic[S]):
         colors: Sequence[Any] | dict[str, Any] | None = None,
         fills: dict[str, dict[str, Any]] | None = None,
         edges: dict[str, Any] | Sequence[dict[str, Any]] | None = None,
-        labels: bool = True,
+        labels: bool | None = None,
         quantities: bool | Literal["original", "fitted"] = False,
+        legend: bool | dict[str, Any] = False,
         complement: dict[str, Any] | None = None,
     ) -> Axes:
         """Render the fitted diagram with matplotlib.
@@ -177,11 +178,20 @@ class EulerFit(Generic[S]):
             defaults); a sequence of kwargs dicts assigns one style per set in
             shape order.
         labels:
-            Whether to draw set name labels at each set's anchor.
+            Whether to draw set name labels at each set's anchor. Defaults to
+            ``not legend``: in-diagram labels are shown when there is no legend
+            and hidden when a legend is drawn. Pass ``True`` or ``False``
+            explicitly to override (e.g. ``legend=True, labels=True`` shows
+            both).
         quantities:
             Show fitted/original values per region. ``True`` and
             ``"original"`` show the input values; ``"fitted"`` shows the
             fitted values. ``False`` (default) shows nothing.
+        legend:
+            Draw a legend mapping each set to a color swatch, useful when
+            in-diagram labels overlap. ``True`` uses matplotlib defaults; a
+            dict is forwarded to ``ax.legend()`` (e.g. ``loc``, ``title``,
+            ``ncol``, ``bbox_to_anchor``). When set, ``labels`` defaults off.
         complement:
             Style overrides (``Rectangle`` patch kwargs) for the universe
             container box, drawn only when the fit has a ``container``.
@@ -202,6 +212,7 @@ class EulerFit(Generic[S]):
             edges=edges,
             labels=labels,
             quantities=quantities,
+            legend=legend,
             complement=complement,
         )
 
