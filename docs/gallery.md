@@ -7,11 +7,11 @@ kernelspec:
 # A gallery of Euler and Venn diagrams
 
 This page is a gallery of Euler and Venn diagrams and a showcase of the
-customization options available through {meth}`~eunoia.EulerFit.plot`. It is
-the Python counterpart to the
-[eulerr gallery](https://jolars.github.io/eulerr/articles/gallery.html).
+customization options available through {meth}`~eunoia.EulerFit.plot`. It is the
+Python counterpart to the [eulerr
+gallery](https://jolars.github.io/eulerr/articles/gallery.html).
 
-```{code-cell} ipython3
+```{code-cell}
 import matplotlib.pyplot as plt
 
 import eunoia as eu
@@ -23,7 +23,7 @@ import eunoia as eu
 
 Here we use squares instead of the default circles.
 
-```{code-cell} ipython3
+```{code-cell}
 fit = eu.euler(
     {
         "A": 10,
@@ -41,17 +41,17 @@ fit.plot();
 
 ### Disjoint sets
 
-Rename the sets simply by choosing the dictionary keys. A single `edges`
-style is applied to every outline.
+Rename the sets simply by choosing the dictionary keys. A single `edges` style
+is applied to every outline.
 
-```{code-cell} ipython3
+```{code-cell}
 fit = eu.euler({"Tom": 1, "Greg": 1, "Alberta": 1})
 fit.plot(edges={"linestyle": "--"});
 ```
 
 ### A set contained in the intersection of two sets
 
-```{code-cell} ipython3
+```{code-cell}
 fit = eu.euler(
     {
         "A": 15,
@@ -73,7 +73,7 @@ fit.plot(
 
 Here we override individual region fills with per-region `fills` styles.
 
-```{code-cell} ipython3
+```{code-cell}
 fit = eu.euler(
     {
         "A": 15,
@@ -99,7 +99,7 @@ fit.plot(
 This relationship cannot be drawn exactly with circles but works well with
 ellipses.
 
-```{code-cell} ipython3
+```{code-cell}
 fit = eu.euler(
     {"A": 7, "B": 6, "C": 0, "A&B": 0, "A&C": 1, "B&C": 1, "A&B&C": 2},
     shape="ellipse",
@@ -111,7 +111,7 @@ fit.plot(quantities=True);
 
 Sets intersecting inside other sets.
 
-```{code-cell} ipython3
+```{code-cell}
 fit = eu.euler(
     {
         "A": 15,
@@ -131,7 +131,7 @@ fit.plot();
 This set relationship is taken from Wilkinson et al. It works best with
 ellipses. We show the *fitted* values rather than the requested ones.
 
-```{code-cell} ipython3
+```{code-cell}
 fit = eu.euler(
     {
         "A": 4,
@@ -158,7 +158,7 @@ fit.plot(quantities="fitted", edges={"linestyle": ":"});
 
 ### Gene set
 
-```{code-cell} ipython3
+```{code-cell}
 fit = eu.euler(
     {
         "SE": 13,
@@ -176,7 +176,7 @@ fit.plot(quantities=True);
 
 ### Three sets intersecting inside a fourth
 
-```{code-cell} ipython3
+```{code-cell}
 fit = eu.euler(
     {
         "A": 30,
@@ -196,7 +196,7 @@ fit.plot();
 
 A combination taken from the eulerAPE article, fit with ellipses.
 
-```{code-cell} ipython3
+```{code-cell}
 fit = eu.euler(
     {
         "a": 3491,
@@ -216,7 +216,7 @@ fit.plot();
 
 This time we fit the diagram using rectangles.
 
-```{code-cell} ipython3
+```{code-cell}
 fit = eu.euler(
     {
         "Frodo": 10,
@@ -242,7 +242,7 @@ fit.plot();
 
 ### Two circles intersecting completely
 
-```{code-cell} ipython3
+```{code-cell}
 fit = eu.euler({"A": 0, "B": 0, "A&B": 10})
 fit.plot();
 ```
@@ -255,17 +255,17 @@ Pass `complement=` to {func}`~eunoia.euler` to reserve area outside every set;
 it comes back as a container that {meth}`~eunoia.EulerFit.plot` draws behind
 everything. The `complement=` plot keyword styles that box.
 
-```{code-cell} ipython3
+```{code-cell}
 fit = eu.euler({"A": 10, "B": 8, "A&B": 4}, complement=20)
 fit.plot(complement={"facecolor": "#eeeeee"}, quantities=True);
 ```
 
 ### Colors as a sequence or a mapping
 
-`colors` accepts either a sequence (one per set, in fit order) or a mapping
-from set name to color.
+`colors` accepts either a sequence (one per set, in fit order) or a mapping from
+set name to color.
 
-```{code-cell} ipython3
+```{code-cell}
 fit = eu.euler(
     {"A": 10, "B": 7, "C": 8, "A&B": 3, "A&C": 4, "B&C": 2, "A&B&C": 1}
 )
@@ -274,10 +274,10 @@ fit.plot(colors={"A": "#e41a1c", "B": "#377eb8", "C": "#4daf4a"});
 
 ### Original versus fitted quantities
 
-Drawing into axes we create ourselves lets us place two diagrams side by side
-to compare the requested values against what the layout achieved.
+Drawing into axes we create ourselves lets us place two diagrams side by side to
+compare the requested values against what the layout achieved.
 
-```{code-cell} ipython3
+```{code-cell}
 fit = eu.euler(
     {"A": 7, "B": 6, "A&C": 1, "B&C": 1, "A&B&C": 2, "C": 0},
     shape="ellipse",
@@ -297,15 +297,11 @@ fig;
 accepts an integer count, a list of names, or a mapping. The default shape is
 the ellipse, which supports one through five sets.
 
-```{note}
-Circle Venn diagrams are unsupported in the pinned eunoia core and raise an
-{class}`~eunoia.EunoiaError`. Use ellipses (1–5 sets) or squares/rectangles
-(1–3 sets).
-```
+``{note} Circle Venn diagrams are unsupported in the pinned eunoia core and raise an {class}`~eunoia.EunoiaError`. Use ellipses (1–5 sets) or squares/rectangles (1–3 sets).``
 
 ### Two and three sets
 
-```{code-cell} ipython3
+```{code-cell}
 fig, (left, right) = plt.subplots(1, 2, figsize=(9, 4))
 eu.venn(2).plot(ax=left)
 eu.venn(["A", "B", "C"]).plot(ax=right)
@@ -314,7 +310,7 @@ fig;
 
 ### Four and five sets
 
-```{code-cell} ipython3
+```{code-cell}
 fig, (left, right) = plt.subplots(1, 2, figsize=(9, 4))
 eu.venn(4).plot(ax=left)
 eu.venn(5).plot(ax=right)
@@ -325,7 +321,7 @@ fig;
 
 Square and rectangle Venn diagrams support up to three sets.
 
-```{code-cell} ipython3
+```{code-cell}
 fig, (left, right) = plt.subplots(1, 2, figsize=(9, 4))
 eu.venn(3, shape="square").plot(ax=left)
 eu.venn(3, shape="rectangle").plot(ax=right)
@@ -334,9 +330,9 @@ fig;
 
 ### From membership lists
 
-`venn` accepts the same membership-list input as `euler`; it only needs the
-set names.
+`venn` accepts the same membership-list input as `euler`; it only needs the set
+names.
 
-```{code-cell} ipython3
+```{code-cell}
 eu.venn({"A": ["x", "y", "z"], "B": ["y", "z", "w"], "C": ["z", "w", "q"]}).plot();
 ```
