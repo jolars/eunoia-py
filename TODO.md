@@ -51,10 +51,10 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
       text styling (`color` / `fontsize` / `fontstyle`). Natural shape is
       `quantities: bool | str | dict`. Used in several eulerr gallery plots
       (one_contained, wilkinson, gene_set).
-- [ ] **Per-set edge styling** --- `edges` currently applies one dict uniformly
-      to every outline (`_plot.py`); eulerr allows per-set vectors
-      (`edges = list(lty = 1:3)`). Let `edges` also accept a per-set dict (keyed
-      by set name) or sequence, mirroring how `colors=` already works.
+- [x] **Per-set edge styling** --- `edges` now also accepts a per-set dict
+      (keyed by set name, values are `PathPatch` kwargs dicts) or a sequence of
+      kwargs dicts (one per set, in shape order), in addition to the flat dict
+      applied uniformly. See `_resolve_set_edges` in `_plot.py`.
 
 ## Quality / nice-to-haves
 

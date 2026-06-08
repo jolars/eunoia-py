@@ -25,7 +25,7 @@ def render(
     ax: Axes | None = None,
     colors: Sequence[Any] | dict[str, Any] | None = None,
     fills: dict[str, dict[str, Any]] | None = None,
-    edges: dict[str, Any] | None = None,
+    edges: dict[str, Any] | Sequence[dict[str, Any]] | None = None,
     labels: bool = True,
     quantities: bool | Literal["original", "fitted"] = False,
     complement: dict[str, Any] | None = None,
@@ -66,6 +66,7 @@ def render(
 
     set_names = [shape.set for shape in fit.shapes]
     set_colors = _resolve_set_colors(set_names, colors)
+    set_edges = _resolve_set_edges(set_names, edges)
 
     # Region fills
     for combo, pieces in region_pieces.items():
@@ -93,12 +94,11 @@ def render(
         "facecolor": "none",
         "linewidth": 1.0,
     }
-    user_edges = dict(edges) if edges else {}
     for name, outline in shape_outlines.items():
         if len(outline) < 3:
             continue
         ek: dict[str, Any] = {**edge_defaults, "edgecolor": set_colors[name]}
-        ek.update(user_edges)
+        ek.update(set_edges.get(name, {}))
         path = _make_compound_path(outline, [])
         if path is not None:
             ax.add_patch(PathPatch(path, **ek))
@@ -195,6 +195,46 @@ def _resolve_set_colors(
             f"{len(set_names)} sets"
         )
     return {name: mcolors.to_rgba(seq[i]) for i, name in enumerate(set_names)}
+
+
+def _resolve_set_edges(
+    set_names: list[str],
+    edges: dict[str, Any] | Sequence[dict[str, Any]] | None,
+) -> dict[str, dict[str, Any]]:
+    """Normalize ``edges`` to a per-set mapping of ``PathPatch`` kwargs.
+
+    ``edges`` may be:
+
+    * ``None`` — no overrides (every set gets ``{}``).
+    * a flat dict of ``PathPatch`` kwargs — applied uniformly to every set.
+    * a per-set dict keyed by set name, whose values are kwargs dicts — each
+      set styled independently; sets absent from the dict get ``{}``.
+    * a sequence of kwargs dicts — one per set, in shape order.
+
+    A dict is read as per-set when *all* its values are themselves dicts;
+    otherwise it is a single uniform style (no ``PathPatch`` kwarg takes a
+    dict, so the two cases never collide).
+    """
+    if edges is None:
+        return {name: {} for name in set_names}
+    if isinstance(edges, dict):
+        if edges and all(isinstance(v, dict) for v in edges.values()):
+            unknown = [k for k in edges if k not in set_names]
+            if unknown:
+                raise ValueError(
+                    f"edges has entries for unknown sets {unknown}; "
+                    f"known sets are {set_names}"
+                )
+            return {name: dict(edges.get(name, {})) for name in set_names}
+        return {name: dict(edges) for name in set_names}
+    if isinstance(edges, str):
+        raise TypeError("edges must be a dict or a sequence of dicts, not a string")
+    seq = list(edges)
+    if len(seq) < len(set_names):
+        raise ValueError(
+            f"edges sequence has {len(seq)} entries but there are {len(set_names)} sets"
+        )
+    return {name: dict(seq[i]) for i, name in enumerate(set_names)}
 
 
 def _blend_region_color(

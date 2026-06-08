@@ -41,12 +41,26 @@ fit.plot();
 
 ### Disjoint sets
 
-Rename the sets simply by choosing the dictionary keys. A single `edges` style
-is applied to every outline.
+Rename the sets simply by choosing the dictionary keys. A flat `edges` dict is
+applied to every outline.
 
 ```{code-cell}
 fit = eu.euler({"Tom": 1, "Greg": 1, "Alberta": 1})
 fit.plot(edges={"linestyle": "--"});
+```
+
+To style each outline independently, pass `edges` as a dict keyed by set name
+(each value a dict of `PathPatch` kwargs) or as a sequence of such dicts, one
+per set in shape order — mirroring how `colors` accepts a per-set dict.
+
+```{code-cell}
+fit = eu.euler({"Tom": 1, "Greg": 1, "Alberta": 1})
+fit.plot(
+    edges={
+        "Tom": {"linestyle": "--", "linewidth": 2},
+        "Greg": {"linestyle": ":"},
+    },
+);
 ```
 
 ### A set contained in the intersection of two sets

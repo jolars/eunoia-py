@@ -102,6 +102,55 @@ def test_plot_custom_colors_dict(simple_fit: eu.EulerFit[eu.Circle]) -> None:
     plt.close(ax.figure)
 
 
+def _outline_patches(ax: Axes) -> list[PathPatch]:
+    # Set outlines are the PathPatches with no fill (facecolor alpha 0).
+    return [
+        p
+        for p in ax.patches
+        if isinstance(p, PathPatch) and p.get_facecolor()[3] == 0.0
+    ]
+
+
+def test_plot_uniform_edges(simple_fit: eu.EulerFit[eu.Circle]) -> None:
+    ax = simple_fit.plot(edges={"linewidth": 3.0})
+    outlines = _outline_patches(ax)
+    assert outlines
+    assert all(p.get_linewidth() == 3.0 for p in outlines)
+    plt.close(ax.figure)
+
+
+def test_plot_per_set_edges_dict(simple_fit: eu.EulerFit[eu.Circle]) -> None:
+    ax = simple_fit.plot(edges={"A": {"linewidth": 4.0}, "B": {"linewidth": 2.0}})
+    by_lw = sorted(p.get_linewidth() for p in _outline_patches(ax))
+    assert by_lw == [2.0, 4.0]
+    plt.close(ax.figure)
+
+
+def test_plot_per_set_edges_partial(simple_fit: eu.EulerFit[eu.Circle]) -> None:
+    # Only A is styled; B keeps the default linewidth (1.0).
+    ax = simple_fit.plot(edges={"A": {"linewidth": 5.0}})
+    by_lw = sorted(p.get_linewidth() for p in _outline_patches(ax))
+    assert by_lw == [1.0, 5.0]
+    plt.close(ax.figure)
+
+
+def test_plot_per_set_edges_sequence(simple_fit: eu.EulerFit[eu.Circle]) -> None:
+    ax = simple_fit.plot(edges=[{"linewidth": 6.0}, {"linewidth": 3.0}])
+    by_lw = sorted(p.get_linewidth() for p in _outline_patches(ax))
+    assert by_lw == [3.0, 6.0]
+    plt.close(ax.figure)
+
+
+def test_plot_per_set_edges_unknown_set(simple_fit: eu.EulerFit[eu.Circle]) -> None:
+    with pytest.raises(ValueError, match="unknown sets"):
+        simple_fit.plot(edges={"Z": {"linewidth": 2.0}})
+
+
+def test_plot_edges_sequence_too_short(simple_fit: eu.EulerFit[eu.Circle]) -> None:
+    with pytest.raises(ValueError, match="2 sets"):
+        simple_fit.plot(edges=[{"linewidth": 2.0}])
+
+
 def test_plot_saves_to_png(simple_fit: eu.EulerFit[eu.Circle], tmp_path) -> None:  # type: ignore[no-untyped-def]
     ax = simple_fit.plot()
     out = tmp_path / "euler.png"

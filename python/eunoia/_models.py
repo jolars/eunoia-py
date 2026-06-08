@@ -150,7 +150,7 @@ class EulerFit(Generic[S]):
         ax: Axes | None = None,
         colors: Sequence[Any] | dict[str, Any] | None = None,
         fills: dict[str, dict[str, Any]] | None = None,
-        edges: dict[str, Any] | None = None,
+        edges: dict[str, Any] | Sequence[dict[str, Any]] | None = None,
         labels: bool = True,
         quantities: bool | Literal["original", "fitted"] = False,
         complement: dict[str, Any] | None = None,
@@ -170,8 +170,12 @@ class EulerFit(Generic[S]):
             Per-region fill style overrides. Maps canonical region key to a
             dict of ``PathPatch`` keyword arguments.
         edges:
-            Edge (set boundary) style overrides — a dict of ``PathPatch``
-            keyword arguments applied to every set outline.
+            Edge (set boundary) style overrides, as ``PathPatch`` keyword
+            arguments. A flat dict is applied uniformly to every set outline;
+            a dict keyed by set name (with kwargs dicts as values) styles each
+            set independently (sets absent from the dict are left at their
+            defaults); a sequence of kwargs dicts assigns one style per set in
+            shape order.
         labels:
             Whether to draw set name labels at each set's anchor.
         quantities:
