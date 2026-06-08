@@ -45,6 +45,16 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
       via mathtext, since that's why we picked matplotlib).
 - [ ] **`legend=True`for plot** --- eulerr has it; deferred because Euler
       diagrams self-label via region anchors.
+- [ ] **`quantities` display types** --- widen the kwarg to mirror eulerr's
+      `quantities = list(type = ...)`: support `"percent"` (share of total) and
+      a count+percent combination in addition to the current raw value, plus
+      text styling (`color` / `fontsize` / `fontstyle`). Natural shape is
+      `quantities: bool | str | dict`. Used in several eulerr gallery plots
+      (one_contained, wilkinson, gene_set).
+- [ ] **Per-set edge styling** --- `edges` currently applies one dict uniformly
+      to every outline (`_plot.py`); eulerr allows per-set vectors
+      (`edges = list(lty = 1:3)`). Let `edges` also accept a per-set dict (keyed
+      by set name) or sequence, mirroring how `colors=` already works.
 
 ## Quality / nice-to-haves
 
