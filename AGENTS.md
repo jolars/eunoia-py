@@ -11,12 +11,9 @@ the R package `eulerr`. Built with PyO3 + maturin, abi3-py311.
 
 ## Working in the repo
 
-The dev environment is a `devenv` shell. Outside of it, `cargo`, `maturin`,
-`pytest`, etc. are not on `PATH`. Run any command via:
-
-```bash
-direnv exec . <command>
-```
+The dev environment is a `devenv` shell, which puts `cargo` (Rust 1.88),
+`maturin`, `pytest`, etc. on `PATH`. Assume you are already inside it — run
+commands directly (no `direnv` / wrapper prefix needed).
 
 The devenv also auto-runs `uv sync --all-extras --all-groups`, so the venv at
 `.devenv/state/venv` already has matplotlib, numpy, mypy, pyright, maturin, and
@@ -26,13 +23,13 @@ the docs deps. Build the Rust extension into the venv with
 Common loops:
 
 ```bash
-direnv exec . maturin develop --uv          # build + install editable
-direnv exec . pytest                        # run tests (26 currently)
-direnv exec . ruff check python tests docs  # lint
-direnv exec . ruff format --check python tests docs
-direnv exec . mypy                          # strict
-direnv exec . pyright                       # strict (matplotlib leniency, see below)
-direnv exec . sphinx-build -b html docs docs/_build/html
+maturin develop --uv          # build + install editable
+pytest                        # run tests (26 currently)
+ruff check python tests docs  # lint
+ruff format --check python tests docs
+mypy                          # strict
+pyright                       # strict (matplotlib leniency, see below)
+sphinx-build -b html docs docs/_build/html
 ```
 
 Or via `Taskfile.yml` (`go-task`): `task build`, `task test`, `task lint`,
