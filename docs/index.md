@@ -7,6 +7,7 @@
 
 Home<self>
 quickstart
+gallery
 api
 ```
 
