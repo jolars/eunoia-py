@@ -6,13 +6,6 @@ kernelspec:
 
 # Quickstart
 
-```{code-cell} ipython3
-:tags: [remove-cell]
-
-import matplotlib
-matplotlib.use("Agg")
-```
-
 ## A two-set fit
 
 The simplest case: two sets with one overlap.
@@ -61,7 +54,7 @@ non-string labels all work. `venn()` accepts the same shape (it only needs the
 set names):
 
 ```{code-cell} ipython3
-eu.venn({"A": ["x", "y"], "B": ["y", "z"]});
+eu.venn({"A": ["x", "y"], "B": ["y", "z"]}).plot();
 ```
 
 ## Three sets with ellipses
