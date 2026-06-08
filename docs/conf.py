@@ -40,6 +40,8 @@ html_theme = "furo"
 html_static_path = ["_static"]
 html_css_files = ["css/custom.css"]
 html_title = f"eunoia {release}"
+html_logo = "_static/logo.svg"
+html_favicon = "_static/logo.svg"
 
 # Intersphinx
 intersphinx_mapping = {

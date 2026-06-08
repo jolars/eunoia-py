@@ -1,4 +1,4 @@
-# eunoia
+# eunoia <img src='https://raw.githubusercontent.com/jolars/eunoia-py/refs/heads/main/docs/_static/logo.png' align="right" width="139" />
 
 Python bindings for the [eunoia](https://github.com/jolars/eunoia) Rust
 library — area-proportional Euler and Venn diagrams. Sister package to the
