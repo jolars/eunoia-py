@@ -26,7 +26,7 @@ def render(
     colors: Sequence[Any] | dict[str, Any] | None = None,
     fills: dict[str, dict[str, Any]] | None = None,
     edges: dict[str, Any] | Sequence[dict[str, Any]] | None = None,
-    labels: bool | None = None,
+    labels: bool | dict[str, Any] | None = None,
     quantities: bool | Literal["original", "fitted"] = False,
     legend: bool | dict[str, Any] = False,
     complement: dict[str, Any] | None = None,
@@ -34,11 +34,6 @@ def render(
     """Draw an EulerFit. See ``EulerFit.plot`` for parameter docs."""
     if ax is None:
         _, ax = plt.subplots()
-
-    # In-diagram set labels default off when a legend is shown (the legend
-    # carries the names instead); an explicit ``labels=`` always wins.
-    if labels is None:
-        labels = not bool(legend)
 
     # Universe container box (drawn first, behind everything).
     container = fit.container
@@ -73,6 +68,17 @@ def render(
     set_names = [shape.set for shape in fit.shapes]
     set_colors = _resolve_set_colors(set_names, colors)
     set_edges = _resolve_set_edges(set_names, edges)
+
+    # In-diagram set labels default off when a legend is shown (the legend
+    # carries the names instead); an explicit ``labels=`` always wins. A dict
+    # turns labels on and carries per-set text/style overrides.
+    label_specs: dict[str, tuple[str, dict[str, Any]] | None]
+    if isinstance(labels, dict):
+        show_labels = True
+        label_specs = _resolve_set_labels(set_names, labels)
+    else:
+        show_labels = (not bool(legend)) if labels is None else bool(labels)
+        label_specs = {name: (name, {}) for name in set_names}
 
     # Region fills
     for combo, pieces in region_pieces.items():
@@ -126,7 +132,11 @@ def render(
     # same `Point` the region anchor came from, exact equality identifies the
     # collision. When both are shown we stack the pair (name above, value below)
     # instead of letting them overlap.
-    label_points = set(set_anchors.values()) if labels else set()
+    label_points = (
+        {xy for name, xy in set_anchors.items() if label_specs.get(name) is not None}
+        if show_labels
+        else set()
+    )
     quantity_points = (
         {xy for combo, xy in region_anchors.items() if combo in values}
         if quantities
@@ -134,10 +144,20 @@ def render(
     )
 
     # Set labels
-    if labels:
+    if show_labels:
         for name, (x, y) in set_anchors.items():
+            spec = label_specs.get(name)
+            if spec is None:
+                continue
+            text, style = spec
             va = "bottom" if (x, y) in quantity_points else "center"
-            ax.text(x, y, name, ha="center", va=va, fontsize=11)
+            text_kwargs: dict[str, Any] = {
+                "ha": "center",
+                "va": va,
+                "fontsize": 11,
+            }
+            text_kwargs.update(style)
+            ax.text(x, y, text, **text_kwargs)
 
     # Region quantities
     if quantities:
@@ -256,6 +276,63 @@ def _resolve_set_edges(
             f"edges sequence has {len(seq)} entries but there are {len(set_names)} sets"
         )
     return {name: dict(seq[i]) for i, name in enumerate(set_names)}
+
+
+def _resolve_set_labels(
+    set_names: list[str],
+    labels: dict[str, Any],
+) -> dict[str, tuple[str, dict[str, Any]] | None]:
+    """Normalize a ``labels`` dict to per-set label text and ``ax.text`` kwargs.
+
+    ``labels`` (when a dict) may be one of two shapes:
+
+    * a **per-set** mapping whose keys are all set names. Each value is either
+
+      - a string — replacement label text for that set (default style);
+      - a dict — ``ax.text`` keyword arguments for that set; an optional
+        ``"text"`` key overrides the label text (e.g. mathtext such as
+        ``r"$\\alpha$"``);
+      - ``None`` or ``False`` — hide that set's label.
+
+      Sets absent from the mapping keep their name and default style.
+
+    * a **uniform** style dict, when *none* of its keys is a set name. It is
+      read as a single set of ``ax.text`` kwargs applied to every label (so
+      ``{"fontsize": 14, "color": "crimson"}`` styles all labels at once).
+
+    Mixing the two (some keys set names, some not) is an error, since it almost
+    always means a mistyped set name.
+    """
+    resolved: dict[str, tuple[str, dict[str, Any]] | None] = {
+        name: (name, {}) for name in set_names
+    }
+    known = [k for k in labels if k in set_names]
+    if known and len(known) != len(labels):
+        unknown = [k for k in labels if k not in set_names]
+        raise ValueError(
+            f"labels mixes set names {known} with non-set keys {unknown}; "
+            f"pass either a per-set dict (keys = set names) or a uniform "
+            f"style dict (no key a set name). Known sets: {set_names}"
+        )
+    if not known:
+        # Uniform style applied to every label (empty dict → defaults only).
+        uniform = dict(labels)
+        return {name: (name, dict(uniform)) for name in set_names}
+    for name, spec in labels.items():
+        if spec is None or spec is False:
+            resolved[name] = None
+        elif isinstance(spec, str):
+            resolved[name] = (spec, {})
+        elif isinstance(spec, dict):
+            kwargs = dict(spec)
+            text = kwargs.pop("text", name)
+            resolved[name] = (str(text), kwargs)
+        else:
+            raise TypeError(
+                f"labels[{name!r}] must be a str, dict, None, or False, "
+                f"got {type(spec).__name__}"
+            )
+    return resolved
 
 
 def _blend_region_color(

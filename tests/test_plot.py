@@ -52,6 +52,62 @@ def test_plot_with_labels_off(simple_fit: eu.EulerFit[eu.Circle]) -> None:
     plt.close(ax.figure)
 
 
+def test_plot_labels_per_set_text(simple_fit: eu.EulerFit[eu.Circle]) -> None:
+    ax = simple_fit.plot(labels={"A": "Group A", "B": r"$\beta$"})
+    text_strings = [t.get_text() for t in ax.texts]
+    assert "Group A" in text_strings
+    assert r"$\beta$" in text_strings
+    assert "A" not in text_strings  # replaced
+    plt.close(ax.figure)
+
+
+def test_plot_labels_per_set_partial(simple_fit: eu.EulerFit[eu.Circle]) -> None:
+    # Only A is relabeled; B keeps its name.
+    ax = simple_fit.plot(labels={"A": "Group A"})
+    text_strings = [t.get_text() for t in ax.texts]
+    assert "Group A" in text_strings
+    assert "B" in text_strings
+    plt.close(ax.figure)
+
+
+def test_plot_labels_per_set_style(simple_fit: eu.EulerFit[eu.Circle]) -> None:
+    ax = simple_fit.plot(labels={"A": {"text": "alpha", "fontsize": 20}})
+    a_label = next(t for t in ax.texts if t.get_text() == "alpha")
+    assert a_label.get_fontsize() == 20
+    plt.close(ax.figure)
+
+
+def test_plot_labels_hide_one(simple_fit: eu.EulerFit[eu.Circle]) -> None:
+    ax = simple_fit.plot(labels={"A": None})
+    text_strings = [t.get_text() for t in ax.texts]
+    assert "A" not in text_strings
+    assert "B" in text_strings
+    plt.close(ax.figure)
+
+
+def test_plot_labels_uniform_style(simple_fit: eu.EulerFit[eu.Circle]) -> None:
+    ax = simple_fit.plot(labels={"fontsize": 18})
+    set_labels = [t for t in ax.texts if t.get_text() in ("A", "B")]
+    assert len(set_labels) == 2
+    assert all(t.get_fontsize() == 18 for t in set_labels)
+    plt.close(ax.figure)
+
+
+def test_plot_labels_dict_overrides_legend_default(
+    simple_fit: eu.EulerFit[eu.Circle],
+) -> None:
+    # A dict turns labels on even when a legend would otherwise hide them.
+    ax = simple_fit.plot(legend=True, labels={"A": "Group A"})
+    text_strings = [t.get_text() for t in ax.texts]
+    assert "Group A" in text_strings
+    plt.close(ax.figure)
+
+
+def test_plot_labels_mixed_keys_raises(simple_fit: eu.EulerFit[eu.Circle]) -> None:
+    with pytest.raises(ValueError, match="mixes set names"):
+        simple_fit.plot(labels={"A": "Group A", "fontsize": 14})
+
+
 def test_plot_with_quantities(simple_fit: eu.EulerFit[eu.Circle]) -> None:
     ax = simple_fit.plot(quantities=True)
     text_strings = [t.get_text() for t in ax.texts]

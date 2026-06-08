@@ -300,6 +300,25 @@ fit = eu.euler(
 fit.plot(legend={"loc": "upper right", "title": "Sets"});
 ```
 
+### Custom label text and style
+
+`labels` can be a dict for per-set control. Map a set name to a replacement
+string (matplotlib [mathtext](https://matplotlib.org/stable/users/explain/text/mathtext.html)
+works, which is part of why we picked matplotlib), to an `Axes.text` kwargs dict
+(with an optional `"text"` key for custom text), or to `None`/`False` to hide
+that set's label. A dict whose keys are *not* set names — e.g.
+`{"fontsize": 14}` — is a uniform style applied to every label instead.
+
+```{code-cell}
+fit = eu.euler({"alpha": 10, "beta": 7, "alpha&beta": 3})
+fit.plot(
+    labels={
+        "alpha": {"text": r"$\alpha$", "fontsize": 22},
+        "beta": {"text": r"$\beta$", "fontsize": 22, "color": "crimson"},
+    },
+);
+```
+
 ### Original versus fitted quantities
 
 Drawing into axes we create ourselves lets us place two diagrams side by side to

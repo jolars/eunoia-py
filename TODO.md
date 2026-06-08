@@ -41,8 +41,12 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
 - [ ] **numpy bool ndarray input** --- the matrix idiom from eulerr.
 - [ ] **Optimizer / tolerance knobs** on `euler()`: `optimizer=`, `tolerance=`,
       `n_restarts=`, `max_iterations=`.
-- [ ] **`labels=dict`for plot** --- per-set custom label text/style (math text
-      via mathtext, since that's why we picked matplotlib).
+- [x] **`labels=dict`for plot** --- per-set custom label text/style (math text
+      via mathtext, since that's why we picked matplotlib). Done: `labels`
+      accepts `bool | dict | None`. A per-set dict (keys = set names) maps each
+      to a replacement string, an `ax.text` kwargs dict (optional `"text"` key),
+      or `None`/`False` to hide; a dict with no set-name keys is a uniform style
+      applied to all labels. See `_resolve_set_labels` in `_plot.py`.
 - [x] **`legend=True`for plot** --- color-keyed swatches via `ax.legend`;
       accepts `bool | dict` and defaults inline `labels` off when shown.
 - [ ] **`quantities` display types** --- widen the kwarg to mirror eulerr's

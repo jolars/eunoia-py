@@ -151,7 +151,7 @@ class EulerFit(Generic[S]):
         colors: Sequence[Any] | dict[str, Any] | None = None,
         fills: dict[str, dict[str, Any]] | None = None,
         edges: dict[str, Any] | Sequence[dict[str, Any]] | None = None,
-        labels: bool | None = None,
+        labels: bool | dict[str, Any] | None = None,
         quantities: bool | Literal["original", "fitted"] = False,
         legend: bool | dict[str, Any] = False,
         complement: dict[str, Any] | None = None,
@@ -178,11 +178,15 @@ class EulerFit(Generic[S]):
             defaults); a sequence of kwargs dicts assigns one style per set in
             shape order.
         labels:
-            Whether to draw set name labels at each set's anchor. Defaults to
-            ``not legend``: in-diagram labels are shown when there is no legend
-            and hidden when a legend is drawn. Pass ``True`` or ``False``
-            explicitly to override (e.g. ``legend=True, labels=True`` shows
-            both).
+            Set name labels at each set's anchor. ``None`` (default) shows
+            them when there is no legend and hides them when a legend is drawn;
+            ``True``/``False`` force them on/off. A dict turns labels on and
+            customizes text and style: either a **per-set** mapping (keys are
+            set names) whose values are a replacement string, an ``ax.text``
+            kwargs dict — with an optional ``"text"`` key for custom text such
+            as mathtext ``r"$\alpha$"`` — or ``None``/``False`` to hide that
+            set; or a **uniform** ``ax.text`` kwargs dict (no key a set name)
+            applied to every label, e.g. ``{"fontsize": 14}``.
         quantities:
             Show fitted/original values per region. ``True`` and
             ``"original"`` show the input values; ``"fitted"`` shows the
