@@ -62,8 +62,9 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
 
 ## Quality / nice-to-haves
 
-- [ ] Better color blending for overlap regions (eulerr blends in HSL, we
-      currently average RGBA --- fine but mediocre on mid-saturation pairs).
+- [x] Better color blending for overlap regions (now blend in OKLab via
+      linear-light sRGB instead of averaging gamma-encoded RGBA, which
+      darkened mid-saturation pairs).
 - [ ] Math-text example in `docs/quickstart.md` (set names like `$\alpha$`,
       `$\beta$`) to showcase the matplotlib choice.
 - [ ] Parity test against eulerr README/vignette numbers --- record specific

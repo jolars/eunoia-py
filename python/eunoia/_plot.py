@@ -344,9 +344,63 @@ def _blend_region_color(
     if not cs:
         return (0.5, 0.5, 0.5, 1.0)
     n = len(cs)
-    return (
-        sum(c[0] for c in cs) / n,
-        sum(c[1] for c in cs) / n,
-        sum(c[2] for c in cs) / n,
-        sum(c[3] for c in cs) / n,
+    # Blend in OKLab: perceptually uniform, so the mean of the L/a/b
+    # coordinates stays vivid instead of darkening, which a plain mean of
+    # gamma-encoded sRGB does on mid-saturation pairs. Alpha is unaffected by
+    # color space, so it is averaged directly.
+    labs = [_srgb_to_oklab(c[:3]) for c in cs]
+    mean_lab = (
+        sum(lab[0] for lab in labs) / n,
+        sum(lab[1] for lab in labs) / n,
+        sum(lab[2] for lab in labs) / n,
     )
+    r, g, b = _oklab_to_srgb(mean_lab)
+    return (r, g, b, sum(c[3] for c in cs) / n)
+
+
+def _srgb_to_linear(c: float) -> float:
+    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+
+def _linear_to_srgb(c: float) -> float:
+    s = 12.92 * c if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055
+    return min(1.0, max(0.0, s))
+
+
+def _srgb_to_oklab(rgb: tuple[float, float, float]) -> tuple[float, float, float]:
+    """Convert a gamma-encoded sRGB triple to OKLab (Björn Ottosson, 2020)."""
+    lr = _srgb_to_linear(rgb[0])
+    lg = _srgb_to_linear(rgb[1])
+    lb = _srgb_to_linear(rgb[2])
+
+    lc = 0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb
+    mc = 0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb
+    sc = 0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb
+
+    l_ = lc ** (1 / 3)
+    m_ = mc ** (1 / 3)
+    s_ = sc ** (1 / 3)
+
+    return (
+        0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_,
+        1.9779984951 * l_ - 2.4285922050 * m_ + 0.4505937099 * s_,
+        0.0259040371 * l_ + 0.7827717662 * m_ - 0.8086757660 * s_,
+    )
+
+
+def _oklab_to_srgb(lab: tuple[float, float, float]) -> tuple[float, float, float]:
+    """Inverse of :func:`_srgb_to_oklab`; result is clamped to [0, 1]."""
+    big_l, a, b = lab
+    l_ = big_l + 0.3963377774 * a + 0.2158037573 * b
+    m_ = big_l - 0.1055613458 * a - 0.0638541728 * b
+    s_ = big_l - 0.0894841775 * a - 1.2914855480 * b
+
+    lc = l_ * l_ * l_
+    mc = m_ * m_ * m_
+    sc = s_ * s_ * s_
+
+    lr = 4.0767416621 * lc - 3.3077115913 * mc + 0.2309699292 * sc
+    lg = -1.2684380046 * lc + 2.6097574011 * mc - 0.3413193965 * sc
+    lb = -0.0041960863 * lc - 0.7034186147 * mc + 1.7076147010 * sc
+
+    return (_linear_to_srgb(lr), _linear_to_srgb(lg), _linear_to_srgb(lb))
