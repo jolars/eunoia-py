@@ -8,7 +8,7 @@ from eunoia import __version__
 from github_link import make_linkcode_resolve
 
 # Project information
-project = "eunoia"
+project = "Eunoia"
 copyright = "2026, Johan Larsson"
 author = "Johan Larsson"
 release = __version__
@@ -39,7 +39,7 @@ autosummary_imported_members = True
 html_theme = "furo"
 html_static_path = ["_static"]
 html_css_files = ["css/custom.css"]
-html_title = f"eunoia {release}"
+html_title = f"Eunoia {release}"
 html_logo = "_static/logo.svg"
 html_favicon = "_static/logo.svg"
 

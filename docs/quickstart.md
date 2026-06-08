@@ -25,7 +25,7 @@ fit.plot();
 
 By default, values are interpreted as **exclusive** per-region areas. If your
 numbers are total set sizes that include overlaps, pass `input="inclusive"` and
-the eunoia core converts internally:
+the Eunoia core converts internally:
 
 ```{code-cell}
 fit = eu.euler({"A": 13, "B": 8, "A&B": 3}, input="inclusive")

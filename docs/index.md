@@ -1,4 +1,4 @@
-# eunoia
+# Eunoia
 
 ```{toctree}
 :maxdepth: 2
@@ -11,7 +11,7 @@ gallery
 api
 ```
 
-Python bindings for the [eunoia](https://github.com/jolars/eunoia) Rust
+Python bindings for the [Eunoia](https://github.com/jolars/eunoia) Rust
 library — area-proportional Euler and Venn diagrams. Sister package to the
 R package [eulerr](https://github.com/jolars/eulerr).
 

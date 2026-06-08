@@ -297,7 +297,7 @@ fig;
 accepts an integer count, a list of names, or a mapping. The default shape is
 the ellipse, which supports one through five sets.
 
-``{note} Circle Venn diagrams are unsupported in the pinned eunoia core and raise an {class}`~eunoia.EunoiaError`. Use ellipses (1–5 sets) or squares/rectangles (1–3 sets).``
+``{note} Circle Venn diagrams are unsupported in the pinned Eunoia core and raise an {class}`~eunoia.EunoiaError`. Use ellipses (1–5 sets) or squares/rectangles (1–3 sets).``
 
 ### Two and three sets
 
