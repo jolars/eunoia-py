@@ -103,28 +103,51 @@ def render(
         if path is not None:
             ax.add_patch(PathPatch(path, **ek))
 
-    # Set labels
-    if labels:
-        for name, (x, y) in set_anchors.items():
-            ax.text(x, y, name, ha="center", va="center", fontsize=11)
-
-    # Region quantities
+    # Resolve the quantity values up front so labels know whether a quantity
+    # shares their anchor (and must make room for it).
+    values: dict[str, float] = {}
     if quantities:
         kind: Literal["original", "fitted"] = (
             "fitted" if quantities == "fitted" else "original"
         )
         values = fit.original_values if kind == "original" else fit.fitted_values
+
+    # A set label and a region quantity can land on the exact same anchor: the
+    # core derives every set anchor from a region anchor (the set's own
+    # exclusive region, or -- for a set nested inside another with no exclusive
+    # area -- the largest containing region, copied verbatim). It does not tell
+    # us which region, only the resulting point, but because that point is the
+    # same `Point` the region anchor came from, exact equality identifies the
+    # collision. When both are shown we stack the pair (name above, value below)
+    # instead of letting them overlap.
+    label_points = set(set_anchors.values()) if labels else set()
+    quantity_points = (
+        {xy for combo, xy in region_anchors.items() if combo in values}
+        if quantities
+        else set()
+    )
+
+    # Set labels
+    if labels:
+        for name, (x, y) in set_anchors.items():
+            va = "bottom" if (x, y) in quantity_points else "center"
+            ax.text(x, y, name, ha="center", va=va, fontsize=11)
+
+    # Region quantities
+    if quantities:
         for combo, (x, y) in region_anchors.items():
-            if combo in values:
-                ax.text(
-                    x,
-                    y,
-                    f"{values[combo]:.3g}",
-                    ha="center",
-                    va="center",
-                    fontsize=9,
-                    color="dimgray",
-                )
+            if combo not in values:
+                continue
+            va = "top" if (x, y) in label_points else "center"
+            ax.text(
+                x,
+                y,
+                f"{values[combo]:.3g}",
+                ha="center",
+                va=va,
+                fontsize=9,
+                color="dimgray",
+            )
 
     ax.relim()
     ax.autoscale_view()
