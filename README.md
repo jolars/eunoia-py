@@ -1,5 +1,8 @@
 # Eunoia <img src='https://raw.githubusercontent.com/jolars/eunoia-py/refs/heads/main/docs/_static/logo.png' align="right" width="139" />
 
+[![PyPI
+version](https://badge.fury.io/py/eunoia.svg)](https://badge.fury.io/py/eunoia)
+
 Python bindings for the [Eunoia](https://github.com/jolars/eunoia) Rust library
 for fitting area-proportional Euler and Venn diagrams. Sister package to the R
 package [eulerr](https://github.com/jolars/eulerr).
