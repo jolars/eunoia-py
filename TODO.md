@@ -70,7 +70,7 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
 - [x] Better color blending for overlap regions (now blend in OKLab via
       linear-light sRGB instead of averaging gamma-encoded RGBA, which
       darkened mid-saturation pairs).
-- [ ] Math-text example in `docs/quickstart.md` (set names like `$\alpha$`,
+- [x] Math-text example in `docs/quickstart.md` (set names like `$\alpha$`,
       `$\beta$`) to showcase the matplotlib choice.
 - [ ] Parity test against eulerr README/vignette numbers --- record specific
       `diag_error` values and assert match within 1e-6 (circles) / 1e-9

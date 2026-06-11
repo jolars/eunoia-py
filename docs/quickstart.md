@@ -82,6 +82,28 @@ fit.plot(
 );
 ```
 
+## Math text in labels
+
+Set names are drawn as matplotlib text, so anything between `$…$` is rendered
+with its [mathtext](https://matplotlib.org/stable/users/explain/text/mathtext.html)
+engine. Use Greek letters, subscripts, or full TeX as set names and they carry
+through to the labels and legend:
+
+```{code-cell}
+fit = eu.euler(
+    {
+        r"$\alpha$": 10,
+        r"$\beta$": 7,
+        r"$\gamma$": 8,
+        r"$\alpha$&$\beta$": 3,
+        r"$\alpha$&$\gamma$": 4,
+        r"$\beta$&$\gamma$": 2,
+        r"$\alpha$&$\beta$&$\gamma$": 1,
+    }
+)
+fit.plot();
+```
+
 ## Reproducibility
 
 Pass a `seed` to fix the optimizer's RNG:
