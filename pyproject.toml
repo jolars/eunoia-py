@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "eunoia"
-version = "0.1.0"
+version = "0.2.0"
 description = "Area-proportional Euler and Venn diagrams"
 readme = "README.md"
 license = { text = "MIT" }
