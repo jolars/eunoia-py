@@ -1,10 +1,8 @@
 # Eunoia <img src='https://raw.githubusercontent.com/jolars/eunoia-py/refs/heads/main/docs/_static/logo.png' align="right" width="139" />
 
-Python bindings for the [Eunoia](https://github.com/jolars/eunoia) Rust
-library — area-proportional Euler and Venn diagrams. Sister package to the
-R package [eulerr](https://github.com/jolars/eulerr).
-
-> **Status:** v0.1.0 — initial release. The user-facing surface may evolve.
+Python bindings for the [Eunoia](https://github.com/jolars/eunoia) Rust library
+for fitting area-proportional Euler and Venn diagrams. Sister package to the R
+package [eulerr](https://github.com/jolars/eulerr).
 
 ## Install
 
@@ -68,28 +66,13 @@ fit.plot(
 
 ## Public API
 
-| Function / class           | Purpose                                            |
-| -------------------------- | -------------------------------------------------- |
-| `eunoia.euler(values, …)`  | Fit a diagram from a `{combination: area}` dict   |
-| `eunoia.EulerFit`          | Result class with shapes, fitted values, metrics  |
-| `eunoia.Circle` / `Ellipse`| Per-set fitted shape                              |
-| `eunoia.Point`             | 2D point                                          |
-| `eunoia.EunoiaError`       | Base error type (subclass of `ValueError`)         |
-
-## Status & roadmap (v0.1.0 → v0.2)
-
-In v0.1.0:
-- `dict` input only, with `input="exclusive"` / `"inclusive"`
-- `circle` and `ellipse` shapes
-- matplotlib-based plotting
-
-Deferred to v0.2+:
-- `venn()` (non-proportional, 1–5 sets)
-- `error_plot()` diagnostic
-- list-of-sets / DataFrame input
-- `complement` (universe area outside all sets)
-- `square` and `rectangle` shapes
-- exposed optimizer / tolerance knobs
+  | Function / class          | Purpose                                          |
+  | ------------------------- | ------------------------------------------------ |
+  | `eunoia.euler(values, …)` | Fit a diagram from a `{combination: area}` dict  |
+  | `eunoia.EulerFit`         | Result class with shapes, fitted values, metrics |
+  | `eunoia.Circle`/`Ellipse` | Per-set fitted shape                             |
+  | `eunoia.Point`            | 2D point                                         |
+  | `eunoia.EunoiaError`      | Base error type (subclass of `ValueError`)       |
 
 ## License
 
