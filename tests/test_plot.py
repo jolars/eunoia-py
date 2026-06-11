@@ -116,6 +116,77 @@ def test_plot_with_quantities(simple_fit: eu.EulerFit[eu.Circle]) -> None:
     plt.close(ax.figure)
 
 
+def test_plot_quantities_counts_equals_true(
+    simple_fit: eu.EulerFit[eu.Circle],
+) -> None:
+    # "counts" is the explicit name for the default raw-value display.
+    a_true = sorted(t.get_text() for t in simple_fit.plot(quantities=True).texts)
+    a_counts = sorted(t.get_text() for t in simple_fit.plot(quantities="counts").texts)
+    assert a_true == a_counts
+
+
+def test_plot_quantities_percent(simple_fit: eu.EulerFit[eu.Circle]) -> None:
+    # Original (exclusive) areas A=10, B=5, A&B=3, total=18 → shares of total.
+    ax = simple_fit.plot(quantities="percent", labels=False)
+    text_strings = [t.get_text() for t in ax.texts]
+    assert all(t.endswith("%") for t in text_strings)
+    assert {"55.6%", "27.8%", "16.7%"} == set(text_strings)
+    plt.close(ax.figure)
+
+
+def test_plot_quantities_counts_and_percent(
+    simple_fit: eu.EulerFit[eu.Circle],
+) -> None:
+    ax = simple_fit.plot(quantities={"type": ["counts", "percent"]}, labels=False)
+    text_strings = [t.get_text() for t in ax.texts]
+    # Count on top, percentage in parentheses below, on one text object.
+    assert "3\n(16.7%)" in text_strings
+    plt.close(ax.figure)
+
+
+def test_plot_quantities_dict_source_and_style(
+    simple_fit: eu.EulerFit[eu.Circle],
+) -> None:
+    ax = simple_fit.plot(
+        quantities={"source": "fitted", "color": "crimson", "fontsize": 7},
+        labels=False,
+    )
+    assert ax.texts  # fitted values present
+    assert all(t.get_color() == "crimson" for t in ax.texts)
+    assert all(t.get_fontsize() == 7 for t in ax.texts)
+    plt.close(ax.figure)
+
+
+def test_plot_quantities_empty_dict_is_on(
+    simple_fit: eu.EulerFit[eu.Circle],
+) -> None:
+    # An empty dict is falsy but means "on with defaults", unlike False.
+    ax = simple_fit.plot(quantities={}, labels=False)
+    assert ax.texts
+    plt.close(ax.figure)
+
+
+def test_plot_quantities_bad_string_raises(
+    simple_fit: eu.EulerFit[eu.Circle],
+) -> None:
+    with pytest.raises(ValueError, match="quantities string"):
+        simple_fit.plot(quantities="nonsense")
+
+
+def test_plot_quantities_bad_type_raises(
+    simple_fit: eu.EulerFit[eu.Circle],
+) -> None:
+    with pytest.raises(ValueError, match="'counts' or 'percent'"):
+        simple_fit.plot(quantities={"type": "fraction"})
+
+
+def test_plot_quantities_bad_source_raises(
+    simple_fit: eu.EulerFit[eu.Circle],
+) -> None:
+    with pytest.raises(ValueError, match="'original' or 'fitted'"):
+        simple_fit.plot(quantities={"source": "guessed"})
+
+
 def test_plot_legend_lists_sets(simple_fit: eu.EulerFit[eu.Circle]) -> None:
     ax = simple_fit.plot(legend=True)
     legend = ax.get_legend()

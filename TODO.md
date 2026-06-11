@@ -54,12 +54,13 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
       applied to all labels. See `_resolve_set_labels` in `_plot.py`.
 - [x] **`legend=True`for plot** --- color-keyed swatches via `ax.legend`;
       accepts `bool | dict` and defaults inline `labels` off when shown.
-- [ ] **`quantities` display types** --- widen the kwarg to mirror eulerr's
-      `quantities = list(type = ...)`: support `"percent"` (share of total) and
-      a count+percent combination in addition to the current raw value, plus
-      text styling (`color` / `fontsize` / `fontstyle`). Natural shape is
-      `quantities: bool | str | dict`. Used in several eulerr gallery plots
-      (one_contained, wilkinson, gene_set).
+- [x] **`quantities` display types** --- widened to `bool | str | dict` to
+      mirror eulerr's `quantities = list(type = ...)`. Strings select either the
+      value *source* (`"original"` / `"fitted"`) or the display *type*
+      (`"counts"` / `"percent"`); a dict combines `source`, `type` (one or both
+      of `counts`/`percent`, stacked count-over-percent), and any extra
+      `ax.text` style kwargs (`color` / `fontsize` / `fontstyle`). Percent is
+      each region's share of the total. See `_resolve_quantities` in `_plot.py`.
 - [x] **Per-set edge styling** --- `edges` now also accepts a per-set dict
       (keyed by set name, values are `PathPatch` kwargs dicts) or a sequence of
       kwargs dicts (one per set, in shape order), in addition to the flat dict

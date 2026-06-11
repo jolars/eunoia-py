@@ -338,6 +338,29 @@ right.set_title("fitted")
 fig;
 ```
 
+### Counts and percentages
+
+`quantities` also chooses *how* to display each region. A string picks the
+display type—`"counts"` (the raw value, the default) or `"percent"` (the
+region's share of the total)—while a dict combines a type, a value source, and
+text styling. Passing both types stacks the count above its percentage.
+
+```{code-cell}
+fit = eu.euler(
+    {
+        "SE": 13,
+        "Treat": 28,
+        "Anti-CCP": 101,
+        "DAS28": 91,
+        "SE&Treat": 1,
+        "SE&DAS28": 14,
+        "Treat&Anti-CCP": 6,
+        "SE&Anti-CCP&DAS28": 1,
+    }
+)
+fit.plot(quantities={"type": ["counts", "percent"], "fontsize": 8});
+```
+
 ## Venn diagrams
 
 {func}`~eunoia.venn` draws topological (non-proportional) Venn diagrams. It

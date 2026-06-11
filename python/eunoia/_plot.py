@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import TYPE_CHECKING, Any, Literal, cast
+from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING, Any, cast
 
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
@@ -29,7 +29,7 @@ def render(
     fills: dict[str, dict[str, Any]] | None = None,
     edges: dict[str, Any] | Sequence[dict[str, Any]] | None = None,
     labels: bool | dict[str, Any] | None = None,
-    quantities: bool | Literal["original", "fitted"] = False,
+    quantities: bool | str | dict[str, Any] = False,
     legend: bool | dict[str, Any] = False,
     complement: dict[str, Any] | None = None,
 ) -> Axes:
@@ -117,12 +117,8 @@ def render(
 
     # Resolve the quantity values up front so labels know whether a quantity
     # shares their anchor (and must make room for it).
-    values: dict[str, float] = {}
-    if quantities:
-        kind: Literal["original", "fitted"] = (
-            "fitted" if quantities == "fitted" else "original"
-        )
-        values = fit.original_values if kind == "original" else fit.fitted_values
+    quant = _resolve_quantities(fit, quantities)
+    values: dict[str, float] = quant[0] if quant is not None else {}
 
     # A set label and a region quantity can land on the exact same anchor: the
     # core derives every set anchor from a region anchor (the set's own
@@ -139,7 +135,7 @@ def render(
     )
     quantity_points = (
         {xy for combo, xy in region_anchors.items() if combo in values}
-        if quantities
+        if quant is not None
         else set()
     )
 
@@ -160,7 +156,8 @@ def render(
             ax.text(x, y, text, **text_kwargs)
 
     # Region quantities
-    if quantities:
+    if quant is not None:
+        _, fmt, q_style = quant
         for combo, (x, y) in region_anchors.items():
             if combo not in values:
                 continue
@@ -170,7 +167,8 @@ def render(
                 "va": va,
                 **opts["quantities"],
             }
-            ax.text(x, y, f"{values[combo]:.3g}", **quantity_kwargs)
+            quantity_kwargs.update(q_style)
+            ax.text(x, y, fmt(values[combo]), **quantity_kwargs)
 
     # Legend: color-keyed swatches matching the region fills (same color and
     # alpha), one per set in shape order.
@@ -343,6 +341,90 @@ def _resolve_set_labels(
                 f"got {type(spec).__name__}"
             )
     return resolved
+
+
+_QUANTITY_TYPES = ("counts", "percent")
+
+
+def _resolve_quantities(
+    fit: EulerFit[Any],
+    quantities: bool | str | dict[str, Any],
+) -> tuple[dict[str, float], Callable[[float], str], dict[str, Any]] | None:
+    """Resolve the ``quantities`` kwarg to (values, formatter, text kwargs).
+
+    Returns ``None`` when quantities are off. Otherwise returns the value
+    source mapping (canonical region key → value), a formatter turning one
+    value into its label string, and any extra ``ax.text`` style kwargs.
+
+    ``quantities`` may be:
+
+    * ``False`` (default) — off; ``True`` — on with the input (original)
+      values shown as raw counts.
+    * a string — one of ``"original"`` / ``"fitted"`` (value *source*, shown as
+      counts) or ``"counts"`` / ``"percent"`` (display *type*, original
+      source). ``"percent"`` shows each region's share of the total.
+    * a dict — ``{"source": ..., "type": ..., **text_kwargs}``. ``source`` is
+      ``"original"`` (default) or ``"fitted"``; ``type`` is ``"counts"``,
+      ``"percent"``, or a sequence of both (counts on top, percent in
+      parentheses below). Any remaining keys are forwarded to ``ax.text`` as
+      style overrides (e.g. ``color``, ``fontsize``, ``fontstyle``).
+    """
+    if quantities is False:
+        return None
+
+    source = "original"
+    types: list[str] = ["counts"]
+    text_kwargs: dict[str, Any] = {}
+
+    if quantities is True:
+        pass
+    elif isinstance(quantities, str):
+        if quantities in ("original", "fitted"):
+            source = quantities
+        elif quantities in _QUANTITY_TYPES:
+            types = [quantities]
+        else:
+            raise ValueError(
+                f"quantities string must be one of 'original', 'fitted', "
+                f"'counts', 'percent'; got {quantities!r}"
+            )
+    else:
+        # A mapping: {"source": ..., "type": ..., **ax.text style kwargs}. An
+        # empty dict is "on with defaults" (counts of the original values).
+        cfg = dict(quantities)
+        source = cfg.pop("source", "original")
+        if source not in ("original", "fitted"):
+            raise ValueError(
+                f"quantities 'source' must be 'original' or 'fitted'; got {source!r}"
+            )
+        raw_type = cfg.pop("type", "counts")
+        types = [raw_type] if isinstance(raw_type, str) else list(raw_type)
+        if not types:
+            raise ValueError("quantities 'type' must name at least one type")
+        unknown = [t for t in types if t not in _QUANTITY_TYPES]
+        if unknown:
+            raise ValueError(
+                f"quantities 'type' entries must be 'counts' or 'percent'; "
+                f"got {unknown}"
+            )
+        text_kwargs = cfg
+
+    values = fit.original_values if source == "original" else fit.fitted_values
+    total = sum(values.values())
+    show_counts = "counts" in types
+    show_percent = "percent" in types
+
+    def fmt(v: float) -> str:
+        parts: list[str] = []
+        if show_counts:
+            parts.append(f"{v:.3g}")
+        if show_percent:
+            pct = (v / total * 100.0) if total else 0.0
+            s = f"{pct:.3g}%"
+            parts.append(f"({s})" if show_counts else s)
+        return "\n".join(parts)
+
+    return values, fmt, text_kwargs
 
 
 def _blend_region_color(
