@@ -1,5 +1,6 @@
 # Eunoia <img src='https://raw.githubusercontent.com/jolars/eunoia-py/refs/heads/main/docs/_static/logo.png' align="right" width="139" />
 
+[![CI](https://github.com/jolars/eunoia-py/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jolars/eunoia-py/actions/workflows/ci.yml)
 [![PyPI
 version](https://badge.fury.io/py/eunoia.svg)](https://badge.fury.io/py/eunoia)
 
