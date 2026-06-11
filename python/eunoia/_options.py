@@ -39,7 +39,7 @@ __all__ = ["get_options", "options", "reset_options"]
 _DEFAULTS: dict[str, Any] = {
     "palette": "tab10",
     "fills": {"alpha": 0.5},
-    "edges": {"linewidth": 1.0},
+    "edges": {"linewidth": 1.0, "edgecolor": "black"},
     "labels": {"fontsize": 11},
     "quantities": {"fontsize": 9, "color": "dimgray"},
     "legend": {},
