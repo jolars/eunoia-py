@@ -4,9 +4,9 @@
 [![PyPI
 version](https://badge.fury.io/py/eunoia.svg)](https://badge.fury.io/py/eunoia)
 
-Python bindings for the [Eunoia](https://github.com/jolars/eunoia) Rust library
-for fitting area-proportional Euler and Venn diagrams. Sister package to the R
-package [eulerr](https://github.com/jolars/eulerr).
+Python bindings for the [Eunoia](https://eunoia.bz), a Rust library for fitting
+area-proportional Euler and Venn diagrams. Sister package to the R package
+[eulerr](https://github.com/jolars/eulerr).
 
 ## Install
 
