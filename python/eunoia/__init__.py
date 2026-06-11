@@ -20,7 +20,7 @@ from eunoia._models import (
 from eunoia._options import get_options, options, reset_options
 from eunoia._venn import venn
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "Circle",
