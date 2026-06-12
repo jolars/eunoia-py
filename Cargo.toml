@@ -14,7 +14,7 @@ name = "_eunoia"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.28", features = ["extension-module", "abi3-py311"] }
+pyo3 = { version = "0.29", features = ["extension-module", "abi3-py311"] }
 eunoia = "1.1"
 
 [profile.release]
