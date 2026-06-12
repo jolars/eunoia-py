@@ -8,6 +8,7 @@
 Home<self>
 quickstart
 gallery
+comparison
 api
 ```
 

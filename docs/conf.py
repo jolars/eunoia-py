@@ -26,7 +26,10 @@ extensions = [
     "sphinx.ext.linkcode",
 ]
 templates_path = ["_templates"]
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+# `_generated/` holds fragments pulled in via the MyST `{include}` directive
+# (e.g. the benchmark results table). Exclude them from source discovery so they
+# are not also rendered as standalone, orphan pages.
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "_generated"]
 master_doc = "index"
 
 pygments_style = "tango"

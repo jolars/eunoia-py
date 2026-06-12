@@ -1,0 +1,834 @@
+{
+  "meta": {
+    "corpus_source": "Ported from the eunoia Rust corpus (crates/eunoia/src/test_utils/corpus.rs), itself derived from eulerr's test-reproducibility.R and the eulerr issue tracker.",
+    "resolution": 1000,
+    "timing_repeats": 5,
+    "python": "3.13.12",
+    "versions": {
+      "eunoia (circle)": "0.1.0",
+      "eunoia (ellipse)": "0.1.0",
+      "matplotlib-set-diagrams": "0.2.2",
+      "matplotlib-venn": "1.1.2"
+    },
+    "method": "Fitters grouped by the objective they minimize; each group scored on that objective's scale-invariant metric (a single multiplicative scale on fitted areas is absorbed). eunoia's loss is set via loss=; set-diagrams' via cost_function_objective."
+  },
+  "groups": [
+    {
+      "key": "squared",
+      "title": "Sum of squared errors",
+      "objective": "minimize \u03a3 (fitted - target)\u00b2",
+      "metric": "stress",
+      "metric_label": "stress (sum of squared errors)",
+      "pending": null,
+      "members": [
+        {
+          "id": "eunoia-circle-sum_squared",
+          "display": "eunoia (circle)",
+          "available": true
+        },
+        {
+          "id": "eunoia-ellipse-sum_squared",
+          "display": "eunoia (ellipse)",
+          "available": true
+        },
+        {
+          "id": "matplotlib-set-diagrams-squared",
+          "display": "matplotlib-set-diagrams",
+          "available": true
+        }
+      ],
+      "rows": [
+        {
+          "case": "two_disjoint",
+          "n_sets": 2,
+          "cells": {
+            "eunoia-circle-sum_squared": {
+              "status": "ok",
+              "value": 2.362767818492623e-09,
+              "time_ms": 2.8044949995091883
+            },
+            "eunoia-ellipse-sum_squared": {
+              "status": "ok",
+              "value": 2.362767818492623e-09,
+              "time_ms": 7.96363100016606
+            },
+            "matplotlib-set-diagrams-squared": {
+              "status": "ok",
+              "value": 3.08847182391389e-10,
+              "time_ms": 9.452193000470288
+            }
+          }
+        },
+        {
+          "case": "two_overlap",
+          "n_sets": 2,
+          "cells": {
+            "eunoia-circle-sum_squared": {
+              "status": "ok",
+              "value": 5.803842294320623e-09,
+              "time_ms": 11.337183999785339
+            },
+            "eunoia-ellipse-sum_squared": {
+              "status": "ok",
+              "value": 5.803842294309037e-09,
+              "time_ms": 13.717175001147552
+            },
+            "matplotlib-set-diagrams-squared": {
+              "status": "ok",
+              "value": 0.008207647272902241,
+              "time_ms": 339.57462100079283
+            }
+          }
+        },
+        {
+          "case": "three_set_small_overlaps",
+          "n_sets": 3,
+          "cells": {
+            "eunoia-circle-sum_squared": {
+              "status": "ok",
+              "value": 0.00015088522803367803,
+              "time_ms": 18.198820998804877
+            },
+            "eunoia-ellipse-sum_squared": {
+              "status": "ok",
+              "value": 2.399656473973346e-09,
+              "time_ms": 30.14630799953011
+            },
+            "matplotlib-set-diagrams-squared": {
+              "status": "ok",
+              "value": 0.0001582798957859409,
+              "time_ms": 613.8662840003235
+            }
+          }
+        },
+        {
+          "case": "uniform_3_set",
+          "n_sets": 3,
+          "cells": {
+            "eunoia-circle-sum_squared": {
+              "status": "ok",
+              "value": 0.008676160846955716,
+              "time_ms": 534.0279460015154
+            },
+            "eunoia-ellipse-sum_squared": {
+              "status": "ok",
+              "value": 7.7253060844837e-09,
+              "time_ms": 27.530272000149125
+            },
+            "matplotlib-set-diagrams-squared": {
+              "status": "ok",
+              "value": 0.14772728018018988,
+              "time_ms": 574.6399060008116
+            }
+          }
+        },
+        {
+          "case": "eulerape_3_set",
+          "n_sets": 3,
+          "cells": {
+            "eunoia-circle-sum_squared": {
+              "status": "ok",
+              "value": 0.0004392926385808222,
+              "time_ms": 23.180124999271357
+            },
+            "eunoia-ellipse-sum_squared": {
+              "status": "ok",
+              "value": 1.1150052170128881e-08,
+              "time_ms": 74.64400000026217
+            },
+            "matplotlib-set-diagrams-squared": {
+              "status": "ok",
+              "value": 0.0006517459693641386,
+              "time_ms": 197.25778700012597
+            }
+          }
+        },
+        {
+          "case": "issue47_3_set_huge_triple",
+          "n_sets": 3,
+          "cells": {
+            "eunoia-circle-sum_squared": {
+              "status": "ok",
+              "value": 0.02452629502563696,
+              "time_ms": 485.8202319992415
+            },
+            "eunoia-ellipse-sum_squared": {
+              "status": "ok",
+              "value": 7.554694722975245e-09,
+              "time_ms": 39.85044199907861
+            },
+            "matplotlib-set-diagrams-squared": {
+              "status": "ok",
+              "value": 0.028051757971023748,
+              "time_ms": 725.5589239994151
+            }
+          }
+        },
+        {
+          "case": "issue111_3_set_asymmetric",
+          "n_sets": 3,
+          "cells": {
+            "eunoia-circle-sum_squared": {
+              "status": "ok",
+              "value": 7.155698484881496e-08,
+              "time_ms": 44.036048000634764
+            },
+            "eunoia-ellipse-sum_squared": {
+              "status": "ok",
+              "value": 1.1126855020715563e-10,
+              "time_ms": 53.54493200138677
+            },
+            "matplotlib-set-diagrams-squared": {
+              "status": "ok",
+              "value": 2.3630648435948452e-05,
+              "time_ms": 713.6438639990956
+            }
+          }
+        },
+        {
+          "case": "issue114_4_set_dominant_quad",
+          "n_sets": 4,
+          "cells": {
+            "eunoia-circle-sum_squared": {
+              "status": "ok",
+              "value": 0.013456634498351551,
+              "time_ms": 1106.7252729990287
+            },
+            "eunoia-ellipse-sum_squared": {
+              "status": "ok",
+              "value": 1.3501835496583237e-08,
+              "time_ms": 197.46852199932619
+            },
+            "matplotlib-set-diagrams-squared": {
+              "status": "ok",
+              "value": 0.12228244463878198,
+              "time_ms": 28.582372000528267
+            }
+          }
+        },
+        {
+          "case": "issue103_4_set",
+          "n_sets": 4,
+          "cells": {
+            "eunoia-circle-sum_squared": {
+              "status": "ok",
+              "value": 0.004081665645463845,
+              "time_ms": 917.1619110002212
+            },
+            "eunoia-ellipse-sum_squared": {
+              "status": "ok",
+              "value": 1.1877711595289414e-08,
+              "time_ms": 1131.5679119998094
+            },
+            "matplotlib-set-diagrams-squared": {
+              "status": "ok",
+              "value": 0.009665355654694405,
+              "time_ms": 650.7023719987046
+            }
+          }
+        },
+        {
+          "case": "issue93_5_set_kinases",
+          "n_sets": 5,
+          "cells": {
+            "eunoia-circle-sum_squared": {
+              "status": "ok",
+              "value": 0.01118881822826349,
+              "time_ms": 1312.3946349987818
+            },
+            "eunoia-ellipse-sum_squared": {
+              "status": "ok",
+              "value": 4.2800719921686925e-05,
+              "time_ms": 3822.597821999807
+            },
+            "matplotlib-set-diagrams-squared": {
+              "status": "ok",
+              "value": 0.09521191874368852,
+              "time_ms": 3056.072231000144
+            }
+          }
+        },
+        {
+          "case": "wilkinson_6_set",
+          "n_sets": 6,
+          "cells": {
+            "eunoia-circle-sum_squared": {
+              "status": "ok",
+              "value": 0.004207714463372324,
+              "time_ms": 2234.067015000619
+            },
+            "eunoia-ellipse-sum_squared": {
+              "status": "ok",
+              "value": 3.8670584201601315e-08,
+              "time_ms": 231.29166899889242
+            },
+            "matplotlib-set-diagrams-squared": {
+              "status": "ok",
+              "value": 0.10119068548731358,
+              "time_ms": 9741.684179000003
+            }
+          }
+        }
+      ]
+    },
+    {
+      "key": "absolute",
+      "title": "Sum of absolute errors",
+      "objective": "minimize \u03a3 |fitted - target|",
+      "metric": "abs_error",
+      "metric_label": "abs error (sum of absolute errors)",
+      "pending": null,
+      "members": [
+        {
+          "id": "eunoia-circle-sum_absolute",
+          "display": "eunoia (circle)",
+          "available": true
+        },
+        {
+          "id": "eunoia-ellipse-sum_absolute",
+          "display": "eunoia (ellipse)",
+          "available": true
+        },
+        {
+          "id": "matplotlib-set-diagrams-simple",
+          "display": "matplotlib-set-diagrams",
+          "available": true
+        }
+      ],
+      "rows": [
+        {
+          "case": "two_disjoint",
+          "n_sets": 2,
+          "cells": {
+            "eunoia-circle-sum_absolute": {
+              "status": "ok",
+              "value": 4.63037856569128e-05
+            },
+            "eunoia-ellipse-sum_absolute": {
+              "status": "ok",
+              "value": 4.63037856569128e-05
+            },
+            "matplotlib-set-diagrams-simple": {
+              "status": "ok",
+              "value": 1.9295805262194227e-05
+            }
+          }
+        },
+        {
+          "case": "two_overlap",
+          "n_sets": 2,
+          "cells": {
+            "eunoia-circle-sum_absolute": {
+              "status": "ok",
+              "value": 5.683504575218886e-05
+            },
+            "eunoia-ellipse-sum_absolute": {
+              "status": "ok",
+              "value": 5.818826112730895e-05
+            },
+            "matplotlib-set-diagrams-simple": {
+              "status": "ok",
+              "value": 0.0022068431093138813
+            }
+          }
+        },
+        {
+          "case": "three_set_small_overlaps",
+          "n_sets": 3,
+          "cells": {
+            "eunoia-circle-sum_absolute": {
+              "status": "ok",
+              "value": 0.0073013080715651395
+            },
+            "eunoia-ellipse-sum_absolute": {
+              "status": "ok",
+              "value": 0.004775177177697893
+            },
+            "matplotlib-set-diagrams-simple": {
+              "status": "ok",
+              "value": 0.012066371062402213
+            }
+          }
+        },
+        {
+          "case": "uniform_3_set",
+          "n_sets": 3,
+          "cells": {
+            "eunoia-circle-sum_absolute": {
+              "status": "ok",
+              "value": 0.06498339821039835
+            },
+            "eunoia-ellipse-sum_absolute": {
+              "status": "ok",
+              "value": 0.0003843899082730024
+            },
+            "matplotlib-set-diagrams-simple": {
+              "status": "ok",
+              "value": 0.08616499328370097
+            }
+          }
+        },
+        {
+          "case": "eulerape_3_set",
+          "n_sets": 3,
+          "cells": {
+            "eunoia-circle-sum_absolute": {
+              "status": "ok",
+              "value": 0.011612598265499475
+            },
+            "eunoia-ellipse-sum_absolute": {
+              "status": "ok",
+              "value": 0.008029472768010878
+            },
+            "matplotlib-set-diagrams-simple": {
+              "status": "ok",
+              "value": 0.02886555179748235
+            }
+          }
+        },
+        {
+          "case": "issue47_3_set_huge_triple",
+          "n_sets": 3,
+          "cells": {
+            "eunoia-circle-sum_absolute": {
+              "status": "ok",
+              "value": 0.08055363270480924
+            },
+            "eunoia-ellipse-sum_absolute": {
+              "status": "ok",
+              "value": 0.0044189135975135265
+            },
+            "matplotlib-set-diagrams-simple": {
+              "status": "ok",
+              "value": 0.16212714132954378
+            }
+          }
+        },
+        {
+          "case": "issue111_3_set_asymmetric",
+          "n_sets": 3,
+          "cells": {
+            "eunoia-circle-sum_absolute": {
+              "status": "ok",
+              "value": 0.00031868212209739815
+            },
+            "eunoia-ellipse-sum_absolute": {
+              "status": "ok",
+              "value": 0.00023869189116786674
+            },
+            "matplotlib-set-diagrams-simple": {
+              "status": "ok",
+              "value": 0.0023906653213609883
+            }
+          }
+        },
+        {
+          "case": "issue114_4_set_dominant_quad",
+          "n_sets": 4,
+          "cells": {
+            "eunoia-circle-sum_absolute": {
+              "status": "ok",
+              "value": 0.09611579440499406
+            },
+            "eunoia-ellipse-sum_absolute": {
+              "status": "ok",
+              "value": 0.0511088033287022
+            },
+            "matplotlib-set-diagrams-simple": {
+              "status": "ok",
+              "value": 0.24770805174003052
+            }
+          }
+        },
+        {
+          "case": "issue103_4_set",
+          "n_sets": 4,
+          "cells": {
+            "eunoia-circle-sum_absolute": {
+              "status": "ok",
+              "value": 0.08007354289617451
+            },
+            "eunoia-ellipse-sum_absolute": {
+              "status": "ok",
+              "value": 0.054050326110760515
+            },
+            "matplotlib-set-diagrams-simple": {
+              "status": "ok",
+              "value": 0.11227279590551016
+            }
+          }
+        },
+        {
+          "case": "issue93_5_set_kinases",
+          "n_sets": 5,
+          "cells": {
+            "eunoia-circle-sum_absolute": {
+              "status": "ok",
+              "value": 0.09790791952026645
+            },
+            "eunoia-ellipse-sum_absolute": {
+              "status": "ok",
+              "value": 0.08996327466074311
+            },
+            "matplotlib-set-diagrams-simple": {
+              "status": "ok",
+              "value": 0.48901594233165996
+            }
+          }
+        },
+        {
+          "case": "wilkinson_6_set",
+          "n_sets": 6,
+          "cells": {
+            "eunoia-circle-sum_absolute": {
+              "status": "ok",
+              "value": 0.04124139603990422
+            },
+            "eunoia-ellipse-sum_absolute": {
+              "status": "ok",
+              "value": 0.03641102873030586
+            },
+            "matplotlib-set-diagrams-simple": {
+              "status": "ok",
+              "value": 0.36555483351599855
+            }
+          }
+        }
+      ]
+    },
+    {
+      "key": "logarithmic",
+      "title": "Logarithmic error",
+      "objective": "minimize \u03a3 |log(1+fitted) - log(1+target)|",
+      "metric": "log_error",
+      "metric_label": "log error (logarithmic L1)",
+      "pending": null,
+      "members": [
+        {
+          "id": "eunoia-circle-log_sum_absolute",
+          "display": "eunoia (circle)",
+          "available": true
+        },
+        {
+          "id": "eunoia-ellipse-log_sum_absolute",
+          "display": "eunoia (ellipse)",
+          "available": true
+        },
+        {
+          "id": "matplotlib-venn",
+          "display": "matplotlib-venn",
+          "available": true
+        },
+        {
+          "id": "matplotlib-set-diagrams-logarithmic",
+          "display": "matplotlib-set-diagrams",
+          "available": true
+        }
+      ],
+      "rows": [
+        {
+          "case": "two_disjoint",
+          "n_sets": 2,
+          "cells": {
+            "eunoia-circle-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.0013292938964938803
+            },
+            "eunoia-ellipse-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.0013292938964938803
+            },
+            "matplotlib-venn": {
+              "status": "ok",
+              "value": 0.0013294519761899892,
+              "time_ms": 4.811255999811692
+            },
+            "matplotlib-set-diagrams-logarithmic": {
+              "status": "ok",
+              "value": 0.0013293296851865342
+            }
+          }
+        },
+        {
+          "case": "two_overlap",
+          "n_sets": 2,
+          "cells": {
+            "eunoia-circle-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.002007308006439931
+            },
+            "eunoia-ellipse-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.0020073078607995777
+            },
+            "matplotlib-venn": {
+              "status": "ok",
+              "value": 0.002007308006439931,
+              "time_ms": 6.61544399918057
+            },
+            "matplotlib-set-diagrams-logarithmic": {
+              "status": "ok",
+              "value": 0.002115836087189919
+            }
+          }
+        },
+        {
+          "case": "three_set_small_overlaps",
+          "n_sets": 3,
+          "cells": {
+            "eunoia-circle-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.016293308609358643
+            },
+            "eunoia-ellipse-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.0015866505958139715
+            },
+            "matplotlib-venn": {
+              "status": "ok",
+              "value": 0.019736787245513095,
+              "time_ms": 10.57068599948252
+            },
+            "matplotlib-set-diagrams-logarithmic": {
+              "status": "ok",
+              "value": 0.019293977813576686
+            }
+          }
+        },
+        {
+          "case": "uniform_3_set",
+          "n_sets": 3,
+          "cells": {
+            "eunoia-circle-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.06443820153205147
+            },
+            "eunoia-ellipse-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.0015237304960693718
+            },
+            "matplotlib-venn": {
+              "status": "ok",
+              "value": 0.06527610507836124,
+              "time_ms": 10.325209999791696
+            },
+            "matplotlib-set-diagrams-logarithmic": {
+              "status": "ok",
+              "value": 0.06523664945959975
+            }
+          }
+        },
+        {
+          "case": "eulerape_3_set",
+          "n_sets": 3,
+          "cells": {
+            "eunoia-circle-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.08518160233767669
+            },
+            "eunoia-ellipse-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.0024370636906403858
+            },
+            "matplotlib-venn": {
+              "status": "ok",
+              "value": 0.14494518155764646,
+              "time_ms": 10.522692999074934
+            },
+            "matplotlib-set-diagrams-logarithmic": {
+              "status": "ok",
+              "value": 0.10776163111110766
+            }
+          }
+        },
+        {
+          "case": "issue47_3_set_huge_triple",
+          "n_sets": 3,
+          "cells": {
+            "eunoia-circle-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.11606203930700165
+            },
+            "eunoia-ellipse-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.01092025857905038
+            },
+            "matplotlib-venn": {
+              "status": "ok",
+              "value": 0.144875543127929,
+              "time_ms": 10.563476998868282
+            },
+            "matplotlib-set-diagrams-logarithmic": {
+              "status": "ok",
+              "value": 0.14524634705222417
+            }
+          }
+        },
+        {
+          "case": "issue111_3_set_asymmetric",
+          "n_sets": 3,
+          "cells": {
+            "eunoia-circle-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.004627425025224943
+            },
+            "eunoia-ellipse-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.00038166879823078425
+            },
+            "matplotlib-venn": {
+              "status": "ok",
+              "value": 0.005968228639837411,
+              "time_ms": 11.318285998640931
+            },
+            "matplotlib-set-diagrams-logarithmic": {
+              "status": "ok",
+              "value": 0.005671190930719923
+            }
+          }
+        },
+        {
+          "case": "issue114_4_set_dominant_quad",
+          "n_sets": 4,
+          "cells": {
+            "eunoia-circle-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.15436392540579888
+            },
+            "eunoia-ellipse-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.05687731977392938
+            },
+            "matplotlib-venn": {
+              "status": "unsupported"
+            },
+            "matplotlib-set-diagrams-logarithmic": {
+              "status": "ok",
+              "value": 0.1679383462779677
+            }
+          }
+        },
+        {
+          "case": "issue103_4_set",
+          "n_sets": 4,
+          "cells": {
+            "eunoia-circle-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.16073226308343005
+            },
+            "eunoia-ellipse-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.057701898125935555
+            },
+            "matplotlib-venn": {
+              "status": "unsupported"
+            },
+            "matplotlib-set-diagrams-logarithmic": {
+              "status": "ok",
+              "value": 0.2153642143452366
+            }
+          }
+        },
+        {
+          "case": "issue93_5_set_kinases",
+          "n_sets": 5,
+          "cells": {
+            "eunoia-circle-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.22135957801691133
+            },
+            "eunoia-ellipse-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.1881481412439226
+            },
+            "matplotlib-venn": {
+              "status": "unsupported"
+            },
+            "matplotlib-set-diagrams-logarithmic": {
+              "status": "ok",
+              "value": 0.629094441161093
+            }
+          }
+        },
+        {
+          "case": "wilkinson_6_set",
+          "n_sets": 6,
+          "cells": {
+            "eunoia-circle-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.03492638950012846
+            },
+            "eunoia-ellipse-log_sum_absolute": {
+              "status": "ok",
+              "value": 0.024064657049614437
+            },
+            "matplotlib-venn": {
+              "status": "unsupported"
+            },
+            "matplotlib-set-diagrams-logarithmic": {
+              "status": "ok",
+              "value": 0.32238794617824085
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "self_check": [
+    {
+      "case": "two_disjoint",
+      "rasterized": 2.362767818492623e-09,
+      "native": 3.486678034126019e-32
+    },
+    {
+      "case": "two_overlap",
+      "rasterized": 5.803842294320623e-09,
+      "native": 5.023187822951431e-30
+    },
+    {
+      "case": "three_set_small_overlaps",
+      "rasterized": 0.00015088522803367803,
+      "native": 0.0001520702814952787
+    },
+    {
+      "case": "uniform_3_set",
+      "rasterized": 0.008676160846955716,
+      "native": 0.008687011028433514
+    },
+    {
+      "case": "eulerape_3_set",
+      "rasterized": 0.0004392926385808222,
+      "native": 0.00043929082920626583
+    },
+    {
+      "case": "issue47_3_set_huge_triple",
+      "rasterized": 0.02452629502563696,
+      "native": 0.024526293378752406
+    },
+    {
+      "case": "issue111_3_set_asymmetric",
+      "rasterized": 7.155698484881496e-08,
+      "native": 7.517205317221041e-08
+    },
+    {
+      "case": "issue114_4_set_dominant_quad",
+      "rasterized": 0.013456634498351551,
+      "native": 0.01346046225168478
+    },
+    {
+      "case": "issue103_4_set",
+      "rasterized": 0.004081665645463845,
+      "native": 0.004081508454048426
+    },
+    {
+      "case": "issue93_5_set_kinases",
+      "rasterized": 0.01118881822826349,
+      "native": 0.01118881118881119
+    },
+    {
+      "case": "wilkinson_6_set",
+      "rasterized": 0.004207714463372324,
+      "native": 0.004207746374208467
+    }
+  ]
+}

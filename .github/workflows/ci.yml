@@ -26,7 +26,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - run: uv sync --all-extras --all-groups
+      - run: uv sync --all-extras --all-groups --no-group benchmark
 
       - run: uv run maturin develop --uv
 
@@ -55,7 +55,7 @@ jobs:
           python-version: ${{ matrix.python }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - run: uv sync --all-extras --all-groups
+      - run: uv sync --all-extras --all-groups --no-group benchmark
       - run: uv run maturin develop --uv
       - run: uv run pytest
 
@@ -68,7 +68,7 @@ jobs:
           python-version: "3.12"
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - run: uv sync --all-extras --all-groups
+      - run: uv sync --all-extras --all-groups --no-group benchmark
       - run: uv run maturin develop --uv
       - run: uv run sphinx-build -b html docs docs/_build/html
 

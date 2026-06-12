@@ -33,6 +33,11 @@ docs = ["sphinx>=7", "furo", "myst-nb", "sphinx-copybutton", "sphinx-autobuild"]
 
 [dependency-groups]
 dev = ["pytest>=8", "mypy>=1.10", "pyright>=1.1", "maturin>=1.13"]
+# Competitor fitters for the `benchmarks/` harness only. Kept out of `dev`,
+# `docs`, and runtime deps: matplotlib-set-diagrams is GPL, so it must never
+# enter the published wheel or the docs build. Install with
+# `uv sync --group benchmark` (or `task benchmark`).
+benchmark = ["matplotlib-venn>=1.1", "matplotlib-set-diagrams>=0.2"]
 
 [project.urls]
 Repository = "https://github.com/jolars/eunoia-py"
