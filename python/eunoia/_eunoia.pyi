@@ -117,24 +117,28 @@ def _fit_circles(
     input_kind: str,
     complement: float | None = None,
     seed: int | None = None,
+    loss: str | None = None,
 ) -> _CircleResult: ...
 def _fit_ellipses(
     combinations: list[tuple[str, float]],
     input_kind: str,
     complement: float | None = None,
     seed: int | None = None,
+    loss: str | None = None,
 ) -> _EllipseResult: ...
 def _fit_squares(
     combinations: list[tuple[str, float]],
     input_kind: str,
     complement: float | None = None,
     seed: int | None = None,
+    loss: str | None = None,
 ) -> _SquareResult: ...
 def _fit_rectangles(
     combinations: list[tuple[str, float]],
     input_kind: str,
     complement: float | None = None,
     seed: int | None = None,
+    loss: str | None = None,
 ) -> _RectangleResult: ...
 def _venn(
     n: int,

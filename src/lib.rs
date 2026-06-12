@@ -1,5 +1,6 @@
 use eunoia::geometry::shapes::{Circle, Ellipse, Rectangle, Square};
 use eunoia::geometry::traits::{DiagramShape, Polygonize};
+use eunoia::loss::LossType;
 use eunoia::plotting::PlotOptions;
 use eunoia::spec::DiagramSpec;
 use eunoia::{DiagramError, DiagramSpecBuilder, Fitter, InputType, Layout, VennDiagram};
@@ -20,6 +21,9 @@ fn map_err(e: DiagramError) -> PyErr {
         DiagramError::UnsupportedSetCount(_) => "unsupported_set_count",
         DiagramError::TooManySets { .. } => "too_many_sets",
         DiagramError::InvalidShapeParameter { .. } => "invalid_shape_parameter",
+        DiagramError::EmptySolverPool { .. } => "empty_solver_pool",
+        // `DiagramError` is #[non_exhaustive]; tag unknown future variants.
+        _ => "diagram_error",
     };
     EunoiaError::new_err(format!("{tag}: {e}"))
 }
@@ -30,6 +34,27 @@ fn parse_input_kind(input_kind: &str) -> PyResult<InputType> {
         "inclusive" => Ok(InputType::Inclusive),
         other => Err(EunoiaError::new_err(format!(
             "invalid_input: input must be 'exclusive' or 'inclusive', got '{other}'"
+        ))),
+    }
+}
+
+fn parse_loss(loss: &str) -> PyResult<LossType> {
+    match loss {
+        "sum_squared" => Ok(LossType::SumSquared),
+        "sum_absolute" => Ok(LossType::SumAbsolute),
+        "sum_squared_region_error" => Ok(LossType::SumSquaredRegionError),
+        "sum_absolute_region_error" => Ok(LossType::SumAbsoluteRegionError),
+        "max_absolute" => Ok(LossType::MaxAbsolute),
+        "max_squared" => Ok(LossType::MaxSquared),
+        "root_mean_squared" => Ok(LossType::RootMeanSquared),
+        "stress" => Ok(LossType::Stress),
+        "diag_error" => Ok(LossType::DiagError),
+        "log_sum_absolute" => Ok(LossType::LogSumAbsolute),
+        other => Err(EunoiaError::new_err(format!(
+            "invalid_loss: unknown loss '{other}'; one of 'sum_squared', \
+             'sum_absolute', 'sum_squared_region_error', \
+             'sum_absolute_region_error', 'max_absolute', 'max_squared', \
+             'root_mean_squared', 'stress', 'diag_error', 'log_sum_absolute'"
         ))),
     }
 }
@@ -240,72 +265,88 @@ where
 }
 
 #[pyfunction]
-#[pyo3(signature = (combinations, input_kind, complement=None, seed=None))]
+#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None))]
 fn _fit_circles<'py>(
     py: Python<'py>,
     combinations: Vec<(String, f64)>,
     input_kind: &str,
     complement: Option<f64>,
     seed: Option<u64>,
+    loss: Option<&str>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let spec = build_spec(&combinations, input_kind, complement)?;
     let mut fitter = Fitter::<Circle>::new(&spec);
     if let Some(s) = seed {
         fitter = fitter.seed(s);
     }
+    if let Some(l) = loss {
+        fitter = fitter.loss_type(parse_loss(l)?);
+    }
     let layout = fitter.fit().map_err(map_err)?;
     build_result(py, &spec, &layout, ser_circle)
 }
 
 #[pyfunction]
-#[pyo3(signature = (combinations, input_kind, complement=None, seed=None))]
+#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None))]
 fn _fit_ellipses<'py>(
     py: Python<'py>,
     combinations: Vec<(String, f64)>,
     input_kind: &str,
     complement: Option<f64>,
     seed: Option<u64>,
+    loss: Option<&str>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let spec = build_spec(&combinations, input_kind, complement)?;
     let mut fitter = Fitter::<Ellipse>::new(&spec);
     if let Some(s) = seed {
         fitter = fitter.seed(s);
     }
+    if let Some(l) = loss {
+        fitter = fitter.loss_type(parse_loss(l)?);
+    }
     let layout = fitter.fit().map_err(map_err)?;
     build_result(py, &spec, &layout, ser_ellipse)
 }
 
 #[pyfunction]
-#[pyo3(signature = (combinations, input_kind, complement=None, seed=None))]
+#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None))]
 fn _fit_squares<'py>(
     py: Python<'py>,
     combinations: Vec<(String, f64)>,
     input_kind: &str,
     complement: Option<f64>,
     seed: Option<u64>,
+    loss: Option<&str>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let spec = build_spec(&combinations, input_kind, complement)?;
     let mut fitter = Fitter::<Square>::new(&spec);
     if let Some(s) = seed {
         fitter = fitter.seed(s);
     }
+    if let Some(l) = loss {
+        fitter = fitter.loss_type(parse_loss(l)?);
+    }
     let layout = fitter.fit().map_err(map_err)?;
     build_result(py, &spec, &layout, ser_square)
 }
 
 #[pyfunction]
-#[pyo3(signature = (combinations, input_kind, complement=None, seed=None))]
+#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None))]
 fn _fit_rectangles<'py>(
     py: Python<'py>,
     combinations: Vec<(String, f64)>,
     input_kind: &str,
     complement: Option<f64>,
     seed: Option<u64>,
+    loss: Option<&str>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let spec = build_spec(&combinations, input_kind, complement)?;
     let mut fitter = Fitter::<Rectangle>::new(&spec);
     if let Some(s) = seed {
         fitter = fitter.seed(s);
+    }
+    if let Some(l) = loss {
+        fitter = fitter.loss_type(parse_loss(l)?);
     }
     let layout = fitter.fit().map_err(map_err)?;
     build_result(py, &spec, &layout, ser_rectangle)

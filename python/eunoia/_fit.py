@@ -35,6 +35,22 @@ EulerInput = Mapping[str, float] | Mapping[str, Collection[str]]
 (``{"A": ["x", "y"]}``)."""
 
 
+Loss = Literal[
+    "sum_squared",
+    "sum_absolute",
+    "sum_squared_region_error",
+    "sum_absolute_region_error",
+    "max_absolute",
+    "max_squared",
+    "root_mean_squared",
+    "stress",
+    "diag_error",
+    "log_sum_absolute",
+]
+"""Objective the optimizer minimizes. ``None`` uses the core default
+(``"sum_squared"``)."""
+
+
 @overload
 def euler(
     values: EulerInput,
@@ -43,6 +59,7 @@ def euler(
     shape: Literal["circle"] = ...,
     seed: int | None = ...,
     complement: float | None = ...,
+    loss: Loss | None = ...,
 ) -> EulerFit[Circle]: ...
 
 
@@ -54,6 +71,7 @@ def euler(
     shape: Literal["ellipse"],
     seed: int | None = ...,
     complement: float | None = ...,
+    loss: Loss | None = ...,
 ) -> EulerFit[Ellipse]: ...
 
 
@@ -65,6 +83,7 @@ def euler(
     shape: Literal["square"],
     seed: int | None = ...,
     complement: float | None = ...,
+    loss: Loss | None = ...,
 ) -> EulerFit[Square]: ...
 
 
@@ -76,6 +95,7 @@ def euler(
     shape: Literal["rectangle"],
     seed: int | None = ...,
     complement: float | None = ...,
+    loss: Loss | None = ...,
 ) -> EulerFit[Rectangle]: ...
 
 
@@ -86,6 +106,7 @@ def euler(
     shape: Literal["circle", "ellipse", "square", "rectangle"] = "circle",
     seed: int | None = None,
     complement: float | None = None,
+    loss: Loss | None = None,
 ) -> EulerFit[Circle] | EulerFit[Ellipse] | EulerFit[Square] | EulerFit[Rectangle]:
     """Fit an area-proportional Euler diagram.
 
@@ -112,6 +133,13 @@ def euler(
         Area outside every named set (the universe / "complement"). When
         given, the core jointly fits a container box and the result carries
         a ``container``. Requires every set to overlap into one cluster.
+    loss:
+        The objective the optimizer minimizes. ``None`` (default) uses the
+        core default, ``"sum_squared"`` (normalized sum of squared region
+        residuals). Other options trade off how error is distributed across
+        regions, e.g. ``"sum_absolute"``, ``"stress"`` (venneuler-style),
+        ``"diag_error"`` (eulerAPE worst-region), the region-error variants,
+        and the max-error variants. See :data:`Loss`.
 
     Returns
     -------
@@ -147,7 +175,7 @@ def euler(
         }
 
     if shape == "circle":
-        result = _fit_circles(combinations, input, complement, seed)
+        result = _fit_circles(combinations, input, complement, seed, loss)
         return _finish(
             result,
             build_circles(result["shapes"]),
@@ -157,7 +185,7 @@ def euler(
         )
 
     if shape == "ellipse":
-        result_e = _fit_ellipses(combinations, input, complement, seed)
+        result_e = _fit_ellipses(combinations, input, complement, seed, loss)
         return _finish(
             result_e,
             build_ellipses(result_e["shapes"]),
@@ -167,7 +195,7 @@ def euler(
         )
 
     if shape == "square":
-        result_s = _fit_squares(combinations, input, complement, seed)
+        result_s = _fit_squares(combinations, input, complement, seed, loss)
         return _finish(
             result_s,
             build_squares(result_s["shapes"]),
@@ -176,7 +204,7 @@ def euler(
             input,
         )
 
-    result_r = _fit_rectangles(combinations, input, complement, seed)
+    result_r = _fit_rectangles(combinations, input, complement, seed, loss)
     return _finish(
         result_r,
         build_rectangles(result_r["shapes"]),

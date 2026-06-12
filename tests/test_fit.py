@@ -50,9 +50,15 @@ def test_inclusive_input_scale() -> None:
 
 
 def test_seed_reproducibility() -> None:
+    # The same seed reproduces the same fit to floating-point precision. (The
+    # 1.1 default optimizer is not bit-exact across runs — parallel summation
+    # wiggles the last ~1e-16 of derived metrics — but the solution matches.)
     fit1 = eu.euler({"A": 10, "B": 5, "A&B": 3}, seed=42)
     fit2 = eu.euler({"A": 10, "B": 5, "A&B": 3}, seed=42)
-    assert fit1.diag_error == fit2.diag_error
+    assert fit1.diag_error == pytest.approx(fit2.diag_error, abs=1e-12)
+    for s1, s2 in zip(fit1.shapes, fit2.shapes, strict=True):
+        assert s1.center.x == pytest.approx(s2.center.x, abs=1e-9)
+        assert s1.center.y == pytest.approx(s2.center.y, abs=1e-9)
 
 
 def test_invalid_input_kind_raises_eunoia_error() -> None:
@@ -177,3 +183,53 @@ def test_membership_str_value_not_treated_as_membership() -> None:
 def test_membership_with_inclusive_input_raises() -> None:
     with pytest.raises(eu.EunoiaError):
         eu.euler({"A": ["x", "y"], "B": ["y", "z"]}, input="inclusive")
+
+
+# A symmetric 3-Venn that no circle layout fits exactly, so different loss
+# objectives land in measurably different places.
+_LOSS_SPEC = {
+    "A": 10.0,
+    "B": 10.0,
+    "C": 10.0,
+    "A&B": 4.0,
+    "A&C": 4.0,
+    "B&C": 4.0,
+    "A&B&C": 2.0,
+}
+
+
+def test_loss_default_matches_sum_squared() -> None:
+    default = eu.euler(_LOSS_SPEC, seed=0)
+    explicit = eu.euler(_LOSS_SPEC, loss="sum_squared", seed=0)
+    assert default.loss == pytest.approx(explicit.loss)
+
+
+def test_loss_each_objective_minimizes_itself() -> None:
+    # The sum_squared fit should have the lowest stress (a squared-residual
+    # metric); the diag_error fit should have the lowest diag_error.
+    sq = eu.euler(_LOSS_SPEC, loss="sum_squared", seed=0)
+    de = eu.euler(_LOSS_SPEC, loss="diag_error", seed=0)
+    assert sq.stress < de.stress
+    assert de.diag_error < sq.diag_error
+
+
+@pytest.mark.parametrize(
+    "loss",
+    [
+        "sum_squared",
+        "sum_absolute",
+        "stress",
+        "diag_error",
+        "max_absolute",
+        "root_mean_squared",
+    ],
+)
+def test_loss_options_run(loss: str) -> None:
+    fit = eu.euler(_LOSS_SPEC, loss=loss, seed=0)
+    assert math.isfinite(fit.loss)
+    assert len(fit.shapes) == 3
+
+
+def test_invalid_loss_raises_eunoia_error() -> None:
+    with pytest.raises(eu.EunoiaError):
+        eu.euler(_LOSS_SPEC, loss="not_a_loss")  # type: ignore[arg-type]

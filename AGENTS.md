@@ -109,6 +109,12 @@ tests/test_*.py                  fit / plot / repr / smoke tests
   binding prefixes the message with the variant name (`undefined_set: ...`,
   `invalid_value: ...`) so users can string-match. Subclass hierarchy can be
   added later non-breakingly.
+- **`euler(..., loss=)`** selects the optimizer objective. `_fit.Loss` lists the
+  strings (`"sum_squared"` default, `"sum_absolute"`, `"log_sum_absolute"`,
+  `"stress"`, `"diag_error"`, region-error/max variants); `parse_loss` in
+  `src/lib.rs` maps them to the core `LossType`. `None` keeps the core default
+  (`sum_squared`). Non-smooth losses (`sum_absolute`, `log_sum_absolute`,
+  `diag_error`) optimize correctly but are much slower, especially for ellipses.
 
 ## Gotchas (things that bit us once)
 
@@ -120,8 +126,8 @@ tests/test_*.py                  fit / plot / repr / smoke tests
   We solved this by *not* listing `ruff` in `[dependency-groups]   dev`, so only
   the nix one (`pkgs.ruff`) is reachable. If you ever see
   `Could not start dynamically linked executable: ruff`, that's why.
-- **`eunoia`core MSRV is 1.84.1**, so `devenv.nix` pins Rust at 1.85. Don't
-  downgrade.
+- **`eunoia` 1.x MSRV is 1.88**, matched by `rust-version` in `Cargo.toml`. Don't
+  downgrade the toolchain below that.
 - **pyright is strict but with `reportUnknownMemberType` / `Variable` /
   `Argument` disabled** in `pyproject.toml`. matplotlib's stubs leave many
   kwargs as `Unknown`, which spams those rules without anything actionable. mypy
@@ -131,10 +137,14 @@ tests/test_*.py                  fit / plot / repr / smoke tests
 
 ## Eunoia core API we bind against
 
-(We pin `eunoia = "0.18"` in `Cargo.toml`; the binding is verified against the
-published 0.18.0 crate. Note: the published crate is a single crate — its
-sources live under `src/…`, not the workspace `crates/eunoia/src/…` paths cited
-below, which point at the local checkout at `/home/jola/projects/eunoia`.)
+(We pin `eunoia = "1.1"` in `Cargo.toml`; the binding is verified against the
+published 1.1.0 crate. 1.0 made the public enums `#[non_exhaustive]`, so
+`map_err`'s `DiagramError` match carries a `_` catch-all; 1.0 also fixed the
+`SumAbsoute`→`SumAbsolute` typo and 1.1 added `LossType::LogSumAbsolute`. The
+new 1.x default optimizer is reproducible only to floating-point precision, not
+bit-exact. Note: the published crate is a single crate — its sources live under
+`src/…`, not the workspace `crates/eunoia/src/…` paths cited below, which point
+at the local checkout at `/home/jola/projects/eunoia`.)
 
 - `DiagramSpecBuilder::new().set(name, val).intersection(&[names], val).input_type(InputType::{Exclusive,Inclusive}).build()`
   (`crates/eunoia/src/spec/spec_builder.rs`)
