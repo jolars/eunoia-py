@@ -17,9 +17,22 @@
     pkgs.zlib
   ];
 
+  # matplotlib defaults to the non-interactive Agg backend, so fit.plot()
+  # renders nothing in a plain REPL. Pin an interactive backend (tkinter is
+  # in the python package above; switch to QtAgg if you add pyqt6).
+  env.MPLBACKEND = "QtAgg";
+
   languages = {
     python = {
       enable = true;
+
+      package = (
+        pkgs.python3.withPackages (
+          ps: with ps; [
+            pyqt6
+          ]
+        )
+      );
 
       uv = {
         enable = true;

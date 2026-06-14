@@ -63,6 +63,7 @@ class _CircleResult(TypedDict):
     region_anchors: dict[str, tuple[float, float]]
     region_areas: dict[str, float]
     set_anchors: dict[str, tuple[float, float]]
+    set_anchor_regions: dict[str, str]
     shape_outlines: dict[str, list[tuple[float, float]]]
     container: _ContainerDict | None
 
@@ -78,6 +79,7 @@ class _EllipseResult(TypedDict):
     region_anchors: dict[str, tuple[float, float]]
     region_areas: dict[str, float]
     set_anchors: dict[str, tuple[float, float]]
+    set_anchor_regions: dict[str, str]
     shape_outlines: dict[str, list[tuple[float, float]]]
     container: _ContainerDict | None
 
@@ -93,6 +95,7 @@ class _SquareResult(TypedDict):
     region_anchors: dict[str, tuple[float, float]]
     region_areas: dict[str, float]
     set_anchors: dict[str, tuple[float, float]]
+    set_anchor_regions: dict[str, str]
     shape_outlines: dict[str, list[tuple[float, float]]]
     container: _ContainerDict | None
 
@@ -108,6 +111,7 @@ class _RectangleResult(TypedDict):
     region_anchors: dict[str, tuple[float, float]]
     region_areas: dict[str, float]
     set_anchors: dict[str, tuple[float, float]]
+    set_anchor_regions: dict[str, str]
     shape_outlines: dict[str, list[tuple[float, float]]]
     container: _ContainerDict | None
 

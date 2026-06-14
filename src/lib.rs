@@ -190,6 +190,16 @@ where
     }
     dict.set_item("set_anchors", set_anchors)?;
 
+    // Maps each set to the canonical region string its label anchor was copied
+    // from (when it was derived from a region; absent otherwise). The renderer
+    // uses this to detect a set-label/region-quantity collision exactly,
+    // instead of matching anchor points by float equality.
+    let set_anchor_regions = PyDict::new(py);
+    for (name, combo) in &plot.set_anchor_regions {
+        set_anchor_regions.set_item(name, combo)?;
+    }
+    dict.set_item("set_anchor_regions", set_anchor_regions)?;
+
     let shape_outlines = PyDict::new(py);
     for (name, poly) in &plot.shape_outlines {
         shape_outlines.set_item(name, polygon_to_pylist(py, poly)?)?;

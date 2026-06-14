@@ -116,6 +116,25 @@ def test_plot_with_quantities(simple_fit: eu.EulerFit[eu.Circle]) -> None:
     plt.close(ax.figure)
 
 
+def test_plot_label_quantity_collision_stacks(
+    simple_fit: eu.EulerFit[eu.Circle],
+) -> None:
+    # When a set label and the quantity for its anchor region share a point,
+    # they are stacked (name on top via va="bottom", value below via va="top")
+    # instead of being drawn centered on the same spot. The collision is
+    # detected via set_anchor_regions, not float-equal anchor points.
+    ax = simple_fit.plot(quantities=True)
+    by_text = {t.get_text(): t for t in ax.texts}
+    for name in ("A", "B"):
+        assert by_text[name].get_verticalalignment() == "bottom"
+    # The exclusive-region quantities (A=10, B=5) sit below their set labels;
+    # the intersection quantity (A&B=3) has no label, so it stays centered.
+    assert by_text["10"].get_verticalalignment() == "top"
+    assert by_text["5"].get_verticalalignment() == "top"
+    assert by_text["3"].get_verticalalignment() == "center"
+    plt.close(ax.figure)
+
+
 def test_plot_quantities_counts_equals_true(
     simple_fit: eu.EulerFit[eu.Circle],
 ) -> None:

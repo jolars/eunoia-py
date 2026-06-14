@@ -60,8 +60,13 @@ tests/test_*.py                  fit / plot / repr / smoke tests
 
 - **One Rust fn per shape**: `_fit_circles`, `_fit_ellipses`, `_fit_squares`,
   `_fit_rectangles`, plus `_venn`. Each returns `shapes`, metrics,
-  `region_pieces`, `region_anchors`, `set_anchors`, `shape_outlines`, and
-  `container` in the same call so `fit.plot()` doesn't refit. In `src/lib.rs` the
+  `region_pieces`, `region_anchors`, `set_anchors`, `set_anchor_regions`,
+  `shape_outlines`, and `container` in the same call so `fit.plot()` doesn't
+  refit. (`set_anchor_regions` maps each set to the canonical region key its
+  label anchor was derived from; `_plot` uses it to stack a set label and its
+  region quantity when they coincide, instead of comparing anchor points by
+  float equality — the optimizer is only reproducible to fp precision, so the
+  two copies of the point differ by ~1e-8.) In `src/lib.rs` the
   shared `build_result` generic + per-shape `ser_*` closures assemble the dict;
   `_fit_*` and `_venn` both call it. All four shapes map to a frozen dataclass
   (`Circle`/`Ellipse`/`Square`/`Rectangle`) and a `shape=` overload in

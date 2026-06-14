@@ -305,5 +305,6 @@ def build_plot_data(result: Mapping[str, Any]) -> dict[str, Any]:
         "region_anchors": result["region_anchors"],
         "region_areas": result["region_areas"],
         "set_anchors": result["set_anchors"],
+        "set_anchor_regions": result["set_anchor_regions"],
         "shape_outlines": result["shape_outlines"],
     }

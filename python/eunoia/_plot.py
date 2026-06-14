@@ -62,6 +62,7 @@ def render(
     set_anchors = cast(
         "dict[str, tuple[float, float]]", plot_data.get("set_anchors", {})
     )
+    set_anchor_regions = cast("dict[str, str]", plot_data.get("set_anchor_regions", {}))
     shape_outlines = cast(
         "dict[str, list[tuple[float, float]]]", plot_data.get("shape_outlines", {})
     )
@@ -120,24 +121,31 @@ def render(
     quant = _resolve_quantities(fit, quantities)
     values: dict[str, float] = quant[0] if quant is not None else {}
 
-    # A set label and a region quantity can land on the exact same anchor: the
-    # core derives every set anchor from a region anchor (the set's own
-    # exclusive region, or -- for a set nested inside another with no exclusive
-    # area -- the largest containing region, copied verbatim). It does not tell
-    # us which region, only the resulting point, but because that point is the
-    # same `Point` the region anchor came from, exact equality identifies the
-    # collision. When both are shown we stack the pair (name above, value below)
-    # instead of letting them overlap.
-    label_points = (
-        {xy for name, xy in set_anchors.items() if label_specs.get(name) is not None}
-        if show_labels
-        else set()
-    )
-    quantity_points = (
-        {xy for combo, xy in region_anchors.items() if combo in values}
-        if quant is not None
-        else set()
-    )
+    # A set label and a region quantity can land on the same anchor: the core
+    # derives each set anchor from a region (the set's own exclusive region, or
+    # -- for a set nested inside another with no exclusive area -- the largest
+    # containing region) and reports that source in ``set_anchor_regions``
+    # (set name -> canonical region key). When a set's label and the quantity
+    # for its anchor region are both shown, we stack the pair (name above,
+    # value below) instead of letting them overlap. We rely on this mapping
+    # rather than matching anchor points by float equality, since the optimizer
+    # is only reproducible to floating-point precision and the two copies of
+    # the point differ by ~1e-8.
+    #
+    # collided[name] is True when set ``name`` shares its anchor with a shown
+    # quantity; collided_regions holds the corresponding region keys.
+    collided = {
+        name: (
+            show_labels
+            and label_specs.get(name) is not None
+            and (region := set_anchor_regions.get(name)) is not None
+            and region in values
+        )
+        for name in set_anchors
+    }
+    collided_regions = {
+        set_anchor_regions[name] for name, hit in collided.items() if hit
+    }
 
     # Set labels
     if show_labels:
@@ -146,7 +154,7 @@ def render(
             if spec is None:
                 continue
             text, style = spec
-            va = "bottom" if (x, y) in quantity_points else "center"
+            va = "bottom" if collided.get(name) else "center"
             text_kwargs: dict[str, Any] = {
                 "ha": "center",
                 "va": va,
@@ -161,7 +169,7 @@ def render(
         for combo, (x, y) in region_anchors.items():
             if combo not in values:
                 continue
-            va = "top" if (x, y) in label_points else "center"
+            va = "top" if combo in collided_regions else "center"
             quantity_kwargs: dict[str, Any] = {
                 "ha": "center",
                 "va": va,
