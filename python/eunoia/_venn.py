@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import string
 from collections.abc import Collection, Mapping, Sequence
-from typing import Any, Literal, overload
+from typing import Any, Literal, cast, overload
 
+from narwhals.typing import IntoFrame
+
+from eunoia._dataframe import dataframe_column_names, is_dataframe
 from eunoia._eunoia import EunoiaError
 from eunoia._eunoia import _venn as _venn_rust
 from eunoia._fit import (
@@ -19,7 +22,13 @@ from eunoia._fit import (
 from eunoia._models import Circle, Ellipse, Rectangle, S, Square, VennFit
 from eunoia._parse import canonicalize
 
-VennInput = int | Sequence[str] | Mapping[str, float] | Mapping[str, Collection[str]]
+VennInput = (
+    int
+    | Sequence[str]
+    | Mapping[str, float]
+    | Mapping[str, Collection[str]]
+    | IntoFrame
+)
 
 
 @overload
@@ -79,7 +88,9 @@ def venn(
         * a sequence of set names, e.g. ``["cat", "dog", "fish"]``;
         * a mapping whose keys are set/combination labels (the distinct base
           set names are extracted; values are ignored, since a Venn layout is
-          non-proportional).
+          non-proportional);
+        * a DataFrame (pandas, polars, … via narwhals) — its column names are
+          taken as the set names.
     shape:
         ``"ellipse"`` (default), ``"circle"``, ``"square"`` or
         ``"rectangle"``. Ellipses support 1--5 sets; circles, squares and
@@ -136,6 +147,8 @@ def _default_name(i: int) -> str:
 
 
 def _resolve_names(sets: VennInput) -> list[str]:
+    if is_dataframe(sets):
+        return dataframe_column_names(sets)
     # bool is an int subclass; reject it explicitly to avoid venn(True).
     if isinstance(sets, bool):
         raise TypeError("venn: 'sets' must be an int, a list of names, or a mapping")
@@ -154,7 +167,7 @@ def _resolve_names(sets: VennInput) -> list[str]:
         return names
     if isinstance(sets, str):
         raise TypeError("venn: pass a list of set names, not a single string")
-    names = [str(s) for s in sets]
+    names = [str(s) for s in cast("Sequence[str]", sets)]
     if not names:
         raise ValueError("venn: need at least one set name")
     if len(set(names)) != len(names):

@@ -26,13 +26,20 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Visualization",
     "Typing :: Typed",
 ]
-dependencies = ["matplotlib>=3.8", "numpy>=1.26"]
+dependencies = ["matplotlib>=3.8", "narwhals>=1.9", "numpy>=1.26"]
 
 [project.optional-dependencies]
 docs = ["sphinx>=7", "furo", "myst-nb", "sphinx-copybutton", "sphinx-autobuild"]
 
 [dependency-groups]
-dev = ["pytest>=8", "mypy>=1.10", "pyright>=1.1", "maturin>=1.13"]
+dev = [
+    "pytest>=8",
+    "mypy>=1.10",
+    "pyright>=1.1",
+    "maturin>=1.13",
+    "pandas>=2",
+    "polars>=1",
+]
 # Competitor fitters for the `benchmarks/` harness only. Kept out of `dev`,
 # `docs`, and runtime deps: matplotlib-set-diagrams is GPL, so it must never
 # enter the published wheel or the docs build. Install with

@@ -41,8 +41,9 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
       drawn by `.plot()`.
 - [x] **List-of-sets input**: `eu.euler({"A": ["x", "y"], "B": ["y", "z"]})` ---
       count exclusive overlaps per region from membership lists.
-- [ ] **DataFrame input** (pandas first, polars cheap follow-up via the
-      `__dataframe__` protocol).
+- [x] **DataFrame input**: pandas, polars, etc. as a wide membership matrix
+      (each column a set, each row an observation). Routed through `narwhals`
+      rather than the deprecated `__dataframe__` interchange protocol.
 - [ ] **numpy bool ndarray input** --- the matrix idiom from eulerr.
 - [ ] **Optimizer / tolerance knobs** on `euler()`: `optimizer=`, `tolerance=`,
       `n_restarts=`, `max_iterations=`.

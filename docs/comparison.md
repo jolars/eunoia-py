@@ -96,7 +96,8 @@ Reading the table:
 - **Complementary, not a competitor** — `eule` computes the disjoint region
   sizes from membership and draws nothing. It is the kind of preprocessing that
   *feeds* a fitter; eunoia does the same thing internally when you pass it
-  membership lists (`eu.euler({"A": [...], "B": [...]})`).
+  membership lists (`eu.euler({"A": [...], "B": [...]})`) or a pandas/polars
+  DataFrame used as a membership matrix.
 
 ## Benchmark
 

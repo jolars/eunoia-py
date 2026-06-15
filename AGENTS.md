@@ -92,6 +92,20 @@ tests/test_*.py                  fit / plot / repr / smoke tests
 - **Canonical keys** everywhere in returned dicts: `"B&A"` becomes `"A&B"` via
   `_parse.canonicalize`. Tests rely on this --- see
   `test_canonical_keys_in_output`.
+- **DataFrame input** (`euler`/`venn`): a pandas/polars/etc. frame is read as a
+  *wide membership matrix* (each column a set, each row an observation, truthy
+  cell = membership) and counted into exclusive per-region counts --- the
+  wide-form cousin of `parse_membership_input`. Lives in
+  `python/eunoia/_dataframe.py`, routed through **narwhals** (`narwhals>=1.9`, a
+  runtime dep) rather than the now-deprecated `__dataframe__` interchange
+  protocol. `is_dataframe` is a `TypeGuard[IntoFrame]`; both public functions
+  branch on it *before* the `Mapping` checks (a frame is not a `Mapping`).
+  Columns must be boolean or `0/1`-valued numeric --- validation is by value
+  (`np.isin([0, 1])`), so a pandas object column of `bool`/`None` is accepted
+  while strings/datetimes/out-of-range numbers raise `EunoiaError`. Null cells
+  count as non-members; all-false rows are dropped; DataFrame input is always
+  exclusive (rejects `input="inclusive"`). No Rust change --- the core still
+  gets the same pre-aggregated `list[(combo, count)]`.
 - **Generic `EulerFit[S]`** with `S = TypeVar("S", Circle, Ellipse)`. The public
   `euler()` has two `@overload`s so `eu.euler(..., shape="ellipse")` types as
   `EulerFit[Ellipse]`.

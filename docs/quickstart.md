@@ -57,6 +57,29 @@ set names):
 eu.venn({"A": ["x", "y"], "B": ["y", "z"]}).plot();
 ```
 
+## DataFrames
+
+A pandas or polars DataFrame (anything [narwhals](https://narwhals-dev.github.io/narwhals/)
+supports) is read as a **membership matrix**: each column is a set, each row an
+observation, and a truthy cell means that observation belongs to the set.
+Columns must be boolean or `0`/`1` numeric:
+
+```{code-cell}
+import pandas as pd
+
+df = pd.DataFrame(
+    {
+        "A": [1, 1, 0, 1, 0],
+        "B": [0, 1, 1, 1, 0],
+        "C": [0, 0, 1, 1, 1],
+    }
+)
+eu.euler(df).original_values
+```
+
+Rows that belong to no set are dropped, and `venn(df)` takes the column names as
+the set names. The same works for polars frames.
+
 ## Three sets with ellipses
 
 Ellipses are more flexible than circles and can fit many three-set arrangements
