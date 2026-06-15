@@ -134,6 +134,15 @@ tests/test_*.py                  fit / plot / repr / smoke tests
   `src/lib.rs` maps them to the core `LossType`. `None` keeps the core default
   (`sum_squared`). Non-smooth losses (`sum_absolute`, `log_sum_absolute`,
   `diag_error`) optimize correctly but are much slower, especially for ellipses.
+- **`euler(..., optimizer=/tolerance=/n_restarts=/max_iterations=)`** expose the
+  matching `Fitter` builder methods, threaded exactly like `loss`/`seed`: Python
+  passes scalars through the FFI (no Python-side validation), Rust applies them
+  with guarded `if let Some(..)` chaining in each `_fit_*`. `optimizer=` is a
+  snake_case string (`"levenberg_marquardt"`, `"lbfgs"`, `"nelder_mead"`,
+  `"cma_es_lm"`, `"trf"`, `"cma_es_trf"`) mapped by `parse_optimizer` in
+  `src/lib.rs` (mirrors `parse_loss`) to the core `Optimizer` enum; `_fit.Optimizer`
+  is the public `Literal` (kept unexported, like `Loss`). These knobs apply to
+  `euler` only — `venn` is topological and takes none of them.
 
 ## Gotchas (things that bit us once)
 
@@ -191,5 +200,4 @@ at the local checkout at `/home/jola/projects/eunoia`.)
 ## Out of scope for v0.1.0 (do not add without asking)
 
 `venn()`, `error_plot()`, `options()`, list-of-sets / DataFrame / numpy input,
-`complement=` kwarg, `square` / `rectangle` shapes, exposed
-optimizer/tolerance/n_restarts knobs, plot legend.
+`complement=` kwarg, `square` / `rectangle` shapes, plot legend.

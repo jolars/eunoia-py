@@ -233,3 +233,37 @@ def test_loss_options_run(loss: str) -> None:
 def test_invalid_loss_raises_eunoia_error() -> None:
     with pytest.raises(eu.EunoiaError):
         eu.euler(_LOSS_SPEC, loss="not_a_loss")  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    "optimizer",
+    [
+        "levenberg_marquardt",
+        "lbfgs",
+        "nelder_mead",
+        "cma_es_lm",
+        "trf",
+        "cma_es_trf",
+    ],
+)
+def test_optimizer_options_run(optimizer: str) -> None:
+    fit = eu.euler(_LOSS_SPEC, optimizer=optimizer, seed=0)  # type: ignore[arg-type]
+    assert math.isfinite(fit.loss)
+    assert len(fit.shapes) == 3
+
+
+def test_invalid_optimizer_raises_eunoia_error() -> None:
+    with pytest.raises(eu.EunoiaError):
+        eu.euler(_LOSS_SPEC, optimizer="not_an_optimizer")  # type: ignore[arg-type]
+
+
+def test_tolerance_n_restarts_max_iterations_run() -> None:
+    fit = eu.euler(_LOSS_SPEC, tolerance=1e-6, n_restarts=1, max_iterations=50, seed=0)
+    assert math.isfinite(fit.loss)
+    assert len(fit.shapes) == 3
+
+
+def test_n_restarts_one_is_reproducible() -> None:
+    a = eu.euler(_LOSS_SPEC, n_restarts=1, seed=42)
+    b = eu.euler(_LOSS_SPEC, n_restarts=1, seed=42)
+    assert a.loss == pytest.approx(b.loss)

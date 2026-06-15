@@ -3,7 +3,9 @@ use eunoia::geometry::traits::{DiagramShape, Polygonize};
 use eunoia::loss::LossType;
 use eunoia::plotting::PlotOptions;
 use eunoia::spec::DiagramSpec;
-use eunoia::{DiagramError, DiagramSpecBuilder, Fitter, InputType, Layout, VennDiagram};
+use eunoia::{
+    DiagramError, DiagramSpecBuilder, Fitter, InputType, Layout, Optimizer, VennDiagram,
+};
 use pyo3::create_exception;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -55,6 +57,22 @@ fn parse_loss(loss: &str) -> PyResult<LossType> {
              'sum_absolute', 'sum_squared_region_error', \
              'sum_absolute_region_error', 'max_absolute', 'max_squared', \
              'root_mean_squared', 'stress', 'diag_error', 'log_sum_absolute'"
+        ))),
+    }
+}
+
+fn parse_optimizer(optimizer: &str) -> PyResult<Optimizer> {
+    match optimizer {
+        "levenberg_marquardt" => Ok(Optimizer::LevenbergMarquardt),
+        "lbfgs" => Ok(Optimizer::Lbfgs),
+        "nelder_mead" => Ok(Optimizer::NelderMead),
+        "cma_es_lm" => Ok(Optimizer::CmaEsLm),
+        "trf" => Ok(Optimizer::Trf),
+        "cma_es_trf" => Ok(Optimizer::CmaEsTrf),
+        other => Err(EunoiaError::new_err(format!(
+            "invalid_optimizer: unknown optimizer '{other}'; one of \
+             'levenberg_marquardt', 'lbfgs', 'nelder_mead', 'cma_es_lm', \
+             'trf', 'cma_es_trf'"
         ))),
     }
 }
@@ -275,7 +293,7 @@ where
 }
 
 #[pyfunction]
-#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None))]
+#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None, optimizer=None, tolerance=None, n_restarts=None, max_iterations=None))]
 fn _fit_circles<'py>(
     py: Python<'py>,
     combinations: Vec<(String, f64)>,
@@ -283,6 +301,10 @@ fn _fit_circles<'py>(
     complement: Option<f64>,
     seed: Option<u64>,
     loss: Option<&str>,
+    optimizer: Option<&str>,
+    tolerance: Option<f64>,
+    n_restarts: Option<usize>,
+    max_iterations: Option<usize>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let spec = build_spec(&combinations, input_kind, complement)?;
     let mut fitter = Fitter::<Circle>::new(&spec);
@@ -292,12 +314,24 @@ fn _fit_circles<'py>(
     if let Some(l) = loss {
         fitter = fitter.loss_type(parse_loss(l)?);
     }
+    if let Some(o) = optimizer {
+        fitter = fitter.optimizer(parse_optimizer(o)?);
+    }
+    if let Some(t) = tolerance {
+        fitter = fitter.tolerance(t);
+    }
+    if let Some(n) = n_restarts {
+        fitter = fitter.n_restarts(n);
+    }
+    if let Some(m) = max_iterations {
+        fitter = fitter.max_iterations(m);
+    }
     let layout = fitter.fit().map_err(map_err)?;
     build_result(py, &spec, &layout, ser_circle)
 }
 
 #[pyfunction]
-#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None))]
+#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None, optimizer=None, tolerance=None, n_restarts=None, max_iterations=None))]
 fn _fit_ellipses<'py>(
     py: Python<'py>,
     combinations: Vec<(String, f64)>,
@@ -305,6 +339,10 @@ fn _fit_ellipses<'py>(
     complement: Option<f64>,
     seed: Option<u64>,
     loss: Option<&str>,
+    optimizer: Option<&str>,
+    tolerance: Option<f64>,
+    n_restarts: Option<usize>,
+    max_iterations: Option<usize>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let spec = build_spec(&combinations, input_kind, complement)?;
     let mut fitter = Fitter::<Ellipse>::new(&spec);
@@ -314,12 +352,24 @@ fn _fit_ellipses<'py>(
     if let Some(l) = loss {
         fitter = fitter.loss_type(parse_loss(l)?);
     }
+    if let Some(o) = optimizer {
+        fitter = fitter.optimizer(parse_optimizer(o)?);
+    }
+    if let Some(t) = tolerance {
+        fitter = fitter.tolerance(t);
+    }
+    if let Some(n) = n_restarts {
+        fitter = fitter.n_restarts(n);
+    }
+    if let Some(m) = max_iterations {
+        fitter = fitter.max_iterations(m);
+    }
     let layout = fitter.fit().map_err(map_err)?;
     build_result(py, &spec, &layout, ser_ellipse)
 }
 
 #[pyfunction]
-#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None))]
+#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None, optimizer=None, tolerance=None, n_restarts=None, max_iterations=None))]
 fn _fit_squares<'py>(
     py: Python<'py>,
     combinations: Vec<(String, f64)>,
@@ -327,6 +377,10 @@ fn _fit_squares<'py>(
     complement: Option<f64>,
     seed: Option<u64>,
     loss: Option<&str>,
+    optimizer: Option<&str>,
+    tolerance: Option<f64>,
+    n_restarts: Option<usize>,
+    max_iterations: Option<usize>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let spec = build_spec(&combinations, input_kind, complement)?;
     let mut fitter = Fitter::<Square>::new(&spec);
@@ -336,12 +390,24 @@ fn _fit_squares<'py>(
     if let Some(l) = loss {
         fitter = fitter.loss_type(parse_loss(l)?);
     }
+    if let Some(o) = optimizer {
+        fitter = fitter.optimizer(parse_optimizer(o)?);
+    }
+    if let Some(t) = tolerance {
+        fitter = fitter.tolerance(t);
+    }
+    if let Some(n) = n_restarts {
+        fitter = fitter.n_restarts(n);
+    }
+    if let Some(m) = max_iterations {
+        fitter = fitter.max_iterations(m);
+    }
     let layout = fitter.fit().map_err(map_err)?;
     build_result(py, &spec, &layout, ser_square)
 }
 
 #[pyfunction]
-#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None))]
+#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None, optimizer=None, tolerance=None, n_restarts=None, max_iterations=None))]
 fn _fit_rectangles<'py>(
     py: Python<'py>,
     combinations: Vec<(String, f64)>,
@@ -349,6 +415,10 @@ fn _fit_rectangles<'py>(
     complement: Option<f64>,
     seed: Option<u64>,
     loss: Option<&str>,
+    optimizer: Option<&str>,
+    tolerance: Option<f64>,
+    n_restarts: Option<usize>,
+    max_iterations: Option<usize>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let spec = build_spec(&combinations, input_kind, complement)?;
     let mut fitter = Fitter::<Rectangle>::new(&spec);
@@ -357,6 +427,18 @@ fn _fit_rectangles<'py>(
     }
     if let Some(l) = loss {
         fitter = fitter.loss_type(parse_loss(l)?);
+    }
+    if let Some(o) = optimizer {
+        fitter = fitter.optimizer(parse_optimizer(o)?);
+    }
+    if let Some(t) = tolerance {
+        fitter = fitter.tolerance(t);
+    }
+    if let Some(n) = n_restarts {
+        fitter = fitter.n_restarts(n);
+    }
+    if let Some(m) = max_iterations {
+        fitter = fitter.max_iterations(m);
     }
     let layout = fitter.fit().map_err(map_err)?;
     build_result(py, &spec, &layout, ser_rectangle)

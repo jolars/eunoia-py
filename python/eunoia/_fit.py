@@ -54,6 +54,18 @@ Loss = Literal[
 (``"sum_squared"``)."""
 
 
+Optimizer = Literal[
+    "levenberg_marquardt",
+    "lbfgs",
+    "nelder_mead",
+    "cma_es_lm",
+    "trf",
+    "cma_es_trf",
+]
+"""Final-stage optimizer the fitter uses. ``None`` keeps the core default
+(``"cma_es_trf"``)."""
+
+
 @overload
 def euler(
     values: EulerInput,
@@ -63,6 +75,10 @@ def euler(
     seed: int | None = ...,
     complement: float | None = ...,
     loss: Loss | None = ...,
+    optimizer: Optimizer | None = ...,
+    tolerance: float | None = ...,
+    n_restarts: int | None = ...,
+    max_iterations: int | None = ...,
 ) -> EulerFit[Circle]: ...
 
 
@@ -75,6 +91,10 @@ def euler(
     seed: int | None = ...,
     complement: float | None = ...,
     loss: Loss | None = ...,
+    optimizer: Optimizer | None = ...,
+    tolerance: float | None = ...,
+    n_restarts: int | None = ...,
+    max_iterations: int | None = ...,
 ) -> EulerFit[Ellipse]: ...
 
 
@@ -87,6 +107,10 @@ def euler(
     seed: int | None = ...,
     complement: float | None = ...,
     loss: Loss | None = ...,
+    optimizer: Optimizer | None = ...,
+    tolerance: float | None = ...,
+    n_restarts: int | None = ...,
+    max_iterations: int | None = ...,
 ) -> EulerFit[Square]: ...
 
 
@@ -99,6 +123,10 @@ def euler(
     seed: int | None = ...,
     complement: float | None = ...,
     loss: Loss | None = ...,
+    optimizer: Optimizer | None = ...,
+    tolerance: float | None = ...,
+    n_restarts: int | None = ...,
+    max_iterations: int | None = ...,
 ) -> EulerFit[Rectangle]: ...
 
 
@@ -110,6 +138,10 @@ def euler(
     seed: int | None = None,
     complement: float | None = None,
     loss: Loss | None = None,
+    optimizer: Optimizer | None = None,
+    tolerance: float | None = None,
+    n_restarts: int | None = None,
+    max_iterations: int | None = None,
 ) -> EulerFit[Circle] | EulerFit[Ellipse] | EulerFit[Square] | EulerFit[Rectangle]:
     """Fit an area-proportional Euler diagram.
 
@@ -151,6 +183,24 @@ def euler(
         regions, e.g. ``"sum_absolute"``, ``"stress"`` (venneuler-style),
         ``"diag_error"`` (eulerAPE worst-region), the region-error variants,
         and the max-error variants. See :data:`Loss`.
+    optimizer:
+        The final-stage optimizer the core uses. ``None`` (default) keeps the
+        core default, ``"cma_es_trf"`` (CMA-ES global escape with a bounded
+        trust-region-reflective polish). Other options trade robustness for
+        speed: ``"levenberg_marquardt"``, ``"lbfgs"``, ``"nelder_mead"``,
+        ``"cma_es_lm"``, ``"trf"``. See :data:`Optimizer`.
+    tolerance:
+        Cost-change convergence tolerance for the final-stage optimizer.
+        ``None`` keeps the core default (``1e-3``); smaller values fit more
+        tightly at the cost of more iterations.
+    n_restarts:
+        Number of full-pipeline restarts (fresh initialization + optimization),
+        keeping the lowest-loss result. ``None`` keeps the core default
+        (``10``). Higher values better approach the global optimum but cost
+        proportionally more; ``1`` disables restarts.
+    max_iterations:
+        Maximum optimizer iterations per fit. ``None`` keeps the core default
+        (``200``).
 
     Returns
     -------
@@ -197,7 +247,17 @@ def euler(
             }
 
     if shape == "circle":
-        result = _fit_circles(combinations, input, complement, seed, loss)
+        result = _fit_circles(
+            combinations,
+            input,
+            complement,
+            seed,
+            loss,
+            optimizer,
+            tolerance,
+            n_restarts,
+            max_iterations,
+        )
         return _finish(
             result,
             build_circles(result["shapes"]),
@@ -207,7 +267,17 @@ def euler(
         )
 
     if shape == "ellipse":
-        result_e = _fit_ellipses(combinations, input, complement, seed, loss)
+        result_e = _fit_ellipses(
+            combinations,
+            input,
+            complement,
+            seed,
+            loss,
+            optimizer,
+            tolerance,
+            n_restarts,
+            max_iterations,
+        )
         return _finish(
             result_e,
             build_ellipses(result_e["shapes"]),
@@ -217,7 +287,17 @@ def euler(
         )
 
     if shape == "square":
-        result_s = _fit_squares(combinations, input, complement, seed, loss)
+        result_s = _fit_squares(
+            combinations,
+            input,
+            complement,
+            seed,
+            loss,
+            optimizer,
+            tolerance,
+            n_restarts,
+            max_iterations,
+        )
         return _finish(
             result_s,
             build_squares(result_s["shapes"]),
@@ -226,7 +306,17 @@ def euler(
             input,
         )
 
-    result_r = _fit_rectangles(combinations, input, complement, seed, loss)
+    result_r = _fit_rectangles(
+        combinations,
+        input,
+        complement,
+        seed,
+        loss,
+        optimizer,
+        tolerance,
+        n_restarts,
+        max_iterations,
+    )
     return _finish(
         result_r,
         build_rectangles(result_r["shapes"]),

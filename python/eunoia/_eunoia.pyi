@@ -122,6 +122,10 @@ def _fit_circles(
     complement: float | None = None,
     seed: int | None = None,
     loss: str | None = None,
+    optimizer: str | None = None,
+    tolerance: float | None = None,
+    n_restarts: int | None = None,
+    max_iterations: int | None = None,
 ) -> _CircleResult: ...
 def _fit_ellipses(
     combinations: list[tuple[str, float]],
@@ -129,6 +133,10 @@ def _fit_ellipses(
     complement: float | None = None,
     seed: int | None = None,
     loss: str | None = None,
+    optimizer: str | None = None,
+    tolerance: float | None = None,
+    n_restarts: int | None = None,
+    max_iterations: int | None = None,
 ) -> _EllipseResult: ...
 def _fit_squares(
     combinations: list[tuple[str, float]],
@@ -136,6 +144,10 @@ def _fit_squares(
     complement: float | None = None,
     seed: int | None = None,
     loss: str | None = None,
+    optimizer: str | None = None,
+    tolerance: float | None = None,
+    n_restarts: int | None = None,
+    max_iterations: int | None = None,
 ) -> _SquareResult: ...
 def _fit_rectangles(
     combinations: list[tuple[str, float]],
@@ -143,6 +155,10 @@ def _fit_rectangles(
     complement: float | None = None,
     seed: int | None = None,
     loss: str | None = None,
+    optimizer: str | None = None,
+    tolerance: float | None = None,
+    n_restarts: int | None = None,
+    max_iterations: int | None = None,
 ) -> _RectangleResult: ...
 def _venn(
     n: int,

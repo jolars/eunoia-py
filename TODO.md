@@ -45,7 +45,7 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
       (each column a set, each row an observation). Routed through `narwhals`
       rather than the deprecated `__dataframe__` interchange protocol.
 - [ ] **numpy bool ndarray input** --- the matrix idiom from eulerr.
-- [ ] **Optimizer / tolerance knobs** on `euler()`: `optimizer=`, `tolerance=`,
+- [x] **Optimizer / tolerance knobs** on `euler()`: `optimizer=`, `tolerance=`,
       `n_restarts=`, `max_iterations=`.
 - [x] **`labels=dict`for plot** --- per-set custom label text/style (math text
       via mathtext, since that's why we picked matplotlib). Done: `labels`
