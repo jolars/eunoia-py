@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.0](https://github.com/jolars/eunoia-py/compare/v0.2.0...v0.3.0) (2026-06-15)
+
+### Features
+- add optimizer knobs for fitting the euler diagrams ([`86edd72`](https://github.com/jolars/eunoia-py/commit/86edd7267998a368cb38705c6e708cc6071939ee))
+- add dataframe input ([`002b530`](https://github.com/jolars/eunoia-py/commit/002b5306027be88918848c33634ec2de194da7af))
+- **benchmarks:** matched-objective comparison vs Python Euler/Venn fitters ([`e80d235`](https://github.com/jolars/eunoia-py/commit/e80d23575255f4492f34553914c31aac2a1b796b))
+- add loss= to euler() and upgrade eunoia core to 1.1 ([`e42f4db`](https://github.com/jolars/eunoia-py/commit/e42f4dbd1313ab07033fd031eae7a5a65498bbd6))
+
+### Bug Fixes
+- **plotting:** avoid label overlap by using new eunoia api ([`2ced691`](https://github.com/jolars/eunoia-py/commit/2ced691dfe85fee1cb0f60f42625da6114631973))
+
 ## [0.2.0](https://github.com/jolars/eunoia-py/compare/v0.1.0...v0.2.0) (2026-06-11)
 
 ### Features

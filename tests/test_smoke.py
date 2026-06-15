@@ -5,7 +5,7 @@ from eunoia._eunoia import _smoke
 
 
 def test_version() -> None:
-    assert eunoia.__version__ == "0.2.0"
+    assert eunoia.__version__ == "0.3.0"
 
 
 def test_extension_loads() -> None:
