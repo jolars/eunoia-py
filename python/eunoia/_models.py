@@ -152,7 +152,7 @@ class EulerFit(Generic[S]):
         fills: dict[str, dict[str, Any]] | None = None,
         edges: dict[str, Any] | Sequence[dict[str, Any]] | None = None,
         labels: bool | dict[str, Any] | None = None,
-        quantities: bool | str | dict[str, Any] = False,
+        quantities: bool | str | dict[str, Any] | None = None,
         legend: bool | dict[str, Any] = False,
         complement: dict[str, Any] | None = None,
     ) -> Axes:
@@ -189,8 +189,11 @@ class EulerFit(Generic[S]):
             set; or a **uniform** ``ax.text`` kwargs dict (no key a set name)
             applied to every label, e.g. ``{"fontsize": 14}``.
         quantities:
-            Show per-region values. ``False`` (default) shows nothing;
-            ``True`` shows the input values as raw counts. A string selects
+            Show per-region values. ``None`` (default) shows nothing for an
+            :class:`EulerFit`; for a :class:`VennFit` it shows the supplied
+            values when the diagram was built with quantities, and nothing
+            otherwise. ``False`` always shows nothing; ``True`` shows the input
+            values as raw counts. A string selects
             either the value *source* (``"original"`` — the input values, the
             default; or ``"fitted"`` — the fitted areas) or the display *type*
             (``"counts"`` — raw values; or ``"percent"`` — each region's share

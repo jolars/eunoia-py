@@ -11,6 +11,7 @@ from matplotlib.patches import Patch, PathPatch
 from matplotlib.patches import Rectangle as MplRectangle
 from matplotlib.path import Path
 
+from eunoia._models import VennFit
 from eunoia._options import get_options
 
 if TYPE_CHECKING:
@@ -29,13 +30,19 @@ def render(
     fills: dict[str, dict[str, Any]] | None = None,
     edges: dict[str, Any] | Sequence[dict[str, Any]] | None = None,
     labels: bool | dict[str, Any] | None = None,
-    quantities: bool | str | dict[str, Any] = False,
+    quantities: bool | str | dict[str, Any] | None = None,
     legend: bool | dict[str, Any] = False,
     complement: dict[str, Any] | None = None,
 ) -> Axes:
     """Draw an EulerFit. See ``EulerFit.plot`` for parameter docs."""
     if ax is None:
         _, ax = plt.subplots()
+
+    # ``quantities=None`` means "context default": off for a proportional
+    # EulerFit, but on for a topological VennFit that was built with supplied
+    # values (which live in ``original_values``). An explicit value always wins.
+    if quantities is None:
+        quantities = isinstance(fit, VennFit) and bool(fit.original_values)
 
     # Global defaults (eunoia.options). Each call's explicit kwargs win over
     # these, which in turn win over matplotlib's own defaults.

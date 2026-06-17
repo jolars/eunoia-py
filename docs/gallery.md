@@ -398,10 +398,29 @@ eu.venn(3, shape="rectangle").plot(ax=right)
 fig;
 ```
 
+### With region quantities
+
+`venn` accepts the same value mapping as `euler`. The layout stays topological,
+but the values are kept as `original_values` and `plot()` labels each region
+automatically (pass `quantities=False` to suppress them). This is the usual
+"Venn diagram with subset sizes" plot.
+
+```{code-cell}
+eu.venn(
+    {
+        "A": 12, "B": 9, "C": 7,
+        "A&B": 4, "A&C": 3, "B&C": 2, "A&B&C": 1,
+    }
+).plot();
+```
+
+Use `input="inclusive"` when the values are total set sizes (overlaps included)
+rather than per-region counts.
+
 ### From membership lists
 
-`venn` accepts the same membership-list input as `euler`; it only needs the set
-names.
+`venn` accepts the same membership-list input as `euler`; it counts each element
+into its region, so the quantities are shown just as above.
 
 ```{code-cell}
 eu.venn({"A": ["x", "y", "z"], "B": ["y", "z", "w"], "C": ["z", "w", "q"]}).plot();

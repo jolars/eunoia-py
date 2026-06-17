@@ -101,3 +101,75 @@ def test_venn_rejects_bad_input() -> None:
 def test_venn_membership_dict_extracts_base_sets() -> None:
     v = eu.venn({"A": ["x", "y"], "B": ["y", "z"]})
     assert [s.set for s in v.shapes] == ["A", "B"]
+
+
+def test_venn_mapping_carries_original_values() -> None:
+    v = eu.venn({"A": 1, "B": 2, "A&B": 3})
+    assert v.original_values == {"A": 1, "B": 2, "A&B": 3}
+
+
+def test_venn_mapping_canonicalizes_keys() -> None:
+    v = eu.venn({"B&A": 3, "A": 1})
+    assert v.original_values == {"A&B": 3, "A": 1}
+
+
+def test_venn_membership_carries_counts() -> None:
+    # x -> A only, y -> A&B, z -> B only.
+    v = eu.venn({"A": ["x", "y"], "B": ["y", "z"]})
+    assert v.original_values == {"A": 1, "A&B": 1, "B": 1}
+
+
+def test_venn_dataframe_carries_counts() -> None:
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"A": [True, True, False], "B": [False, True, True]})
+    v = eu.venn(df)
+    assert [s.set for s in v.shapes] == ["A", "B"]
+    assert v.original_values == {"A": 1, "A&B": 1, "B": 1}
+
+
+def test_venn_int_input_has_no_original_values() -> None:
+    v = eu.venn(3)
+    assert v.original_values == {}
+
+
+def test_venn_inclusive_input_accepted_for_mapping() -> None:
+    v = eu.venn({"A": 10, "B": 7, "A&B": 3}, input="inclusive")
+    assert v.original_values == {"A": 10, "B": 7, "A&B": 3}
+
+
+def test_venn_inclusive_rejected_for_membership() -> None:
+    with pytest.raises(eu.EunoiaError):
+        eu.venn({"A": ["x"], "B": ["y"]}, input="inclusive")
+
+
+def test_venn_inclusive_rejected_for_dataframe() -> None:
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"A": [True], "B": [False]})
+    with pytest.raises(eu.EunoiaError):
+        eu.venn(df, input="inclusive")
+
+
+def test_venn_invalid_input_value_raises() -> None:
+    with pytest.raises(eu.EunoiaError):
+        eu.venn(3, input="bogus")  # type: ignore[arg-type]
+
+
+def test_venn_quantities_auto_on_with_values() -> None:
+    ax = eu.venn({"A": 1, "B": 2, "A&B": 3}).plot()
+    texts = sorted(t.get_text() for t in ax.texts)
+    # Three region quantities plus two set labels.
+    assert "1" in texts and "2" in texts and "3" in texts
+    plt.close(ax.figure)
+
+
+def test_venn_quantities_off_without_values() -> None:
+    ax = eu.venn(3).plot()
+    # No region values to show; only set labels (A, B, C) appear.
+    assert sorted(t.get_text() for t in ax.texts) == ["A", "B", "C"]
+    plt.close(ax.figure)
+
+
+def test_venn_quantities_false_suppresses_with_values() -> None:
+    ax = eu.venn({"A": 1, "B": 2, "A&B": 3}).plot(quantities=False, labels=False)
+    assert len(ax.texts) == 0
+    plt.close(ax.figure)
