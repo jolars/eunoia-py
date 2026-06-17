@@ -39,6 +39,7 @@ dev = [
     "maturin>=1.13",
     "pandas>=2",
     "polars>=1",
+    "reprexpy>=0.3",
 ]
 # Competitor fitters for the `benchmarks/` harness only. Kept out of `dev`,
 # `docs`, and runtime deps: matplotlib-set-diagrams is GPL, so it must never
