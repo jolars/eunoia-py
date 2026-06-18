@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.4.0](https://github.com/jolars/eunoia-py/compare/v0.3.0...v0.4.0) (2026-06-18)
+
+### Features
+- **venn:** add value-setting in input ([`d8698bb`](https://github.com/jolars/eunoia-py/commit/d8698bb0b0ceec40629d1f0d3b1bf906d182be28))
+
 ## [0.3.0](https://github.com/jolars/eunoia-py/compare/v0.2.0...v0.3.0) (2026-06-15)
 
 ### Features
