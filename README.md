@@ -36,7 +36,7 @@ fit.plot()
 plt.show()
 ```
 
-### Inclusive input
+### Inclusive Input
 
 If your numbers are set sizes that already include their overlaps, pass
 `input="inclusive"` and the Eunoia core handles the inclusion-exclusion
@@ -60,7 +60,7 @@ print(fit.diag_error)  # ~1e-14
 fit.plot(quantities=True)
 ```
 
-### Plot styling
+### Plot Styling
 
 ```python
 fit.plot(
@@ -71,7 +71,7 @@ fit.plot(
 )
 ```
 
-### Venn diagrams
+### Venn Diagrams
 
 `venn()` draws a topological (not area-proportional) diagram in which every
 intersection is shown, regardless of its size. It accepts a set count, a list of
@@ -82,15 +82,15 @@ fit = eu.venn(["A", "B", "C"])
 fit.plot(quantities=True)
 ```
 
-Ellipse Venn diagrams support 1–5 sets; circle, square, and rectangle support
-1–3.
+Ellipse Venn diagrams support 1-5 sets; circle, square, and rectangle support
+1-3.
 
-### Other shapes
+### Other Shapes
 
 Besides `"circle"` (default) and `"ellipse"`, `euler()` and `venn()` accept
 `shape="square"` and `shape="rectangle"`.
 
-### Global plotting options
+### Global Plotting Options
 
 `eunoia.options(...)` sets defaults for every subsequent plot (colors, edges,
 labels, quantities, legend, complement). Called with no arguments it returns a
