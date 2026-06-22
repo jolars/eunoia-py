@@ -267,3 +267,25 @@ def test_n_restarts_one_is_reproducible() -> None:
     a = eu.euler(_LOSS_SPEC, n_restarts=1, seed=42)
     b = eu.euler(_LOSS_SPEC, n_restarts=1, seed=42)
     assert a.loss == pytest.approx(b.loss)
+
+
+def test_n_threads_does_not_change_seeded_fit() -> None:
+    # Thread count only affects speed: the lowest-loss restart is selected
+    # regardless of completion order, so a seeded fit matches the serial one.
+    default = eu.euler(_LOSS_SPEC, seed=0)
+    serial = eu.euler(_LOSS_SPEC, seed=0, n_threads=1)
+    assert serial.fitted_values == pytest.approx(default.fitted_values)
+    assert serial.loss == pytest.approx(default.loss)
+
+
+def test_n_threads_caps_pool() -> None:
+    fit = eu.euler(_LOSS_SPEC, seed=0, n_threads=2)
+    assert math.isfinite(fit.loss)
+    assert len(fit.shapes) == 3
+
+
+def test_n_threads_negative_raises() -> None:
+    # n_threads maps to a Rust usize, so a negative value is rejected at the
+    # FFI boundary.
+    with pytest.raises(OverflowError):
+        eu.euler(_LOSS_SPEC, n_threads=-1)

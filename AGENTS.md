@@ -134,15 +134,23 @@ tests/test_*.py                  fit / plot / repr / smoke tests
   `src/lib.rs` maps them to the core `LossType`. `None` keeps the core default
   (`sum_squared`). Non-smooth losses (`sum_absolute`, `log_sum_absolute`,
   `diag_error`) optimize correctly but are much slower, especially for ellipses.
-- **`euler(..., optimizer=/tolerance=/n_restarts=/max_iterations=)`** expose the
-  matching `Fitter` builder methods, threaded exactly like `loss`/`seed`: Python
-  passes scalars through the FFI (no Python-side validation), Rust applies them
-  with guarded `if let Some(..)` chaining in each `_fit_*`. `optimizer=` is a
-  snake_case string (`"levenberg_marquardt"`, `"lbfgs"`, `"nelder_mead"`,
-  `"cma_es_lm"`, `"trf"`, `"cma_es_trf"`) mapped by `parse_optimizer` in
-  `src/lib.rs` (mirrors `parse_loss`) to the core `Optimizer` enum; `_fit.Optimizer`
-  is the public `Literal` (kept unexported, like `Loss`). These knobs apply to
-  `euler` only — `venn` is topological and takes none of them.
+- **`euler(..., optimizer=/tolerance=/n_restarts=/max_iterations=/n_threads=)`**
+  expose the matching `Fitter` builder methods, threaded exactly like
+  `loss`/`seed`: Python passes scalars through the FFI (no Python-side
+  validation), Rust applies them with guarded `if let Some(..)` chaining in each
+  `_fit_*`. `optimizer=` is a snake_case string (`"levenberg_marquardt"`,
+  `"lbfgs"`, `"nelder_mead"`, `"cma_es_lm"`, `"trf"`, `"cma_es_trf"`) mapped by
+  `parse_optimizer` in `src/lib.rs` (mirrors `parse_loss`) to the core
+  `Optimizer` enum; `_fit.Optimizer` is the public `Literal` (kept unexported,
+  like `Loss`). `n_threads=` maps to `Fitter::jobs`: `None` (the default,
+  i.e. we don't call `jobs()`) defers to rayon's global pool = all logical
+  cores; a positive int is a private scoped pool of that many threads (`1` =
+  serial). It's inert unless the crate is built with the `parallel` feature,
+  which we now enable on the `eunoia` dependency in `Cargo.toml`
+  (`features = ["parallel"]`, pulling in rayon). Parallelism never changes a
+  seeded result (best-loss selection across restarts is order-independent),
+  only speed. These knobs apply to `euler` only — `venn` is topological and
+  takes none of them.
 
 ## Gotchas (things that bit us once)
 
@@ -181,8 +189,9 @@ at the local checkout at `/home/jola/projects/eunoia`.)
 - `Layout<S>`: `.shapes()`, `.requested()`, `.fitted()`, `.residuals()`,
   `.region_error()`, `.diag_error()`, `.stress()`, `.loss()`, `.iterations()`
   (`crates/eunoia/src/fitter/layout.rs`)
-- `Layout::plot_data(&spec, PlotOptions) -> PlotData` (gated on `plotting`
-  feature; we enable it in `Cargo.toml`)
+- `Layout::plot_data(&spec, PlotOptions) -> PlotData` (unconditional in the core
+  — there is no `plotting` feature; the only optional feature we enable is
+  `parallel`, see the `n_threads=` note above)
 - `DiagramError` variants → `EunoiaError` with prefix tags
 
 ## Manual one-time setup (before first PyPI release)

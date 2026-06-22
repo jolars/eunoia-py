@@ -79,6 +79,7 @@ def euler(
     tolerance: float | None = ...,
     n_restarts: int | None = ...,
     max_iterations: int | None = ...,
+    n_threads: int | None = ...,
 ) -> EulerFit[Circle]: ...
 
 
@@ -95,6 +96,7 @@ def euler(
     tolerance: float | None = ...,
     n_restarts: int | None = ...,
     max_iterations: int | None = ...,
+    n_threads: int | None = ...,
 ) -> EulerFit[Ellipse]: ...
 
 
@@ -111,6 +113,7 @@ def euler(
     tolerance: float | None = ...,
     n_restarts: int | None = ...,
     max_iterations: int | None = ...,
+    n_threads: int | None = ...,
 ) -> EulerFit[Square]: ...
 
 
@@ -127,6 +130,7 @@ def euler(
     tolerance: float | None = ...,
     n_restarts: int | None = ...,
     max_iterations: int | None = ...,
+    n_threads: int | None = ...,
 ) -> EulerFit[Rectangle]: ...
 
 
@@ -142,6 +146,7 @@ def euler(
     tolerance: float | None = None,
     n_restarts: int | None = None,
     max_iterations: int | None = None,
+    n_threads: int | None = None,
 ) -> EulerFit[Circle] | EulerFit[Ellipse] | EulerFit[Square] | EulerFit[Rectangle]:
     """Fit an area-proportional Euler diagram.
 
@@ -201,6 +206,13 @@ def euler(
     max_iterations:
         Maximum optimizer iterations per fit. ``None`` keeps the core default
         (``200``).
+    n_threads:
+        Number of threads used to run the ``n_restarts`` restarts in parallel.
+        ``None`` (default) uses all available logical cores; a positive integer
+        caps the thread pool, and ``1`` runs serially. This does not affect the
+        result of a seeded fit (the lowest-loss restart is selected regardless
+        of completion order), only how fast it is computed. The default pool
+        also honors the ``RAYON_NUM_THREADS`` environment variable.
 
     Returns
     -------
@@ -257,6 +269,7 @@ def euler(
             tolerance,
             n_restarts,
             max_iterations,
+            n_threads,
         )
         return _finish(
             result,
@@ -277,6 +290,7 @@ def euler(
             tolerance,
             n_restarts,
             max_iterations,
+            n_threads,
         )
         return _finish(
             result_e,
@@ -297,6 +311,7 @@ def euler(
             tolerance,
             n_restarts,
             max_iterations,
+            n_threads,
         )
         return _finish(
             result_s,
@@ -316,6 +331,7 @@ def euler(
         tolerance,
         n_restarts,
         max_iterations,
+        n_threads,
     )
     return _finish(
         result_r,

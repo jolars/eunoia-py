@@ -293,7 +293,7 @@ where
 }
 
 #[pyfunction]
-#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None, optimizer=None, tolerance=None, n_restarts=None, max_iterations=None))]
+#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None, optimizer=None, tolerance=None, n_restarts=None, max_iterations=None, n_threads=None))]
 fn _fit_circles<'py>(
     py: Python<'py>,
     combinations: Vec<(String, f64)>,
@@ -305,6 +305,7 @@ fn _fit_circles<'py>(
     tolerance: Option<f64>,
     n_restarts: Option<usize>,
     max_iterations: Option<usize>,
+    n_threads: Option<usize>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let spec = build_spec(&combinations, input_kind, complement)?;
     let mut fitter = Fitter::<Circle>::new(&spec);
@@ -326,12 +327,15 @@ fn _fit_circles<'py>(
     if let Some(m) = max_iterations {
         fitter = fitter.max_iterations(m);
     }
+    if let Some(nt) = n_threads {
+        fitter = fitter.jobs(nt);
+    }
     let layout = fitter.fit().map_err(map_err)?;
     build_result(py, &spec, &layout, ser_circle)
 }
 
 #[pyfunction]
-#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None, optimizer=None, tolerance=None, n_restarts=None, max_iterations=None))]
+#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None, optimizer=None, tolerance=None, n_restarts=None, max_iterations=None, n_threads=None))]
 fn _fit_ellipses<'py>(
     py: Python<'py>,
     combinations: Vec<(String, f64)>,
@@ -343,6 +347,7 @@ fn _fit_ellipses<'py>(
     tolerance: Option<f64>,
     n_restarts: Option<usize>,
     max_iterations: Option<usize>,
+    n_threads: Option<usize>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let spec = build_spec(&combinations, input_kind, complement)?;
     let mut fitter = Fitter::<Ellipse>::new(&spec);
@@ -364,12 +369,15 @@ fn _fit_ellipses<'py>(
     if let Some(m) = max_iterations {
         fitter = fitter.max_iterations(m);
     }
+    if let Some(nt) = n_threads {
+        fitter = fitter.jobs(nt);
+    }
     let layout = fitter.fit().map_err(map_err)?;
     build_result(py, &spec, &layout, ser_ellipse)
 }
 
 #[pyfunction]
-#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None, optimizer=None, tolerance=None, n_restarts=None, max_iterations=None))]
+#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None, optimizer=None, tolerance=None, n_restarts=None, max_iterations=None, n_threads=None))]
 fn _fit_squares<'py>(
     py: Python<'py>,
     combinations: Vec<(String, f64)>,
@@ -381,6 +389,7 @@ fn _fit_squares<'py>(
     tolerance: Option<f64>,
     n_restarts: Option<usize>,
     max_iterations: Option<usize>,
+    n_threads: Option<usize>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let spec = build_spec(&combinations, input_kind, complement)?;
     let mut fitter = Fitter::<Square>::new(&spec);
@@ -402,12 +411,15 @@ fn _fit_squares<'py>(
     if let Some(m) = max_iterations {
         fitter = fitter.max_iterations(m);
     }
+    if let Some(nt) = n_threads {
+        fitter = fitter.jobs(nt);
+    }
     let layout = fitter.fit().map_err(map_err)?;
     build_result(py, &spec, &layout, ser_square)
 }
 
 #[pyfunction]
-#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None, optimizer=None, tolerance=None, n_restarts=None, max_iterations=None))]
+#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None, optimizer=None, tolerance=None, n_restarts=None, max_iterations=None, n_threads=None))]
 fn _fit_rectangles<'py>(
     py: Python<'py>,
     combinations: Vec<(String, f64)>,
@@ -419,6 +431,7 @@ fn _fit_rectangles<'py>(
     tolerance: Option<f64>,
     n_restarts: Option<usize>,
     max_iterations: Option<usize>,
+    n_threads: Option<usize>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let spec = build_spec(&combinations, input_kind, complement)?;
     let mut fitter = Fitter::<Rectangle>::new(&spec);
@@ -439,6 +452,9 @@ fn _fit_rectangles<'py>(
     }
     if let Some(m) = max_iterations {
         fitter = fitter.max_iterations(m);
+    }
+    if let Some(nt) = n_threads {
+        fitter = fitter.jobs(nt);
     }
     let layout = fitter.fit().map_err(map_err)?;
     build_result(py, &spec, &layout, ser_rectangle)
