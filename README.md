@@ -116,12 +116,12 @@ the previous state on exit. `reset_options()` reverts to the built-ins.
 This package is the Python member of the [Eunoia](https://eunoia.bz) family. The
 same Rust core powers bindings in several other languages:
 
-  | Project                                            | Language             | Distribution                                                          |
-  | -------------------------------------------------- | -------------------- | --------------------------------------------------------------------- |
-  | [eunoia](https://github.com/jolars/eunoia)         | Rust (core)          | [crates.io](https://crates.io/crates/eunoia)                          |
-  | [@jolars/eunoia](https://github.com/jolars/eunoia) | JavaScript/TS (WASM) | [npm](https://www.npmjs.com/package/@jolars/eunoia)                   |
-  | [Eunoia.jl](https://github.com/jolars/Eunoia.jl)   | Julia                | [Julia Hub](https://platform.juliahub.com/ui/Packages/General/Eunoia) |
-  | [eulerr](https://github.com/jolars/eulerr)         | R (original)         | [CRAN](https://cran.r-project.org/package=eulerr)                     |
+  | Language   | Package                                                                                                               | Install                      |
+  | ---------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+  | Rust       | [`eunoia`](https://crates.io/crates/eunoia) ([repo](https://github.com/jolars/eunoia))                                | `cargo add eunoia`           |
+  | JavaScript | [`@jolars/eunoia`](https://www.npmjs.com/package/@jolars/eunoia) ([repo](https://github.com/jolars/eunoia))           | `npm install @jolars/eunoia` |
+  | Julia      | [`Eunoia.jl`](https://platform.juliahub.com/ui/Packages/General/Eunoia) ([repo](https://github.com/jolars/Eunoia.jl)) | `] add Eunoia`               |
+  | R          | [`eulerr`](https://cran.r-project.org/package=eulerr) ([repo](https://github.com/jolars/eulerr))                      | `install.packages("eulerr")` |
 
 Narrative documentation for the whole family lives at
 [eunoia.bz/docs/](https://eunoia.bz/docs/); the Rust API reference is at
