@@ -3,12 +3,12 @@
 Accepts any dataframe narwhals understands (pandas, polars, pyarrow, modin, …)
 as a *wide membership matrix*: each column is a set, each row an observation,
 and a truthy cell means the observation belongs to that set. This mirrors
-eulerr's ``data.frame``/matrix idiom and is the wide-form cousin of the
+eulerr's ``data.frame`` or matrix idiom and is the wide-form cousin of the
 membership-list path in :func:`eunoia._parse.parse_membership_input`.
 
-We route through `narwhals <https://narwhals-dev.github.io/narwhals/>`_ — a
+We route through `narwhals <https://narwhals-dev.github.io/narwhals/>`_, a
 lightweight, dataframe-agnostic compatibility layer recommended by both pandas
-and polars — rather than the (now deprecated) dataframe interchange protocol.
+and polars, rather than the (now deprecated) dataframe interchange protocol.
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ def _column_to_bool(series: nw.Series[Any], name: str) -> npt.NDArray[np.bool_]:
 
     Columns must be boolean or ``0/1`` numeric; null cells count as non-members.
     Validation is by value (``np.isin``), so a pandas object column of
-    ``bool``/``None`` is accepted while strings, datetimes or out-of-range
+    ``bool`` or ``None`` is accepted while strings, datetimes, or out-of-range
     numbers raise."""
     values = series.to_numpy()
     nulls = series.is_null().to_numpy()

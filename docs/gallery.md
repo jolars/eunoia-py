@@ -51,7 +51,7 @@ fit.plot(edges={"linestyle": "--"});
 
 To style each outline independently, pass `edges` as a dict keyed by set name
 (each value a dict of `PathPatch` kwargs) or as a sequence of such dicts, one
-per set in shape order — mirroring how `colors` accepts a per-set dict.
+per set in shape order, mirroring how `colors` accepts a per-set dict.
 
 ```{code-cell}
 fit = eu.euler({"Tom": 1, "Greg": 1, "Alberta": 1})
@@ -306,8 +306,8 @@ fit.plot(legend={"loc": "upper right", "title": "Sets"});
 string (matplotlib [mathtext](https://matplotlib.org/stable/users/explain/text/mathtext.html)
 works, which is part of why we picked matplotlib), to an `Axes.text` kwargs dict
 (with an optional `"text"` key for custom text), or to `None`/`False` to hide
-that set's label. A dict whose keys are *not* set names — e.g.
-`{"fontsize": 14}` — is a uniform style applied to every label instead.
+that set's label. A dict whose keys are *not* set names (e.g.
+`{"fontsize": 14}`) is a uniform style applied to every label instead.
 
 ```{code-cell}
 fit = eu.euler({"alpha": 10, "beta": 7, "alpha&beta": 3})

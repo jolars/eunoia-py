@@ -269,11 +269,11 @@ def _resolve_set_edges(
 
     ``edges`` may be:
 
-    * ``None`` — no overrides (every set gets ``{}``).
-    * a flat dict of ``PathPatch`` kwargs — applied uniformly to every set.
-    * a per-set dict keyed by set name, whose values are kwargs dicts — each
+    * ``None``: no overrides (every set gets ``{}``).
+    * a flat dict of ``PathPatch`` kwargs: applied uniformly to every set.
+    * a per-set dict keyed by set name, whose values are kwargs dicts: each
       set styled independently; sets absent from the dict get ``{}``.
-    * a sequence of kwargs dicts — one per set, in shape order.
+    * a sequence of kwargs dicts: one per set, in shape order.
 
     A dict is read as per-set when *all* its values are themselves dicts;
     otherwise it is a single uniform style (no ``PathPatch`` kwarg takes a
@@ -311,11 +311,11 @@ def _resolve_set_labels(
 
     * a **per-set** mapping whose keys are all set names. Each value is either
 
-      - a string — replacement label text for that set (default style);
-      - a dict — ``ax.text`` keyword arguments for that set; an optional
+      - a string: replacement label text for that set (default style);
+      - a dict: ``ax.text`` keyword arguments for that set; an optional
         ``"text"`` key overrides the label text (e.g. mathtext such as
         ``r"$\\alpha$"``);
-      - ``None`` or ``False`` — hide that set's label.
+      - ``None`` or ``False``: hide that set's label.
 
       Sets absent from the mapping keep their name and default style.
 
@@ -373,12 +373,12 @@ def _resolve_quantities(
 
     ``quantities`` may be:
 
-    * ``False`` (default) — off; ``True`` — on with the input (original)
+    * ``False`` (default) is off; ``True`` is on with the input (original)
       values shown as raw counts.
-    * a string — one of ``"original"`` / ``"fitted"`` (value *source*, shown as
-      counts) or ``"counts"`` / ``"percent"`` (display *type*, original
+    * a string: one of ``"original"`` or ``"fitted"`` (value *source*, shown as
+      counts), or ``"counts"`` or ``"percent"`` (display *type*, original
       source). ``"percent"`` shows each region's share of the total.
-    * a dict — ``{"source": ..., "type": ..., **text_kwargs}``. ``source`` is
+    * a dict: ``{"source": ..., "type": ..., **text_kwargs}``. ``source`` is
       ``"original"`` (default) or ``"fitted"``; ``type`` is ``"counts"``,
       ``"percent"``, or a sequence of both (counts on top, percent in
       parentheses below). Any remaining keys are forwarded to ``ax.text`` as

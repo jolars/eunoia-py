@@ -1,4 +1,4 @@
-"""Public ``euler()`` function — dispatches to the Rust binding."""
+"""Public ``euler()`` function, dispatching to the Rust binding."""
 
 from __future__ import annotations
 
@@ -159,7 +159,7 @@ def euler(
           their areas;
         * a mapping from set names to membership collections
           (``{"A": ["x", "y"], "B": ["y", "z"]}``);
-        * a DataFrame (pandas, polars, … — anything narwhals supports) treated
+        * a DataFrame (pandas, polars, or anything narwhals supports) treated
           as a membership matrix: each column is a set, each row an observation,
           and a truthy cell denotes membership. Columns must be boolean or
           ``0/1`` numeric.
@@ -173,12 +173,12 @@ def euler(
         ``"inclusive"``: values are total set sizes that include overlaps;
         the eunoia core converts internally.
     shape:
-        ``"circle"`` (default), ``"ellipse"``, ``"square"`` or
+        ``"circle"`` (default), ``"ellipse"``, ``"square"``, or
         ``"rectangle"``.
     seed:
         Optional seed for the optimizer's RNG (for reproducibility).
     complement:
-        Area outside every named set (the universe / "complement"). When
+        Area outside every named set (the universe or "complement"). When
         given, the core jointly fits a container box and the result carries
         a ``container``. Requires every set to overlap into one cluster.
     loss:

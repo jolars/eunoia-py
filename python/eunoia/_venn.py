@@ -1,4 +1,4 @@
-"""Public ``venn()`` function — non-proportional Venn diagrams."""
+"""Public ``venn()`` function for non-proportional Venn diagrams."""
 
 from __future__ import annotations
 
@@ -90,7 +90,7 @@ def venn(
     """Lay out a (non-proportional) Venn diagram.
 
     Unlike :func:`euler`, every set intersection is always drawn, regardless
-    of area. The arrangement is *topological* — the shapes come from the
+    of area. The arrangement is *topological*: the shapes come from the
     eunoia core's canonical Venn layouts, not from numerical optimization.
 
     Parameters
@@ -98,25 +98,25 @@ def venn(
     sets:
         The sets to show. One of:
 
-        * an ``int`` *n* — *n* sets with default names ``"A"``, ``"B"``, …;
+        * an ``int`` *n*: *n* sets with default names ``"A"``, ``"B"``, …;
         * a sequence of set names, e.g. ``["cat", "dog", "fish"]``;
         * a mapping from set-combination labels (e.g. ``"A"``, ``"A&B"``) to
-          per-region quantities — the layout stays topological, but the values
-          are kept as :attr:`~EulerFit.original_values` so ``plot()`` can label
+          per-region quantities, where the layout stays topological but the
+          values are kept as :attr:`~EulerFit.original_values` so ``plot()`` can label
           each region (this is the common "Venn diagram with subset sizes"
           case);
         * a mapping from set names to membership collections
           (``{"A": ["x", "y"], "B": ["y", "z"]}``), counted into per-region
           quantities;
         * a DataFrame (pandas, polars, … via narwhals) treated as a membership
-          matrix — its column names are the sets and each row is counted into
+          matrix; its column names are the sets and each row is counted into
           a region.
 
         For ``int`` and plain name-sequence input there are no quantities, so
         ``original_values`` is empty.
     shape:
-        ``"ellipse"`` (default), ``"circle"``, ``"square"`` or
-        ``"rectangle"``. Ellipses support 1--5 sets; circles, squares and
+        ``"ellipse"`` (default), ``"circle"``, ``"square"``, or
+        ``"rectangle"``. Ellipses support 1--5 sets; circles, squares, and
         rectangles 1--3. An unsupported set count raises :class:`EunoiaError`.
     complement:
         Optional universe area outside every set. For a Venn diagram this only

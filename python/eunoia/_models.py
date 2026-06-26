@@ -181,11 +181,11 @@ class EulerFit(Generic[S]):
         labels:
             Set name labels at each set's anchor. ``None`` (default) shows
             them when there is no legend and hides them when a legend is drawn;
-            ``True``/``False`` force them on/off. A dict turns labels on and
-            customizes text and style: either a **per-set** mapping (keys are
+            ``True`` or ``False`` force them on or off. A dict turns labels on
+            and customizes text and style: either a **per-set** mapping (keys are
             set names) whose values are a replacement string, an ``ax.text``
-            kwargs dict — with an optional ``"text"`` key for custom text such
-            as mathtext ``r"$\alpha$"`` — or ``None``/``False`` to hide that
+            kwargs dict (with an optional ``"text"`` key for custom text such
+            as mathtext ``r"$\alpha$"``), or ``None`` or ``False`` to hide that
             set; or a **uniform** ``ax.text`` kwargs dict (no key a set name)
             applied to every label, e.g. ``{"fontsize": 14}``.
         quantities:
@@ -194,9 +194,9 @@ class EulerFit(Generic[S]):
             values when the diagram was built with quantities, and nothing
             otherwise. ``False`` always shows nothing; ``True`` shows the input
             values as raw counts. A string selects
-            either the value *source* (``"original"`` — the input values, the
-            default; or ``"fitted"`` — the fitted areas) or the display *type*
-            (``"counts"`` — raw values; or ``"percent"`` — each region's share
+            either the value *source* (``"original"``, the input values, the
+            default; or ``"fitted"``, the fitted areas) or the display *type*
+            (``"counts"``, raw values; or ``"percent"``, each region's share
             of the total). A dict combines both and adds text styling:
             ``{"source": "fitted", "type": ["counts", "percent"],
             "color": "dimgray", "fontsize": 8}``. ``type`` may name both

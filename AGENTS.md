@@ -1,7 +1,7 @@
 # Agent guide
 
-Notes for AI agents working on this repo. Keep it short --- code is the source
-of truth, this file just points at things and flags gotchas.
+Notes for AI agents working on this repo. Keep it short: code is the source
+of truth, and this file just points at things and flags gotchas.
 
 ## What this is
 
@@ -12,8 +12,8 @@ the R package `eulerr`. Built with PyO3 + maturin, abi3-py311.
 ## Working in the repo
 
 The dev environment is a `devenv` shell, which puts `cargo` (Rust 1.88),
-`maturin`, `pytest`, etc. on `PATH`. Assume you are already inside it — run
-commands directly (no `direnv` / wrapper prefix needed).
+`maturin`, `pytest`, etc. on `PATH`. Assume you are already inside it, so run
+commands directly (no `direnv` or wrapper prefix needed).
 
 The devenv also auto-runs `uv sync --all-extras --all-groups`, so the venv at
 `.devenv/state/venv` already has matplotlib, numpy, mypy, pyright, maturin, and
@@ -44,12 +44,12 @@ python/eunoia/_models.py         dataclasses: Point, Circle, Ellipse, EulerFit[S
 python/eunoia/_fit.py            public euler() with @overload on shape kwarg
 python/eunoia/_parse.py          dict → list[(combo, area)], canonicalize, to_inclusive
 python/eunoia/_plot.py           matplotlib renderer (PathPatch + compound Path)
-python/eunoia/_options.py        global plotting defaults: options() / get_options() / reset_options()
+python/eunoia/_options.py        global plotting defaults: options(), get_options(), and reset_options()
 python/eunoia/_eunoia.pyi        hand-written stubs for the compiled module
 python/eunoia/py.typed           PEP 561 marker
 docs/conf.py                     Sphinx + MyST + furo (mirrored from sortedl1)
 docs/exts/github_link.py         linkcode helper (BSD-3, ported from scikit-learn)
-tests/test_*.py                  fit / plot / repr / smoke tests
+tests/test_*.py                  fit, plot, repr, and smoke tests
 .github/workflows/ci.yml         lint + typecheck + test matrix + docs build
 .github/workflows/publish.yml    multi-platform wheels → PyPI trusted publishing (tag-triggered)
 .github/workflows/publish-test.yml  same matrix → TestPyPI (workflow_dispatch only)
@@ -65,7 +65,7 @@ tests/test_*.py                  fit / plot / repr / smoke tests
   refit. (`set_anchor_regions` maps each set to the canonical region key its
   label anchor was derived from; `_plot` uses it to stack a set label and its
   region quantity when they coincide, instead of comparing anchor points by
-  float equality — the optimizer is only reproducible to fp precision, so the
+  float equality; the optimizer is only reproducible to fp precision, so the
   two copies of the point differ by ~1e-8.) In `src/lib.rs` the
   shared `build_result` generic + per-shape `ser_*` closures assemble the dict;
   `_fit_*` and `_venn` both call it. All four shapes map to a frozen dataclass
@@ -80,7 +80,7 @@ tests/test_*.py                  fit / plot / repr / smoke tests
   Rejected by the core for multi-cluster specs (surfaces as `EunoiaError`).
 - **`venn()`** returns a `VennFit(EulerFit)` (custom repr; topological, so
   `original_values` is empty and `fitted_values` holds geometric region areas).
-  Accepts `int` / list-of-names / mapping. Supported set counts: ellipse
+  Accepts `int`, list-of-names, or mapping. Supported set counts: ellipse
   (1–5), circle/square/rectangle (1–3). Circle Venn gained a
   `canonical_venn_layout` impl in core 0.18; an unsupported count surfaces as
   `EunoiaError`.
@@ -90,21 +90,21 @@ tests/test_*.py                  fit / plot / repr / smoke tests
   in the user's input scale (since `Layout::fitted()` is always per-region
   exclusive).
 - **Canonical keys** everywhere in returned dicts: `"B&A"` becomes `"A&B"` via
-  `_parse.canonicalize`. Tests rely on this --- see
+  `_parse.canonicalize`. Tests rely on this; see
   `test_canonical_keys_in_output`.
 - **DataFrame input** (`euler`/`venn`): a pandas/polars/etc. frame is read as a
   *wide membership matrix* (each column a set, each row an observation, truthy
-  cell = membership) and counted into exclusive per-region counts --- the
+  cell = membership) and counted into exclusive per-region counts, the
   wide-form cousin of `parse_membership_input`. Lives in
   `python/eunoia/_dataframe.py`, routed through **narwhals** (`narwhals>=1.9`, a
   runtime dep) rather than the now-deprecated `__dataframe__` interchange
   protocol. `is_dataframe` is a `TypeGuard[IntoFrame]`; both public functions
   branch on it *before* the `Mapping` checks (a frame is not a `Mapping`).
-  Columns must be boolean or `0/1`-valued numeric --- validation is by value
+  Columns must be boolean or `0/1`-valued numeric; validation is by value
   (`np.isin([0, 1])`), so a pandas object column of `bool`/`None` is accepted
   while strings/datetimes/out-of-range numbers raise `EunoiaError`. Null cells
   count as non-members; all-false rows are dropped; DataFrame input is always
-  exclusive (rejects `input="inclusive"`). No Rust change --- the core still
+  exclusive (rejects `input="inclusive"`). No Rust change; the core still
   gets the same pre-aggregated `list[(combo, count)]`.
 - **Generic `EulerFit[S]`** with `S = TypeVar("S", Circle, Ellipse)`. The public
   `euler()` has two `@overload`s so `eu.euler(..., shape="ellipse")` types as
@@ -149,7 +149,7 @@ tests/test_*.py                  fit / plot / repr / smoke tests
   which we now enable on the `eunoia` dependency in `Cargo.toml`
   (`features = ["parallel"]`, pulling in rayon). Parallelism never changes a
   seeded result (best-loss selection across restarts is order-independent),
-  only speed. These knobs apply to `euler` only — `venn` is topological and
+  only speed. These knobs apply to `euler` only; `venn` is topological and
   takes none of them.
 
 ## Gotchas (things that bit us once)
@@ -164,7 +164,7 @@ tests/test_*.py                  fit / plot / repr / smoke tests
   `Could not start dynamically linked executable: ruff`, that's why.
 - **`eunoia` 1.x MSRV is 1.88**, matched by `rust-version` in `Cargo.toml`. Don't
   downgrade the toolchain below that.
-- **pyright is strict but with `reportUnknownMemberType` / `Variable` /
+- **pyright is strict but with `reportUnknownMemberType`, `Variable`, and
   `Argument` disabled** in `pyproject.toml`. matplotlib's stubs leave many
   kwargs as `Unknown`, which spams those rules without anything actionable. mypy
   strict does the heavy lifting; pyright is the secondary gate.
@@ -178,7 +178,7 @@ published 1.1.0 crate. 1.0 made the public enums `#[non_exhaustive]`, so
 `map_err`'s `DiagramError` match carries a `_` catch-all; 1.0 also fixed the
 `SumAbsoute`→`SumAbsolute` typo and 1.1 added `LossType::LogSumAbsolute`. The
 new 1.x default optimizer is reproducible only to floating-point precision, not
-bit-exact. Note: the published crate is a single crate — its sources live under
+bit-exact. Note: the published crate is a single crate; its sources live under
 `src/…`, not the workspace `crates/eunoia/src/…` paths cited below, which point
 at the local checkout at `/home/jola/projects/eunoia`.)
 
@@ -189,8 +189,8 @@ at the local checkout at `/home/jola/projects/eunoia`.)
 - `Layout<S>`: `.shapes()`, `.requested()`, `.fitted()`, `.residuals()`,
   `.region_error()`, `.diag_error()`, `.stress()`, `.loss()`, `.iterations()`
   (`crates/eunoia/src/fitter/layout.rs`)
-- `Layout::plot_data(&spec, PlotOptions) -> PlotData` (unconditional in the core
-  — there is no `plotting` feature; the only optional feature we enable is
+- `Layout::plot_data(&spec, PlotOptions) -> PlotData` (unconditional in the core:
+  there is no `plotting` feature; the only optional feature we enable is
   `parallel`, see the `n_threads=` note above)
 - `DiagramError` variants → `EunoiaError` with prefix tags
 
@@ -208,5 +208,5 @@ at the local checkout at `/home/jola/projects/eunoia`.)
 
 ## Out of scope for v0.1.0 (do not add without asking)
 
-`venn()`, `error_plot()`, `options()`, list-of-sets / DataFrame / numpy input,
-`complement=` kwarg, `square` / `rectangle` shapes, plot legend.
+`venn()`, `error_plot()`, `options()`, list-of-sets, DataFrame, or numpy input,
+`complement=` kwarg, `square` or `rectangle` shapes, plot legend.

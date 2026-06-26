@@ -49,7 +49,7 @@ fit = eu.euler(
 fit.original_values
 ```
 
-Elements are deduplicated within a set and stringified, so sets, tuples and
+Elements are deduplicated within a set and stringified, so sets, tuples, and
 non-string labels all work. `venn()` accepts the same shape (it only needs the
 set names):
 

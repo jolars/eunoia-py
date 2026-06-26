@@ -104,8 +104,8 @@ the previous state on exit. `reset_options()` reverts to the built-ins.
   | `eunoia.euler(values, …)`                      | Fit an area-proportional diagram from a dict       |
   | `eunoia.venn(sets, …)`                         | Fit a topological Venn diagram                     |
   | `eunoia.EulerFit`/`VennFit`                    | Result classes with shapes, fitted values, metrics |
-  | `eunoia.Circle`/`Ellipse`                      | Per-set fitted shape (circle / ellipse)            |
-  | `eunoia.Square`/`Rectangle`                    | Per-set fitted shape (square / rectangle)          |
+  | `eunoia.Circle`/`Ellipse`                      | Per-set fitted shape (circle or ellipse)           |
+  | `eunoia.Square`/`Rectangle`                    | Per-set fitted shape (square or rectangle)         |
   | `eunoia.Container`                             | Universe box drawn behind a `complement=` diagram  |
   | `eunoia.Point`                                 | 2D point                                           |
   | `eunoia.options`/`get_options`/`reset_options` | Global plotting defaults                           |

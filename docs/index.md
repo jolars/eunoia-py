@@ -13,7 +13,7 @@ api
 ```
 
 Python bindings for the [Eunoia](https://github.com/jolars/eunoia) Rust
-library — area-proportional Euler and Venn diagrams. Sister package to the
+library for area-proportional Euler and Venn diagrams. Sister package to the
 R package [eulerr](https://github.com/jolars/eulerr).
 
 ## Install
