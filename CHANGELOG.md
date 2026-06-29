@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/jolars/eunoia-py/compare/v0.4.0...v0.5.0) (2026-06-29)
+
+### Features
+- add support for rotated rectangles ([`7d8ed88`](https://github.com/jolars/eunoia-py/commit/7d8ed8847bbff4e366b9ae5f9bd69b24a940eca6))
+- place labels with size-aware algorithm ([`4fa9dc5`](https://github.com/jolars/eunoia-py/commit/4fa9dc5862a6d7fe0cdec8be5ddb40d36b712124))
+- add support for numpy bool arrays ([`8bfe019`](https://github.com/jolars/eunoia-py/commit/8bfe019dec476efb2d7fffc44b55482398dcbbb6))
+- **euler:** add n_threads option for parallel fitting ([`b1ab633`](https://github.com/jolars/eunoia-py/commit/b1ab633bf88bc253731c1dfa9701c63fbb005702))
+
 ## [0.4.0](https://github.com/jolars/eunoia-py/compare/v0.3.0...v0.4.0) (2026-06-18)
 
 ### Features
