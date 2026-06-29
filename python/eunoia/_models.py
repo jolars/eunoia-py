@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
@@ -58,6 +59,21 @@ class Rectangle:
 
 
 @dataclass(frozen=True)
+class RotatedRectangle:
+    """A fitted rotated rectangle for one input set.
+
+    ``width`` and ``height`` are the side lengths before rotation; ``rotation``
+    is the counterclockwise angle from the x-axis, in radians.
+    """
+
+    set: str
+    center: Point
+    width: float
+    height: float
+    rotation: float
+
+
+@dataclass(frozen=True)
 class Container:
     """The fitted universe box drawn around a diagram fit with ``complement``.
 
@@ -72,7 +88,13 @@ class Container:
     height: float
 
 
-S = TypeVar("S", Circle, Ellipse, Square, Rectangle)
+S = TypeVar("S", Circle, Ellipse, Square, Rectangle, RotatedRectangle)
+
+
+def _shape_kind_label(class_name: str) -> str:
+    """Space-separated lowercase shape name for ``repr`` (``RotatedRectangle``
+    -> ``"rotated rectangle"``)."""
+    return " ".join(w.lower() for w in re.findall(r"[A-Z][a-z]*", class_name))
 
 
 @dataclass(frozen=True, repr=False)
@@ -118,7 +140,9 @@ class EulerFit(Generic[S]):
 
     def __repr__(self) -> str:
         shape_kind = (
-            type(self.shapes[0]).__name__.lower() + "s" if self.shapes else "shapes"
+            _shape_kind_label(type(self.shapes[0]).__name__) + "s"
+            if self.shapes
+            else "shapes"
         )
         n = len(self.shapes)
         header = (
@@ -245,5 +269,7 @@ class VennFit(EulerFit[S]):
 
     def __repr__(self) -> str:
         names = [s.set for s in self.shapes]
-        kind = type(self.shapes[0]).__name__.lower() if self.shapes else "shape"
+        kind = (
+            _shape_kind_label(type(self.shapes[0]).__name__) if self.shapes else "shape"
+        )
         return f"VennFit ({len(names)} sets [{kind}]: {', '.join(names)})"

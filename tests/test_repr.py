@@ -39,3 +39,9 @@ def test_repr_for_ellipses_says_ellipses() -> None:
     fit = eu.euler({"A": 10, "B": 5, "A&B": 3}, shape="ellipse")
     text = repr(fit)
     assert "ellipses" in text
+
+
+def test_repr_for_rotated_rectangles_says_rotated_rectangles() -> None:
+    fit = eu.euler({"A": 10, "B": 5, "A&B": 3}, shape="rotated_rectangle", seed=1)
+    assert "rotated rectangles" in repr(fit)
+    assert "rotatedrectangles" not in repr(fit)

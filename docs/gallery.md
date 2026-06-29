@@ -399,6 +399,19 @@ eu.venn(3, shape="rectangle").plot(ax=right)
 fig;
 ```
 
+### Rotated rectangles
+
+Rotated rectangles support up to four sets. The four-set layout tilts the
+rectangles so that all 15 regions open up, the rectangular analogue of the
+classic four-ellipse Venn diagram.
+
+```{code-cell}
+fig, (left, right) = plt.subplots(1, 2, figsize=(9, 4))
+eu.venn(3, shape="rotated_rectangle").plot(ax=left)
+eu.venn(4, shape="rotated_rectangle").plot(ax=right)
+fig;
+```
+
 ### With region quantities
 
 `venn` accepts the same value mapping as `euler`. The layout stays topological,

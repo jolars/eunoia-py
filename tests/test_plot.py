@@ -248,7 +248,7 @@ def test_plot_ellipses() -> None:
     plt.close(ax.figure)
 
 
-@pytest.mark.parametrize("shape", ["square", "rectangle"])
+@pytest.mark.parametrize("shape", ["square", "rectangle", "rotated_rectangle"])
 def test_plot_squares_and_rectangles(shape: str) -> None:
     fit = eu.euler({"A": 10, "B": 5, "A&B": 3}, shape=shape)  # type: ignore[arg-type]
     ax = fit.plot()

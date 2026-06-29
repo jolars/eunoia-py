@@ -14,6 +14,7 @@ from eunoia._eunoia import (
     _fit_circles,
     _fit_ellipses,
     _fit_rectangles,
+    _fit_rotated_rectangles,
     _fit_squares,
 )
 from eunoia._models import (
@@ -23,6 +24,7 @@ from eunoia._models import (
     EulerFit,
     Point,
     Rectangle,
+    RotatedRectangle,
     S,
     Square,
 )
@@ -66,6 +68,7 @@ Optimizer = Literal[
     "cma_es_lm",
     "trf",
     "cma_es_trf",
+    "mads",
 ]
 """Final-stage optimizer the fitter uses. ``None`` keeps the core default
 (``"cma_es_trf"``)."""
@@ -143,12 +146,32 @@ def euler(
 ) -> EulerFit[Rectangle]: ...
 
 
+@overload
+def euler(
+    values: EulerInput,
+    *,
+    input: Literal["exclusive", "inclusive"] = ...,
+    names: Sequence[str] | None = ...,
+    shape: Literal["rotated_rectangle"],
+    seed: int | None = ...,
+    complement: float | None = ...,
+    loss: Loss | None = ...,
+    optimizer: Optimizer | None = ...,
+    tolerance: float | None = ...,
+    n_restarts: int | None = ...,
+    max_iterations: int | None = ...,
+    n_threads: int | None = ...,
+) -> EulerFit[RotatedRectangle]: ...
+
+
 def euler(
     values: EulerInput,
     *,
     input: Literal["exclusive", "inclusive"] = "exclusive",
     names: Sequence[str] | None = None,
-    shape: Literal["circle", "ellipse", "square", "rectangle"] = "circle",
+    shape: Literal[
+        "circle", "ellipse", "square", "rectangle", "rotated_rectangle"
+    ] = "circle",
     seed: int | None = None,
     complement: float | None = None,
     loss: Loss | None = None,
@@ -157,7 +180,13 @@ def euler(
     n_restarts: int | None = None,
     max_iterations: int | None = None,
     n_threads: int | None = None,
-) -> EulerFit[Circle] | EulerFit[Ellipse] | EulerFit[Square] | EulerFit[Rectangle]:
+) -> (
+    EulerFit[Circle]
+    | EulerFit[Ellipse]
+    | EulerFit[Square]
+    | EulerFit[Rectangle]
+    | EulerFit[RotatedRectangle]
+):
     """Fit an area-proportional Euler diagram.
 
     Parameters
@@ -192,8 +221,8 @@ def euler(
         1-D array). Defaults to ``"A"``, ``"B"``, …. Only valid for array input;
         other forms carry their own names and passing ``names`` raises.
     shape:
-        ``"circle"`` (default), ``"ellipse"``, ``"square"``, or
-        ``"rectangle"``.
+        ``"circle"`` (default), ``"ellipse"``, ``"square"``,
+        ``"rectangle"``, or ``"rotated_rectangle"``.
     seed:
         Optional seed for the optimizer's RNG (for reproducibility).
     complement:
@@ -212,7 +241,8 @@ def euler(
         core default, ``"cma_es_trf"`` (CMA-ES global escape with a bounded
         trust-region-reflective polish). Other options trade robustness for
         speed: ``"levenberg_marquardt"``, ``"lbfgs"``, ``"nelder_mead"``,
-        ``"cma_es_lm"``, ``"trf"``. See :data:`Optimizer`.
+        ``"cma_es_lm"``, ``"trf"``, ``"mads"`` (a derivative-free
+        mesh-adaptive direct search). See :data:`Optimizer`.
     tolerance:
         Cost-change convergence tolerance for the final-stage optimizer.
         ``None`` keeps the core default (``1e-3``); smaller values fit more
@@ -239,10 +269,16 @@ def euler(
         A fit result with shapes, original/fitted values, residuals,
         region error, diag_error, stress, and loss.
     """
-    if shape not in ("circle", "ellipse", "square", "rectangle"):
+    if shape not in (
+        "circle",
+        "ellipse",
+        "square",
+        "rectangle",
+        "rotated_rectangle",
+    ):
         raise EunoiaError(
-            "invalid_shape: shape must be 'circle', 'ellipse', 'square' or "
-            f"'rectangle', got {shape!r}"
+            "invalid_shape: shape must be 'circle', 'ellipse', 'square', "
+            f"'rectangle' or 'rotated_rectangle', got {shape!r}"
         )
 
     if names is not None and not is_ndarray(values):
@@ -352,7 +388,28 @@ def euler(
             input,
         )
 
-    result_r = _fit_rectangles(
+    if shape == "rectangle":
+        result_r = _fit_rectangles(
+            combinations,
+            input,
+            complement,
+            seed,
+            loss,
+            optimizer,
+            tolerance,
+            n_restarts,
+            max_iterations,
+            n_threads,
+        )
+        return _finish(
+            result_r,
+            build_rectangles(result_r["shapes"]),
+            original_values,
+            canonical_keys,
+            input,
+        )
+
+    result_rr = _fit_rotated_rectangles(
         combinations,
         input,
         complement,
@@ -365,8 +422,8 @@ def euler(
         n_threads,
     )
     return _finish(
-        result_r,
-        build_rectangles(result_r["shapes"]),
+        result_rr,
+        build_rotated_rectangles(result_rr["shapes"]),
         original_values,
         canonical_keys,
         input,
@@ -441,6 +498,21 @@ def build_rectangles(raw: Sequence[Any]) -> tuple[Rectangle, ...]:
             center=Point(x=s["x"], y=s["y"]),
             width=s["width"],
             height=s["height"],
+        )
+        for s in raw
+    )
+
+
+def build_rotated_rectangles(raw: Sequence[Any]) -> tuple[RotatedRectangle, ...]:
+    """Map raw rotated-rectangle dicts from the Rust binding to
+    ``RotatedRectangle``."""
+    return tuple(
+        RotatedRectangle(
+            set=s["set"],
+            center=Point(x=s["x"], y=s["y"]),
+            width=s["width"],
+            height=s["height"],
+            rotation=s["rotation"],
         )
         for s in raw
     )

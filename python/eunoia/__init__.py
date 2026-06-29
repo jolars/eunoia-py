@@ -14,6 +14,7 @@ from eunoia._models import (
     EulerFit,
     Point,
     Rectangle,
+    RotatedRectangle,
     Square,
     VennFit,
 )
@@ -30,6 +31,7 @@ __all__ = [
     "EunoiaError",
     "Point",
     "Rectangle",
+    "RotatedRectangle",
     "Square",
     "VennFit",
     "__version__",

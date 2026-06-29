@@ -73,6 +73,21 @@ def test_venn_unsupported_counts_raise() -> None:
         eu.venn(4, shape="square")
 
 
+def test_venn_rotated_rectangle_supported_up_to_four() -> None:
+    for n in (1, 2, 3, 4):
+        fit = eu.venn(n, shape="rotated_rectangle")
+        assert all(isinstance(s, eu.RotatedRectangle) for s in fit.shapes)
+        assert len(fit.shapes) == n
+        # Every region is present in the topological layout.
+        assert len(fit.fitted_values) == 2**n - 1
+    # The four-set layout rotates the rectangles to open all 15 regions.
+    four = eu.venn(4, shape="rotated_rectangle")
+    assert any(s.rotation != 0.0 for s in four.shapes)
+    # Five or more has no canonical layout.
+    with pytest.raises(eu.EunoiaError):
+        eu.venn(5, shape="rotated_rectangle")
+
+
 def test_venn_circle_supported_up_to_three() -> None:
     # eunoia 0.18 added a canonical circular Venn layout for 1--3 sets.
     for n in (1, 2, 3):

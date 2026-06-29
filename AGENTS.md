@@ -59,7 +59,7 @@ tests/test_*.py                  fit, plot, repr, and smoke tests
 ## Key decisions worth remembering
 
 - **One Rust fn per shape**: `_fit_circles`, `_fit_ellipses`, `_fit_squares`,
-  `_fit_rectangles`, plus `_venn`. Each returns `shapes`, metrics,
+  `_fit_rectangles`, `_fit_rotated_rectangles`, plus `_venn`. Each returns `shapes`, metrics,
   `region_pieces`, `region_anchors`, `set_anchors`, `set_anchor_regions`,
   `shape_outlines`, and `container` in the same call so `fit.plot()` doesn't
   refit. (`set_anchor_regions` maps each set to the canonical region key its
@@ -69,8 +69,9 @@ tests/test_*.py                  fit, plot, repr, and smoke tests
   equality; the optimizer is only reproducible to fp precision, so the two
   copies of the point differ by ~1e-8.) In `src/lib.rs` the
   shared `build_result` generic + per-shape `ser_*` closures assemble the dict;
-  `_fit_*` and `_venn` both call it. All four shapes map to a frozen dataclass
-  (`Circle`/`Ellipse`/`Square`/`Rectangle`) and a `shape=` overload in
+  `_fit_*` and `_venn` both call it. All five shapes map to a frozen dataclass
+  (`Circle`/`Ellipse`/`Square`/`Rectangle`/`RotatedRectangle`, the last adding a
+  `rotation` field in radians) and a `shape=` overload in
   `_fit.euler`; `_fit._finish` shares the fitted/residual assembly, and the
   `build_circles`/`build_ellipses`/… + `build_container`/`build_plot_data`
   helpers in `_fit.py` are reused by `_venn.venn`.
@@ -102,9 +103,10 @@ tests/test_*.py                  fit, plot, repr, and smoke tests
 - **`venn()`** returns a `VennFit(EulerFit)` (custom repr; topological, so
   `original_values` is empty and `fitted_values` holds geometric region areas).
   Accepts `int`, list-of-names, or mapping. Supported set counts: ellipse
-  (1–5), circle/square/rectangle (1–3). Circle Venn gained a
-  `canonical_venn_layout` impl in core 0.18; an unsupported count surfaces as
-  `EunoiaError`.
+  (1–5), circle/square/rectangle (1–3), rotated_rectangle (1–4; the 4-set
+  layout rotates the rectangles ±45° to open all 15 regions, added in core
+  1.6). Circle Venn gained a `canonical_venn_layout` impl in core 0.18; an
+  unsupported count surfaces as `EunoiaError`.
 - **Inclusion-exclusion is handled by the core**, not Python. We pass
   `InputType::Inclusive` to `DiagramSpecBuilder::input_type()` when
   `input="inclusive"`. `_parse.to_inclusive` is only used to express *fitted* values
@@ -143,9 +145,12 @@ tests/test_*.py                  fit, plot, repr, and smoke tests
   input name unnamed sets identically). `names=` is *only* valid for array
   input — passing it with any other form raises. Always exclusive; no Rust
   change. numpy is already a runtime dep, so nothing new in `pyproject.toml`.
-- **Generic `EulerFit[S]`** with `S = TypeVar("S", Circle, Ellipse)`. The public
-  `euler()` has two `@overload`s so `eu.euler(..., shape="ellipse")` types as
-  `EulerFit[Ellipse]`.
+- **Generic `EulerFit[S]`** with
+  `S = TypeVar("S", Circle, Ellipse, Square, Rectangle, RotatedRectangle)`. The
+  public `euler()` has one `@overload` per shape so `eu.euler(...,
+  shape="ellipse")` types as `EulerFit[Ellipse]`. (`EulerFit.__repr__` derives
+  the shape-kind label via `_models._shape_kind_label`, which splits the class
+  name on CamelCase so `RotatedRectangle` prints as "rotated rectangles".)
 - **`EulerFit.plot_data`is a public attribute** (no leading underscore). pyright
   strict flags cross-module access to single-underscore names as
   `reportPrivateUsage`. If you want it actually private, switch to a
@@ -176,7 +181,8 @@ tests/test_*.py                  fit, plot, repr, and smoke tests
   `loss`/`seed`: Python passes scalars through the FFI (no Python-side
   validation), Rust applies them with guarded `if let Some(..)` chaining in each
   `_fit_*`. `optimizer=` is a snake_case string (`"levenberg_marquardt"`,
-  `"lbfgs"`, `"nelder_mead"`, `"cma_es_lm"`, `"trf"`, `"cma_es_trf"`) mapped by
+  `"lbfgs"`, `"nelder_mead"`, `"cma_es_lm"`, `"trf"`, `"cma_es_trf"`, `"mads"`
+  (the derivative-free OrthoMADS solver added in core 1.6)) mapped by
   `parse_optimizer` in `src/lib.rs` (mirrors `parse_loss`) to the core
   `Optimizer` enum; `_fit.Optimizer` is the public `Literal` (kept unexported,
   like `Loss`). `n_threads=` maps to `Fitter::jobs`: `None` (the default,
@@ -210,10 +216,12 @@ tests/test_*.py                  fit, plot, repr, and smoke tests
 
 ## Eunoia core API we bind against
 
-(We pin `eunoia = "1.4"` in `Cargo.toml`; the binding is verified against the
-published 1.4.0 crate. The floor moved from 1.1 to 1.4 for the label-placement
+(We pin `eunoia = "1.6"` in `Cargo.toml`; the binding is verified against the
+published 1.6.0 crate. The floor moved from 1.1 to 1.4 for the label-placement
 API (`place_labels`, `PlacementStrategy`, `classify_into_pieces`, etc. — see the
-size-aware label-placement note above). 1.0 made the public enums
+size-aware label-placement note above), then to 1.6 for the `RotatedRectangle`
+shape (`eunoia::geometry::shapes::RotatedRectangle`, fitted derivative-free) and
+the `Optimizer::Mads` solver. 1.0 made the public enums
 `#[non_exhaustive]`, so `map_err`'s `DiagramError` match carries a `_`
 catch-all (as do the `PlacementKind` match in `_place_labels`); 1.0 also fixed
 the `SumAbsoute`→`SumAbsolute` typo and 1.1 added `LossType::LogSumAbsolute`. The

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use eunoia::geometry::primitives::Point;
-use eunoia::geometry::shapes::{Circle, Ellipse, Polygon, Rectangle, Square};
+use eunoia::geometry::shapes::{Circle, Ellipse, Polygon, Rectangle, RotatedRectangle, Square};
 use eunoia::geometry::traits::{DiagramShape, Polygonize};
 use eunoia::loss::LossType;
 use eunoia::plotting::{
@@ -75,10 +75,11 @@ fn parse_optimizer(optimizer: &str) -> PyResult<Optimizer> {
         "cma_es_lm" => Ok(Optimizer::CmaEsLm),
         "trf" => Ok(Optimizer::Trf),
         "cma_es_trf" => Ok(Optimizer::CmaEsTrf),
+        "mads" => Ok(Optimizer::Mads),
         other => Err(EunoiaError::new_err(format!(
             "invalid_optimizer: unknown optimizer '{other}'; one of \
              'levenberg_marquardt', 'lbfgs', 'nelder_mead', 'cma_es_lm', \
-             'trf', 'cma_es_trf'"
+             'trf', 'cma_es_trf', 'mads'"
         ))),
     }
 }
@@ -269,6 +270,21 @@ fn ser_rectangle<'py>(py: Python<'py>, name: &str, s: &Rectangle) -> PyResult<Bo
     d.set_item("y", s.center().y())?;
     d.set_item("width", s.width())?;
     d.set_item("height", s.height())?;
+    Ok(d)
+}
+
+fn ser_rotated_rectangle<'py>(
+    py: Python<'py>,
+    name: &str,
+    s: &RotatedRectangle,
+) -> PyResult<Bound<'py, PyDict>> {
+    let d = PyDict::new(py);
+    d.set_item("set", name)?;
+    d.set_item("x", s.center().x())?;
+    d.set_item("y", s.center().y())?;
+    d.set_item("width", s.width())?;
+    d.set_item("height", s.height())?;
+    d.set_item("rotation", s.rotation())?;
     Ok(d)
 }
 
@@ -466,6 +482,48 @@ fn _fit_rectangles<'py>(
     build_result(py, &spec, &layout, ser_rectangle)
 }
 
+#[pyfunction]
+#[pyo3(signature = (combinations, input_kind, complement=None, seed=None, loss=None, optimizer=None, tolerance=None, n_restarts=None, max_iterations=None, n_threads=None))]
+fn _fit_rotated_rectangles<'py>(
+    py: Python<'py>,
+    combinations: Vec<(String, f64)>,
+    input_kind: &str,
+    complement: Option<f64>,
+    seed: Option<u64>,
+    loss: Option<&str>,
+    optimizer: Option<&str>,
+    tolerance: Option<f64>,
+    n_restarts: Option<usize>,
+    max_iterations: Option<usize>,
+    n_threads: Option<usize>,
+) -> PyResult<Bound<'py, PyDict>> {
+    let spec = build_spec(&combinations, input_kind, complement)?;
+    let mut fitter = Fitter::<RotatedRectangle>::new(&spec);
+    if let Some(s) = seed {
+        fitter = fitter.seed(s);
+    }
+    if let Some(l) = loss {
+        fitter = fitter.loss_type(parse_loss(l)?);
+    }
+    if let Some(o) = optimizer {
+        fitter = fitter.optimizer(parse_optimizer(o)?);
+    }
+    if let Some(t) = tolerance {
+        fitter = fitter.tolerance(t);
+    }
+    if let Some(n) = n_restarts {
+        fitter = fitter.n_restarts(n);
+    }
+    if let Some(m) = max_iterations {
+        fitter = fitter.max_iterations(m);
+    }
+    if let Some(nt) = n_threads {
+        fitter = fitter.jobs(nt);
+    }
+    let layout = fitter.fit().map_err(map_err)?;
+    build_result(py, &spec, &layout, ser_rotated_rectangle)
+}
+
 fn venn_layout<S>(
     n: usize,
     names: Option<Vec<String>>,
@@ -519,9 +577,13 @@ fn _venn<'py>(
             let (layout, spec) = venn_layout::<Rectangle>(n, names, complement)?;
             build_result(py, &spec, &layout, ser_rectangle)
         }
+        "rotated_rectangle" => {
+            let (layout, spec) = venn_layout::<RotatedRectangle>(n, names, complement)?;
+            build_result(py, &spec, &layout, ser_rotated_rectangle)
+        }
         other => Err(EunoiaError::new_err(format!(
-            "invalid_shape: shape must be 'circle', 'ellipse', 'square' or \
-             'rectangle', got '{other}'"
+            "invalid_shape: shape must be 'circle', 'ellipse', 'square', \
+             'rectangle' or 'rotated_rectangle', got '{other}'"
         ))),
     }
 }
@@ -645,6 +707,7 @@ fn _eunoia(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(_fit_ellipses, m)?)?;
     m.add_function(wrap_pyfunction!(_fit_squares, m)?)?;
     m.add_function(wrap_pyfunction!(_fit_rectangles, m)?)?;
+    m.add_function(wrap_pyfunction!(_fit_rotated_rectangles, m)?)?;
     m.add_function(wrap_pyfunction!(_venn, m)?)?;
     m.add_function(wrap_pyfunction!(_place_labels, m)?)?;
     Ok(())

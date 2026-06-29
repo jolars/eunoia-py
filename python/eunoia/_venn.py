@@ -21,9 +21,18 @@ from eunoia._fit import (
     build_ellipses,
     build_plot_data,
     build_rectangles,
+    build_rotated_rectangles,
     build_squares,
 )
-from eunoia._models import Circle, Ellipse, Rectangle, S, Square, VennFit
+from eunoia._models import (
+    Circle,
+    Ellipse,
+    Rectangle,
+    RotatedRectangle,
+    S,
+    Square,
+    VennFit,
+)
 from eunoia._numpy import (
     default_name,
     is_ndarray,
@@ -90,14 +99,33 @@ def venn(
 ) -> VennFit[Rectangle]: ...
 
 
+@overload
 def venn(
     sets: VennInput,
     *,
-    shape: Literal["circle", "ellipse", "square", "rectangle"] = "ellipse",
+    shape: Literal["rotated_rectangle"],
+    complement: float | None = ...,
+    input: Literal["exclusive", "inclusive"] = ...,
+    names: Sequence[str] | None = ...,
+) -> VennFit[RotatedRectangle]: ...
+
+
+def venn(
+    sets: VennInput,
+    *,
+    shape: Literal[
+        "circle", "ellipse", "square", "rectangle", "rotated_rectangle"
+    ] = "ellipse",
     complement: float | None = None,
     input: Literal["exclusive", "inclusive"] = "exclusive",
     names: Sequence[str] | None = None,
-) -> VennFit[Circle] | VennFit[Ellipse] | VennFit[Square] | VennFit[Rectangle]:
+) -> (
+    VennFit[Circle]
+    | VennFit[Ellipse]
+    | VennFit[Square]
+    | VennFit[Rectangle]
+    | VennFit[RotatedRectangle]
+):
     """Lay out a (non-proportional) Venn diagram.
 
     Unlike :func:`euler`, every set intersection is always drawn, regardless
@@ -128,9 +156,11 @@ def venn(
         For ``int`` and plain name-sequence input there are no quantities, so
         ``original_values`` is empty.
     shape:
-        ``"ellipse"`` (default), ``"circle"``, ``"square"``, or
-        ``"rectangle"``. Ellipses support 1--5 sets; circles, squares, and
-        rectangles 1--3. An unsupported set count raises :class:`EunoiaError`.
+        ``"ellipse"`` (default), ``"circle"``, ``"square"``, ``"rectangle"``,
+        or ``"rotated_rectangle"``. Ellipses support 1--5 sets; circles,
+        squares, and rectangles 1--3; rotated rectangles 1--4 (the 4-set
+        layout uses rotated rectangles to open all 15 regions). An unsupported
+        set count raises :class:`EunoiaError`.
     complement:
         Optional universe area outside every set. For a Venn diagram this only
         adds a visual container box (the padded bounding box); it does not
@@ -154,10 +184,16 @@ def venn(
         by ``plot()`` automatically; otherwise ``fitted_values`` holds the
         geometric area of every region.
     """
-    if shape not in ("circle", "ellipse", "square", "rectangle"):
+    if shape not in (
+        "circle",
+        "ellipse",
+        "square",
+        "rectangle",
+        "rotated_rectangle",
+    ):
         raise EunoiaError(
-            "invalid_shape: shape must be 'circle', 'ellipse', 'square' or "
-            f"'rectangle', got {shape!r}"
+            "invalid_shape: shape must be 'circle', 'ellipse', 'square', "
+            f"'rectangle' or 'rotated_rectangle', got {shape!r}"
         )
     if input not in ("exclusive", "inclusive"):
         raise EunoiaError(
@@ -173,8 +209,10 @@ def venn(
         shapes = build_ellipses(result["shapes"])
     elif shape == "square":
         shapes = build_squares(result["shapes"])
-    else:
+    elif shape == "rectangle":
         shapes = build_rectangles(result["shapes"])
+    else:
+        shapes = build_rotated_rectangles(result["shapes"])
 
     return _make_venn(result, shapes, original_values, canonical_keys, input)
 

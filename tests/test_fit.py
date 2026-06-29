@@ -95,7 +95,26 @@ def test_rectangle_shape_fields() -> None:
     assert rect.height > 0
 
 
-@pytest.mark.parametrize("shape", ["circle", "ellipse", "square", "rectangle"])
+def test_rotated_rectangle_shape_fields() -> None:
+    fit = eu.euler({"A": 10, "B": 8, "A&B": 4}, shape="rotated_rectangle", seed=1)
+    rect = fit.shapes[0]
+    assert isinstance(rect, eu.RotatedRectangle)
+    assert rect.width > 0
+    assert rect.height > 0
+    assert isinstance(rect.rotation, float)
+    # Two-set overlaps fit well even for the derivative-free rotated rectangle.
+    assert fit.diag_error < 0.1
+
+
+def test_mads_optimizer_runs() -> None:
+    fit = eu.euler({"A": 10, "B": 8, "A&B": 4}, optimizer="mads", seed=1)
+    assert math.isfinite(fit.loss)
+    assert fit.diag_error < 0.1
+
+
+@pytest.mark.parametrize(
+    "shape", ["circle", "ellipse", "square", "rectangle", "rotated_rectangle"]
+)
 def test_complement_returns_container(shape: str) -> None:
     fit = eu.euler({"A": 10, "B": 8, "A&B": 4}, shape=shape, complement=20)  # type: ignore[arg-type]
     assert fit.container is not None

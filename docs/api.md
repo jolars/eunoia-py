@@ -29,6 +29,7 @@
    Ellipse
    Square
    Rectangle
+   RotatedRectangle
    Container
    Point
 ```
