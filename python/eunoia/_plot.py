@@ -11,6 +11,7 @@ from matplotlib.patches import Patch, PathPatch
 from matplotlib.patches import Rectangle as MplRectangle
 from matplotlib.path import Path
 
+from eunoia._eunoia import _place_labels
 from eunoia._models import VennFit
 from eunoia._options import get_options
 
@@ -123,67 +124,66 @@ def render(
         if path is not None:
             ax.add_patch(PathPatch(path, **ek))
 
-    # Resolve the quantity values up front so labels know whether a quantity
-    # shares their anchor (and must make room for it).
+    # Compose the per-region label content. Each set's name goes into the
+    # region its anchor was derived from (``set_anchor_regions``: set name ->
+    # canonical region key, the set's own exclusive region or, for a set with
+    # no exclusive area, a containing region), and each shown quantity into its
+    # own region. A set name and its region's quantity therefore land in the
+    # same block and stack as one unit. We then place each block via the core's
+    # size-aware placement (``_place_labels``), so a block that doesn't fit its
+    # region is pushed outside with a leader line instead of overflowing the
+    # boundary -- which a bare point anchor cannot avoid for a thin region.
     quant = _resolve_quantities(fit, quantities)
     values: dict[str, float] = quant[0] if quant is not None else {}
 
-    # A set label and a region quantity can land on the same anchor: the core
-    # derives each set anchor from a region (the set's own exclusive region, or
-    # -- for a set nested inside another with no exclusive area -- the largest
-    # containing region) and reports that source in ``set_anchor_regions``
-    # (set name -> canonical region key). When a set's label and the quantity
-    # for its anchor region are both shown, we stack the pair (name above,
-    # value below) instead of letting them overlap. We rely on this mapping
-    # rather than matching anchor points by float equality, since the optimizer
-    # is only reproducible to floating-point precision and the two copies of
-    # the point differ by ~1e-8.
-    #
-    # collided[name] is True when set ``name`` shares its anchor with a shown
-    # quantity; collided_regions holds the corresponding region keys.
-    collided = {
-        name: (
-            show_labels
-            and label_specs.get(name) is not None
-            and (region := set_anchor_regions.get(name)) is not None
-            and region in values
-        )
-        for name in set_anchors
-    }
-    collided_regions = {
-        set_anchor_regions[name] for name, hit in collided.items() if hit
-    }
+    # region key -> list of (text, ax.text style) lines, set names first.
+    region_lines: dict[str, list[tuple[str, dict[str, Any]]]] = {}
+    # Set labels whose anchor was not derived from a region we have pieces for
+    # fall back to the raw set anchor point (no size-aware placement).
+    fallback_names: list[tuple[float, float, str, dict[str, Any]]] = []
 
-    # Set labels
     if show_labels:
-        for name, (x, y) in set_anchors.items():
+        for name in set_names:
             spec = label_specs.get(name)
             if spec is None:
                 continue
             text, style = spec
-            va = "bottom" if collided.get(name) else "center"
-            text_kwargs: dict[str, Any] = {
-                "ha": "center",
-                "va": va,
-                **opts["labels"],
-            }
-            text_kwargs.update(style)
-            ax.text(x, y, text, **text_kwargs)
+            line_style: dict[str, Any] = {**opts["labels"], **style}
+            region = set_anchor_regions.get(name)
+            if region is not None and region in region_pieces:
+                region_lines.setdefault(region, []).append((text, line_style))
+            elif name in set_anchors:
+                x, y = set_anchors[name]
+                fallback_names.append((x, y, text, line_style))
 
-    # Region quantities
     if quant is not None:
         _, fmt, q_style = quant
-        for combo, (x, y) in region_anchors.items():
+        for combo in region_anchors:
             if combo not in values:
                 continue
-            va = "top" if combo in collided_regions else "center"
-            quantity_kwargs: dict[str, Any] = {
-                "ha": "center",
-                "va": va,
-                **opts["quantities"],
-            }
-            quantity_kwargs.update(q_style)
-            ax.text(x, y, fmt(values[combo]), **quantity_kwargs)
+            line_style = {**opts["quantities"], **q_style}
+            region_lines.setdefault(combo, []).append((fmt(values[combo]), line_style))
+
+    # Establish the data->display transform from the diagram geometry before
+    # measuring any text: matplotlib only knows text extents in pixels, and only
+    # once a renderer and axis limits exist.
+    ax.relim()
+    ax.autoscale_view()
+    ax.set_aspect("equal")
+
+    if region_lines:
+        container_box = (
+            (container.center.x, container.center.y, container.width, container.height)
+            if container is not None
+            else None
+        )
+        placements, measured = _place_region_labels(
+            ax, region_lines, _region_rings(region_pieces), container_box
+        )
+        _draw_region_labels(ax, placements, measured)
+
+    for fx, fy, ftext, fstyle in fallback_names:
+        ax.text(fx, fy, ftext, ha="center", va="center", **fstyle)
 
     # Legend: color-keyed swatches matching the region fills (same color and
     # alpha), one per set in shape order.
@@ -203,11 +203,169 @@ def render(
             legend_kwargs.update(legend)
         ax.legend(handles=handles, **legend_kwargs)
 
-    ax.relim()
-    ax.autoscale_view()
+    # Limits were established before label placement and then expanded in place
+    # to admit any exterior labels; a fresh ``relim`` here would recompute the
+    # data limits from the patches alone and clip those exterior labels, so we
+    # only re-assert the aspect ratio and hide the axes.
     ax.set_aspect("equal")
     ax.axis("off")
     return ax
+
+
+# Each round re-measures text against the (possibly expanded) axis limits and
+# re-places; interior-only diagrams settle in one round, exterior labels in a
+# few. Capped so a non-converging case can't loop forever.
+_PLACE_MAX_ITERS = 4
+
+_Line = tuple[str, dict[str, Any]]
+_MeasuredLine = tuple[str, dict[str, Any], float, float]
+
+
+def _region_rings(
+    region_pieces: dict[str, list[dict[str, Any]]],
+) -> dict[str, list[list[tuple[float, float]]]]:
+    """Flatten each region's pieces to a list of boundary rings.
+
+    The core classifies rings back into outer/hole pieces by containment, so we
+    can hand it every piece's outer ring plus its hole rings as one flat list
+    per region, ignoring the outer/hole distinction and winding order.
+    """
+    rings: dict[str, list[list[tuple[float, float]]]] = {}
+    for combo, pieces in region_pieces.items():
+        if combo == "":
+            continue
+        region: list[list[tuple[float, float]]] = []
+        for piece in pieces:
+            region.append(piece["outer"])
+            region.extend(piece["holes"])
+        if region:
+            rings[combo] = region
+    return rings
+
+
+def _measure_renderer(fig: Any) -> Any:
+    """A standalone Agg renderer at the figure's size and dpi for text metrics.
+
+    Text extents only need *a* renderer; building a bare Agg one (instead of the
+    active canvas's) keeps measurement working under any backend, including
+    headless, without reattaching the figure's canvas.
+    """
+    from matplotlib.backends.backend_agg import RendererAgg
+
+    w_in, h_in = fig.get_size_inches()
+    dpi = fig.dpi
+    return RendererAgg(int(w_in * dpi), int(h_in * dpi), dpi)  # type: ignore[no-untyped-call]
+
+
+def _text_data_size(
+    ax: Axes, renderer: Any, text: str, style: dict[str, Any]
+) -> tuple[float, float]:
+    """Measure ``text`` in data-coordinate units under the axes' transform."""
+    artist = ax.text(0.0, 0.0, text, **{k: v for k, v in style.items() if k != "ha"})
+    bbox = artist.get_window_extent(renderer=renderer)
+    artist.remove()
+    inv = ax.transData.inverted()
+    x0, y0 = inv.transform((0.0, 0.0))
+    x1, y1 = inv.transform((bbox.width, bbox.height))
+    return abs(float(x1 - x0)), abs(float(y1 - y0))
+
+
+def _place_region_labels(
+    ax: Axes,
+    region_lines: dict[str, list[_Line]],
+    rings: dict[str, list[list[tuple[float, float]]]],
+    container: tuple[float, float, float, float] | None,
+) -> tuple[dict[str, Any], dict[str, list[_MeasuredLine]]]:
+    """Measure each region's stacked text and place it with the core.
+
+    Returns the raw placements (region key -> placement dict) and the measured
+    lines (region key -> list of ``(text, style, width, height)``) used to draw
+    and stack each block. Re-measures and re-places until the axis limits stop
+    changing (exterior labels can enlarge the canvas, which changes the
+    data-unit size of the text), bounded by :data:`_PLACE_MAX_ITERS`.
+    """
+    renderer = _measure_renderer(ax.figure)
+    placements: dict[str, Any] = {}
+    measured: dict[str, list[_MeasuredLine]] = {}
+
+    for _ in range(_PLACE_MAX_ITERS):
+        sizes: dict[str, tuple[float, float]] = {}
+        measured = {}
+        for region, lines in region_lines.items():
+            dims: list[_MeasuredLine] = []
+            for text, style in lines:
+                w, h = _text_data_size(ax, renderer, text, style)
+                dims.append((text, style, w, h))
+            sizes[region] = (max(d[2] for d in dims), sum(d[3] for d in dims))
+            measured[region] = dims
+
+        placements = _place_labels(rings, sizes, container, exterior="raycast")
+
+        extra: list[tuple[float, float]] = []
+        for pl in placements.values():
+            if str(pl["kind"]).startswith("exterior"):
+                extra.append(pl["anchor"])
+                if pl["leader_end"] is not None:
+                    extra.append(pl["leader_end"])
+        if not extra:
+            break
+        before = (*ax.get_xlim(), *ax.get_ylim())
+        ax.update_datalim(extra)
+        ax.autoscale_view()
+        if (*ax.get_xlim(), *ax.get_ylim()) == before:
+            break
+
+    return placements, measured
+
+
+def _draw_region_labels(
+    ax: Axes,
+    placements: dict[str, Any],
+    measured: dict[str, list[_MeasuredLine]],
+) -> None:
+    """Draw each placed block: leader line (if exterior) then stacked lines."""
+    for region, dims in measured.items():
+        placement = placements.get(region)
+        if placement is None:
+            # The core could not place this block (degenerate or empty region);
+            # skip rather than dropping text on a boundary.
+            continue
+        ax_x, ax_y = placement["anchor"]
+
+        if (
+            str(placement["kind"]).startswith("exterior")
+            and placement["tether"] is not None
+            and placement["leader_end"] is not None
+        ):
+            waypoints = placement["leader_waypoints"]
+            xs = [
+                placement["tether"][0],
+                *(p[0] for p in waypoints),
+                placement["leader_end"][0],
+            ]
+            ys = [
+                placement["tether"][1],
+                *(p[1] for p in waypoints),
+                placement["leader_end"][1],
+            ]
+            leader_color = dims[0][1].get("color", "dimgray")
+            ax.plot(xs, ys, color=leader_color, linewidth=0.8, zorder=2.5)
+
+        # Stack the lines centered on the anchor (which is the block's center),
+        # top line first, each placed with ``va="top"`` at a descending cursor.
+        total_h = sum(d[3] for d in dims)
+        y_cursor = ax_y + total_h / 2.0
+        for text, style, _, h in dims:
+            draw_style = {k: v for k, v in style.items() if k != "ha"}
+            ax.text(
+                ax_x,
+                y_cursor,
+                text,
+                ha=style.get("ha", "center"),
+                va="top",
+                **draw_style,
+            )
+            y_cursor -= h
 
 
 def _make_compound_path(

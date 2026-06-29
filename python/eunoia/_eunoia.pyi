@@ -8,6 +8,7 @@ __all__ = [
     "_fit_ellipses",
     "_fit_rectangles",
     "_fit_squares",
+    "_place_labels",
     "_smoke",
     "_venn",
 ]
@@ -170,3 +171,22 @@ def _venn(
     names: list[str] | None = None,
     complement: float | None = None,
 ) -> _CircleResult | _EllipseResult | _SquareResult | _RectangleResult: ...
+
+class _Placement(TypedDict):
+    anchor: tuple[float, float]
+    kind: str
+    tether: tuple[float, float] | None
+    leader_end: tuple[float, float] | None
+    leader_waypoints: list[tuple[float, float]]
+
+def _place_labels(
+    rings: dict[str, list[list[tuple[float, float]]]],
+    sizes: dict[str, tuple[float, float]],
+    container: tuple[float, float, float, float] | None = None,
+    precision: float | None = None,
+    exterior: str | None = None,
+    tether: str | None = None,
+    leader_gap: float | None = None,
+    margin: float | None = None,
+    iterations: int | None = None,
+) -> dict[str, _Placement]: ...

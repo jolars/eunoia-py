@@ -288,7 +288,8 @@ fit.plot(colors={"A": "#e41a1c", "B": "#377eb8", "C": "#4daf4a"});
 
 ### A legend instead of inline labels
 
-When sets are small or crowded their inline labels can overlap. Passing
+Inline labels that don't fit their region are placed outside the diagram with a
+leader line, but for very dense diagrams a legend can still be cleaner. Passing
 `legend=True` moves the set names into a color-keyed legend and turns the inline
 labels off by default (pass `labels=True` to keep both). A dict is forwarded to
 matplotlib's `Axes.legend`, so you can control placement and title.

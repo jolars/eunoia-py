@@ -119,19 +119,17 @@ def test_plot_with_quantities(simple_fit: eu.EulerFit[eu.Circle]) -> None:
 def test_plot_label_quantity_collision_stacks(
     simple_fit: eu.EulerFit[eu.Circle],
 ) -> None:
-    # When a set label and the quantity for its anchor region share a point,
-    # they are stacked (name on top via va="bottom", value below via va="top")
-    # instead of being drawn centered on the same spot. The collision is
-    # detected via set_anchor_regions, not float-equal anchor points.
+    # A set label and the quantity for its anchor region are composed into one
+    # block and placed together, so the name sits directly above its value at
+    # the same x. (A=10, B=5 are exclusive-region quantities paired with their
+    # set names; A&B=3 is an intersection quantity drawn on its own.)
     ax = simple_fit.plot(quantities=True)
-    by_text = {t.get_text(): t for t in ax.texts}
-    for name in ("A", "B"):
-        assert by_text[name].get_verticalalignment() == "bottom"
-    # The exclusive-region quantities (A=10, B=5) sit below their set labels;
-    # the intersection quantity (A&B=3) has no label, so it stays centered.
-    assert by_text["10"].get_verticalalignment() == "top"
-    assert by_text["5"].get_verticalalignment() == "top"
-    assert by_text["3"].get_verticalalignment() == "center"
+    by_text = {t.get_text(): t.get_position() for t in ax.texts}
+    for name, value in (("A", "10"), ("B", "5")):
+        nx, ny = by_text[name]
+        vx, vy = by_text[value]
+        assert nx == pytest.approx(vx)  # same column
+        assert ny > vy  # name stacked above its quantity
     plt.close(ax.figure)
 
 

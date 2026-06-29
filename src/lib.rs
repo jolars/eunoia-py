@@ -1,8 +1,14 @@
-use eunoia::geometry::shapes::{Circle, Ellipse, Rectangle, Square};
+use std::collections::HashMap;
+
+use eunoia::geometry::primitives::Point;
+use eunoia::geometry::shapes::{Circle, Ellipse, Polygon, Rectangle, Square};
 use eunoia::geometry::traits::{DiagramShape, Polygonize};
 use eunoia::loss::LossType;
-use eunoia::plotting::PlotOptions;
-use eunoia::spec::DiagramSpec;
+use eunoia::plotting::{
+    ExteriorPolicy, LeaderStrategy, PlacementKind, PlacementStrategy, PlotOptions, RegionPiece,
+    RegionPolygons, TetherSource, classify_into_pieces, place_labels,
+};
+use eunoia::spec::{Combination, DiagramSpec};
 use eunoia::{
     DiagramError, DiagramSpecBuilder, Fitter, InputType, Layout, Optimizer, VennDiagram,
 };
@@ -520,6 +526,112 @@ fn _venn<'py>(
     }
 }
 
+/// Place labels in their regions, accounting for label size.
+///
+/// `rings` maps each canonical region key to a flat list of its boundary rings
+/// (every piece's outer ring plus any hole rings, each a list of `(x, y)`
+/// vertices); orientation is irrelevant, since the core classifies rings into
+/// pieces by containment. `sizes` maps a region key to the `(width, height)` of
+/// the label to place there, in diagram coordinates. The result maps each
+/// placed region key to `{anchor, kind, tether, leader_end, leader_waypoints}`:
+/// interior placements have `tether`/`leader_end` `None` and no waypoints;
+/// exterior placements carry the leader geometry the renderer draws as the
+/// polyline `tether -> leader_waypoints... -> leader_end`.
+#[pyfunction]
+#[pyo3(signature = (
+    rings, sizes, container=None, precision=None, exterior=None, tether=None,
+    leader_gap=None, margin=None, iterations=None
+))]
+#[allow(clippy::too_many_arguments)]
+fn _place_labels<'py>(
+    py: Python<'py>,
+    rings: HashMap<String, Vec<Vec<(f64, f64)>>>,
+    sizes: HashMap<String, (f64, f64)>,
+    container: Option<(f64, f64, f64, f64)>,
+    precision: Option<f64>,
+    exterior: Option<&str>,
+    tether: Option<&str>,
+    leader_gap: Option<f64>,
+    margin: Option<f64>,
+    iterations: Option<usize>,
+) -> PyResult<Bound<'py, PyDict>> {
+    // Rebuild the region polygons from the serialized rings. `classify_into_pieces`
+    // groups rings into outer/hole pieces by containment, so we can pass a flat
+    // ring list per region without tracking which ring was an outer vs a hole.
+    let mut map: HashMap<Combination, Vec<RegionPiece>> = HashMap::new();
+    for (combo_str, region_rings) in &rings {
+        let polys: Vec<Polygon> = region_rings
+            .iter()
+            .map(|ring| Polygon::new(ring.iter().map(|&(x, y)| Point::new(x, y)).collect()))
+            .collect();
+        let pieces = classify_into_pieces(polys);
+        if pieces.is_empty() {
+            continue;
+        }
+        // `Combination`'s FromStr is infallible.
+        let combo: Combination = combo_str.parse().unwrap_or_else(|_| Combination::new(&[]));
+        map.insert(combo, pieces);
+    }
+    let regions = RegionPolygons::from_map(map);
+
+    let exterior_policy = match exterior {
+        Some("force_directed") => ExteriorPolicy::ForceDirected { margin, iterations },
+        Some("raycast") | None => ExteriorPolicy::Raycast { margin },
+        Some(other) => {
+            return Err(EunoiaError::new_err(format!(
+                "invalid_placement: exterior must be 'raycast' or 'force_directed', got '{other}'"
+            )));
+        }
+    };
+    let tether_source = match tether {
+        Some("boundary") => TetherSource::Boundary,
+        Some("poi") | None => TetherSource::Poi,
+        Some(other) => {
+            return Err(EunoiaError::new_err(format!(
+                "invalid_placement: tether must be 'poi' or 'boundary', got '{other}'"
+            )));
+        }
+    };
+    let mut strategy = PlacementStrategy::default()
+        .leader(LeaderStrategy::Straight(exterior_policy))
+        .tether(tether_source);
+    if let Some(p) = precision {
+        strategy = strategy.precision(p);
+    }
+    if let Some(g) = leader_gap {
+        strategy = strategy.leader_gap(g);
+    }
+
+    let container_rect = container.map(|(cx, cy, w, h)| Rectangle::new(Point::new(cx, cy), w, h));
+
+    let placements = place_labels(&regions, &sizes, container_rect.as_ref(), &strategy);
+
+    let out = PyDict::new(py);
+    for (combo, placement) in &placements {
+        let d = PyDict::new(py);
+        d.set_item("anchor", (placement.anchor.x(), placement.anchor.y()))?;
+        let kind = match placement.kind {
+            PlacementKind::Interior => "interior",
+            PlacementKind::ExteriorRaycast => "exterior_raycast",
+            PlacementKind::ExteriorForceDirected => "exterior_force_directed",
+            PlacementKind::ExteriorElbow => "exterior_elbow",
+            // `PlacementKind` is #[non_exhaustive]; treat unknown future
+            // kinds as generic exterior placements (they carry leader data).
+            _ => "exterior",
+        };
+        d.set_item("kind", kind)?;
+        d.set_item("tether", placement.tether.as_ref().map(|p| (p.x(), p.y())))?;
+        d.set_item("leader_end", placement.leader_end.as_ref().map(|p| (p.x(), p.y())))?;
+        let waypoints = PyList::empty(py);
+        for p in &placement.leader_waypoints {
+            waypoints.append((p.x(), p.y()))?;
+        }
+        d.set_item("leader_waypoints", waypoints)?;
+        out.set_item(combo, d)?;
+    }
+    Ok(out)
+}
+
 #[pyfunction]
 fn _smoke() -> &'static str {
     "eunoia: scaffolding works"
@@ -534,5 +646,6 @@ fn _eunoia(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(_fit_squares, m)?)?;
     m.add_function(wrap_pyfunction!(_fit_rectangles, m)?)?;
     m.add_function(wrap_pyfunction!(_venn, m)?)?;
+    m.add_function(wrap_pyfunction!(_place_labels, m)?)?;
     Ok(())
 }

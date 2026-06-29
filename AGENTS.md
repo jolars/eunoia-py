@@ -63,10 +63,11 @@ tests/test_*.py                  fit, plot, repr, and smoke tests
   `region_pieces`, `region_anchors`, `set_anchors`, `set_anchor_regions`,
   `shape_outlines`, and `container` in the same call so `fit.plot()` doesn't
   refit. (`set_anchor_regions` maps each set to the canonical region key its
-  label anchor was derived from; `_plot` uses it to stack a set label and its
-  region quantity when they coincide, instead of comparing anchor points by
-  float equality; the optimizer is only reproducible to fp precision, so the
-  two copies of the point differ by ~1e-8.) In `src/lib.rs` the
+  label anchor was derived from; `_plot` uses it to group each set's name with
+  its region's quantity into one label block (see the label-placement note
+  below), keyed by region rather than by comparing anchor points by float
+  equality; the optimizer is only reproducible to fp precision, so the two
+  copies of the point differ by ~1e-8.) In `src/lib.rs` the
   shared `build_result` generic + per-shape `ser_*` closures assemble the dict;
   `_fit_*` and `_venn` both call it. All four shapes map to a frozen dataclass
   (`Circle`/`Ellipse`/`Square`/`Rectangle`) and a `shape=` overload in
@@ -78,6 +79,26 @@ tests/test_*.py                  fit, plot, repr, and smoke tests
   `EulerFit.container` (a `Container` dataclass) and `_plot` draws it behind
   everything, skipping the empty-combination region (which serializes to `""`).
   Rejected by the core for multi-cluster specs (surfaces as `EunoiaError`).
+- **Size-aware label placement**: `_plot.render` does not drop text on the bare
+  region/set anchors (the poles of inaccessibility in `region_anchors` /
+  `set_anchors`). Instead it composes a label block per region (the set name(s)
+  whose `set_anchor_regions` point here, plus that region's quantity, stacked),
+  measures each block in data units (a throwaway matplotlib `Text` +
+  `get_window_extent` against a standalone `RendererAgg`, then pixel→data via
+  `ax.transData.inverted()`), and calls the new `_place_labels` FFI. That binds
+  the core's `eunoia::plotting::place_labels`: blocks that fit land at the
+  largest-inscribed-rect center; blocks that don't are pushed outside the
+  diagram with a straight leader line (`tether → leader_end`, drawn as a
+  `Line2D`). `_place_labels` rebuilds `RegionPolygons` statelessly from the
+  serialized `region_pieces` via `classify_into_pieces` + `from_map` (we can't
+  construct the `#[non_exhaustive]` `RegionPiece` directly, and feeding flat
+  rings lets the core re-classify by containment). The measure→place loop in
+  `_place_region_labels` re-measures when exterior labels enlarge the canvas,
+  bounded by `_PLACE_MAX_ITERS`; interior-only diagrams settle in one pass and
+  draw no leaders. The final `render` no longer calls `relim`/`autoscale_view`
+  (it would clip the in-place-expanded limits that admit exterior labels). The
+  default exterior policy is deterministic `raycast`, so seeded fits render
+  reproducibly.
 - **`venn()`** returns a `VennFit(EulerFit)` (custom repr; topological, so
   `original_values` is empty and `fitted_values` holds geometric region areas).
   Accepts `int`, list-of-names, or mapping. Supported set counts: ellipse
@@ -189,10 +210,13 @@ tests/test_*.py                  fit, plot, repr, and smoke tests
 
 ## Eunoia core API we bind against
 
-(We pin `eunoia = "1.1"` in `Cargo.toml`; the binding is verified against the
-published 1.1.0 crate. 1.0 made the public enums `#[non_exhaustive]`, so
-`map_err`'s `DiagramError` match carries a `_` catch-all; 1.0 also fixed the
-`SumAbsoute`→`SumAbsolute` typo and 1.1 added `LossType::LogSumAbsolute`. The
+(We pin `eunoia = "1.4"` in `Cargo.toml`; the binding is verified against the
+published 1.4.0 crate. The floor moved from 1.1 to 1.4 for the label-placement
+API (`place_labels`, `PlacementStrategy`, `classify_into_pieces`, etc. — see the
+size-aware label-placement note above). 1.0 made the public enums
+`#[non_exhaustive]`, so `map_err`'s `DiagramError` match carries a `_`
+catch-all (as do the `PlacementKind` match in `_place_labels`); 1.0 also fixed
+the `SumAbsoute`→`SumAbsolute` typo and 1.1 added `LossType::LogSumAbsolute`. The
 new 1.x default optimizer is reproducible only to floating-point precision, not
 bit-exact. Note: the published crate is a single crate; its sources live under
 `src/…`, not the workspace `crates/eunoia/src/…` paths cited below, which point
