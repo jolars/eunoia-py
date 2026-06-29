@@ -24,8 +24,12 @@
    :toctree: generated/
 
    EulerFit
+   VennFit
    Circle
    Ellipse
+   Square
+   Rectangle
+   Container
    Point
 ```
 

@@ -6,9 +6,9 @@ kernelspec:
 
 # Eunoia
 
-Python bindings for the [Eunoia](https://github.com/jolars/eunoia) Rust
-library for area-proportional Euler and Venn diagrams. Sister package to the
-R package [eulerr](https://github.com/jolars/eulerr).
+Python bindings for the [Eunoia](https://github.com/jolars/eunoia) Rust library
+for area-proportional Euler and Venn diagrams. Sister package to the R package
+[eulerr](https://github.com/jolars/eulerr).
 
 ```{toctree}
 :maxdepth: 2
@@ -22,9 +22,9 @@ comparison
 api
 ```
 
-An Euler diagram lays out one shape per set and sizes and positions them so
-that every region's area is proportional to the quantity it represents. Eunoia
-fits that layout with a fast Rust optimizer and draws it with matplotlib:
+An Euler diagram lays out one shape per set and sizes and positions them so that
+every region's area is proportional to the quantity it represents. Eunoia fits
+that layout with a fast Rust optimizer and draws it with matplotlib:
 
 ```{code-cell}
 import eunoia as eu
@@ -48,8 +48,8 @@ fit.plot(quantities=True);
   for one to five sets.
 - **Matplotlib native.** Plots are ordinary `Axes`, so they slot into figures,
   subplots, and your usual styling.
-- **Fast and typed.** The optimizer is Rust; the API is fully type-annotated
-  and ships a `py.typed` marker.
+- **Fast and typed.** The optimizer is Rust; the API is fully type-annotated and
+  ships a `py.typed` marker.
 
 ## Install
 
