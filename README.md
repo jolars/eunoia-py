@@ -36,80 +36,15 @@ fit.plot()
 plt.show()
 ```
 
-### Inclusive Input
+`euler()` also accepts inclusive counts, DataFrames, and NumPy arrays;
+`shape=` switches between circles, ellipses, squares, and rectangles;
+`venn()` draws topological diagrams; and `eunoia.options(...)` sets global
+plotting defaults. See the documentation for the full API.
 
-If your numbers are set sizes that already include their overlaps, pass
-`input="inclusive"` and the Eunoia core handles the inclusion-exclusion
-conversion:
+## Documentation
 
-```python
-fit = eu.euler({"A": 13, "B": 8, "A&B": 3}, input="inclusive")
-```
-
-### Ellipses
-
-Ellipses are more flexible than circles and fit many three-set arrangements
-exactly:
-
-```python
-fit = eu.euler(
-    {"A": 2, "B": 2, "C": 2, "A&B": 1, "A&C": 1, "B&C": 1},
-    shape="ellipse",
-)
-print(fit.diag_error)  # ~1e-14
-fit.plot(quantities=True)
-```
-
-### Plot Styling
-
-```python
-fit.plot(
-    colors=["#e41a1c", "#377eb8", "#4daf4a"],  # per-set
-    quantities="fitted",  # show fitted areas at region anchors
-    labels=True,  # set names at set anchors
-    edges={"linewidth": 1.5},
-)
-```
-
-### Venn Diagrams
-
-`venn()` draws a topological (not area-proportional) diagram in which every
-intersection is shown, regardless of its size. It accepts a set count, a list of
-names, or a `{combination: area}` mapping:
-
-```python
-fit = eu.venn(["A", "B", "C"])
-fit.plot(quantities=True)
-```
-
-Ellipse Venn diagrams support 1-5 sets; circle, square, and rectangle support
-1-3.
-
-### Other Shapes
-
-Besides `"circle"` (default) and `"ellipse"`, `euler()` and `venn()` accept
-`shape="square"` and `shape="rectangle"`.
-
-### Global Plotting Options
-
-`eunoia.options(...)` sets defaults for every subsequent plot (colors, edges,
-labels, quantities, legend, complement). Called with no arguments it returns a
-snapshot; called with category kwargs it returns a context manager that restores
-the previous state on exit. `reset_options()` reverts to the built-ins.
-
-## Public API
-
-  | Function/class                                 | Purpose                                            |
-  | ---------------------------------------------- | -------------------------------------------------- |
-  | `eunoia.euler(values, …)`                      | Fit an area-proportional diagram from a dict       |
-  | `eunoia.venn(sets, …)`                         | Fit a topological Venn diagram                     |
-  | `eunoia.EulerFit`/`VennFit`                    | Result classes with shapes, fitted values, metrics |
-  | `eunoia.Circle`/`Ellipse`                      | Per-set fitted shape (circle or ellipse)           |
-  | `eunoia.Square`/`Rectangle`                    | Per-set fitted shape (square or rectangle)         |
-  | `eunoia.Container`                             | Universe box drawn behind a `complement=` diagram  |
-  | `eunoia.Point`                                 | 2D point                                           |
-  | `eunoia.options`/`get_options`/`reset_options` | Global plotting defaults                           |
-  | `eunoia.EunoiaError`                           | Base error type (subclass of `ValueError`)         |
+Full documentation, including narrative guides and the API reference, lives at
+[jolars.github.io/eunoia-py](https://jolars.github.io/eunoia-py).
 
 ## Ecosystem
 
@@ -123,7 +58,7 @@ same Rust core powers bindings in several other languages:
   | Julia      | [`Eunoia.jl`](https://platform.juliahub.com/ui/Packages/General/Eunoia) ([repo](https://github.com/jolars/Eunoia.jl)) | `] add Eunoia`               |
   | R          | [`eulerr`](https://cran.r-project.org/package=eulerr) ([repo](https://github.com/jolars/eulerr))                      | `install.packages("eulerr")` |
 
-Narrative documentation for the whole family lives at
+Documentation for the whole family lives at
 [eunoia.bz/docs/](https://eunoia.bz/docs/); the Rust API reference is at
 [docs.rs/eunoia](https://docs.rs/eunoia/).
 
