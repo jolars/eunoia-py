@@ -10,6 +10,7 @@
     pkgs.ruff
     pkgs.stdenv.cc.cc.lib
     pkgs.zlib
+    pkgs.google-lighthouse
   ];
 
   env.LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
