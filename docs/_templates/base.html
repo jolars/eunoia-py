@@ -1,0 +1,7 @@
+{% extends "!base.html" %}
+{# furo's page.html extends base.html directly (not layout.html), so the global
+   <meta name="description"> goes here to reach every page. #}
+{% block extrahead %}
+  {{ super() }}
+  <meta name="description" content="Eunoia is a Python library for area-proportional Euler and Venn diagrams, built on the Rust eunoia crate and sister to the R package eulerr." />
+{% endblock %}

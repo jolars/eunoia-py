@@ -32,7 +32,11 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "_generated"]
 master_doc = "index"
 
-pygments_style = "tango"
+# WCAG AA-conformant syntax highlighting (tango's string token fell below the
+# 4.5:1 contrast ratio against furo's code background). furo reads
+# `pygments_dark_style` for its dark mode.
+pygments_style = "a11y-high-contrast-light"
+pygments_dark_style = "a11y-high-contrast-dark"
 
 # Autosummary
 autosummary_generate = True
@@ -43,6 +47,8 @@ html_theme = "furo"
 html_static_path = ["_static"]
 html_css_files = ["css/custom.css"]
 html_title = f"Eunoia {release}"
+# Global <meta name="description"> for search results is injected on every page
+# via _templates/layout.html (Sphinx has no top-level html_meta config).
 html_logo = "_static/logo.svg"
 html_favicon = "_static/logo.svg"
 
