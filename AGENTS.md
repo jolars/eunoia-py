@@ -106,6 +106,22 @@ tests/test_*.py                  fit, plot, repr, and smoke tests
   count as non-members; all-false rows are dropped; DataFrame input is always
   exclusive (rejects `input="inclusive"`). No Rust change; the core still
   gets the same pre-aggregated `list[(combo, count)]`.
+- **NumPy array input** (`euler`/`venn`): the array cousin of DataFrame input,
+  the matrix idiom from eulerr. Lives in `python/eunoia/_numpy.py`; both public
+  functions branch on `is_ndarray` (a `TypeGuard[npt.NDArray]`) *before*
+  `is_dataframe` and the `Mapping` checks. A 2D `(n_rows, n_sets)` array is a
+  wide membership matrix; a 1D array is a single set. The np.unique counting
+  loop is factored into `matrix_to_combinations(names, matrix)`, *shared* with
+  `_dataframe.dataframe_to_combinations`, so canonicalization is identical.
+  Values must be boolean or `0/1` numeric (bool dtype short-circuits; numeric
+  validated by `np.isin([0, 1])`); `NaN` counts as non-member (parity with DF
+  nulls); strings/datetimes/object/out-of-range raise `EunoiaError`. Arrays
+  carry no column names, so a new **`names=` kwarg** on `euler()`/`venn()`
+  supplies them (validated for length and uniqueness); default is `A`, `B`, …
+  via `default_name` (relocated here from `_venn.py` so `venn(int)` and array
+  input name unnamed sets identically). `names=` is *only* valid for array
+  input — passing it with any other form raises. Always exclusive; no Rust
+  change. numpy is already a runtime dep, so nothing new in `pyproject.toml`.
 - **Generic `EulerFit[S]`** with `S = TypeVar("S", Circle, Ellipse)`. The public
   `euler()` has two `@overload`s so `eu.euler(..., shape="ellipse")` types as
   `EulerFit[Ellipse]`.

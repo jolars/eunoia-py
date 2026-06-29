@@ -21,7 +21,7 @@ import numpy.typing as npt
 from narwhals.typing import IntoFrame
 
 from eunoia._eunoia import EunoiaError
-from eunoia._parse import canonicalize
+from eunoia._numpy import matrix_to_combinations
 
 
 def is_dataframe(obj: object) -> TypeGuard[IntoFrame]:
@@ -73,17 +73,10 @@ def dataframe_to_combinations(obj: IntoFrame) -> list[tuple[str, float]]:
 
     Each row is assigned to the canonical region of the columns that are true;
     all-false rows (member of no set) are dropped. Returns the same shape the
-    Rust binding consumes."""
+    Rust binding consumes. Counting is shared with the numpy-array path via
+    :func:`eunoia._numpy.matrix_to_combinations`."""
     names, matrix = _extract_bool_matrix(obj)
-    uniq, counts = np.unique(matrix, axis=0, return_counts=True)
-    out: dict[str, float] = {}
-    for row, count in zip(uniq, counts, strict=True):
-        sets = [names[i] for i in range(len(names)) if row[i]]
-        if not sets:
-            continue
-        combo = canonicalize("&".join(sets))
-        out[combo] = out.get(combo, 0.0) + float(count)
-    return list(out.items())
+    return matrix_to_combinations(names, matrix)
 
 
 def dataframe_column_names(obj: IntoFrame) -> list[str]:

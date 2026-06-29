@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import string
 from collections.abc import Collection, Mapping, Sequence
 from typing import Any, Literal, cast, overload
 
+import numpy.typing as npt
 from narwhals.typing import IntoFrame
 
 from eunoia._dataframe import (
@@ -24,6 +24,11 @@ from eunoia._fit import (
     build_squares,
 )
 from eunoia._models import Circle, Ellipse, Rectangle, S, Square, VennFit
+from eunoia._numpy import (
+    default_name,
+    is_ndarray,
+    ndarray_to_named_combinations,
+)
 from eunoia._parse import (
     canonicalize,
     is_membership_input,
@@ -37,6 +42,7 @@ VennInput = (
     | Mapping[str, float]
     | Mapping[str, Collection[str]]
     | IntoFrame
+    | npt.NDArray[Any]
 )
 
 
@@ -47,6 +53,7 @@ def venn(
     shape: Literal["ellipse"] = ...,
     complement: float | None = ...,
     input: Literal["exclusive", "inclusive"] = ...,
+    names: Sequence[str] | None = ...,
 ) -> VennFit[Ellipse]: ...
 
 
@@ -57,6 +64,7 @@ def venn(
     shape: Literal["circle"],
     complement: float | None = ...,
     input: Literal["exclusive", "inclusive"] = ...,
+    names: Sequence[str] | None = ...,
 ) -> VennFit[Circle]: ...
 
 
@@ -67,6 +75,7 @@ def venn(
     shape: Literal["square"],
     complement: float | None = ...,
     input: Literal["exclusive", "inclusive"] = ...,
+    names: Sequence[str] | None = ...,
 ) -> VennFit[Square]: ...
 
 
@@ -77,6 +86,7 @@ def venn(
     shape: Literal["rectangle"],
     complement: float | None = ...,
     input: Literal["exclusive", "inclusive"] = ...,
+    names: Sequence[str] | None = ...,
 ) -> VennFit[Rectangle]: ...
 
 
@@ -86,6 +96,7 @@ def venn(
     shape: Literal["circle", "ellipse", "square", "rectangle"] = "ellipse",
     complement: float | None = None,
     input: Literal["exclusive", "inclusive"] = "exclusive",
+    names: Sequence[str] | None = None,
 ) -> VennFit[Circle] | VennFit[Ellipse] | VennFit[Square] | VennFit[Rectangle]:
     """Lay out a (non-proportional) Venn diagram.
 
@@ -110,7 +121,9 @@ def venn(
           quantities;
         * a DataFrame (pandas, polars, … via narwhals) treated as a membership
           matrix; its column names are the sets and each row is counted into
-          a region.
+          a region;
+        * a numpy boolean array used as a membership matrix (2-D, or 1-D for a
+          single set); set names come from ``names`` or are generated.
 
         For ``int`` and plain name-sequence input there are no quantities, so
         ``original_values`` is empty.
@@ -128,6 +141,10 @@ def venn(
         values are total set sizes that include overlaps. Only meaningful for
         the region-area mapping form; membership-list and DataFrame input are
         always exclusive (passing ``"inclusive"`` raises :class:`EunoiaError`).
+    names:
+        Set names for numpy-array input, one per column (or a single name for a
+        1-D array). Defaults to ``"A"``, ``"B"``, …. Only valid for array input;
+        other forms carry their own names and passing ``names`` raises.
 
     Returns
     -------
@@ -147,7 +164,7 @@ def venn(
             f"invalid_input: input must be 'exclusive' or 'inclusive', got {input!r}"
         )
 
-    names, original_values, canonical_keys = _resolve_input(sets, input)
+    names, original_values, canonical_keys = _resolve_input(sets, input, names)
     result: Any = _venn_rust(len(names), shape, names, complement)
 
     if shape == "circle":
@@ -199,22 +216,30 @@ def _make_venn(
     )
 
 
-def _default_name(i: int) -> str:
-    if i < len(string.ascii_uppercase):
-        return string.ascii_uppercase[i]
-    return f"set{i + 1}"
-
-
 def _resolve_input(
-    sets: VennInput, input: str
+    sets: VennInput, input: str, names: Sequence[str] | None
 ) -> tuple[list[str], dict[str, float], list[str]]:
     """Resolve ``sets`` into set names, ``original_values`` and canonical keys.
 
     Mirrors :func:`euler`'s input handling for the value-carrying forms
-    (region-area mapping, membership lists, DataFrame). ``int`` and plain
-    name-sequence input carry no quantities, so ``original_values`` is empty
-    and the canonical-key list is too.
+    (region-area mapping, membership lists, DataFrame, numpy array). ``int`` and
+    plain name-sequence input carry no quantities, so ``original_values`` is
+    empty and the canonical-key list is too. ``names`` is only honored for array
+    input; supplying it with any other form raises.
     """
+    if is_ndarray(sets):
+        if input != "exclusive":
+            raise EunoiaError(
+                "invalid_input: array input is always exclusive; "
+                "do not pass input='inclusive'"
+            )
+        set_names, combinations = ndarray_to_named_combinations(sets, names)
+        original_values = {c: v for c, v in combinations}
+        return set_names, original_values, list(original_values)
+
+    if names is not None:
+        raise EunoiaError("invalid_input: names= is only valid for numpy array input")
+
     if is_dataframe(sets):
         if input != "exclusive":
             raise EunoiaError(
@@ -231,7 +256,7 @@ def _resolve_input(
     if isinstance(sets, int):
         if sets < 1:
             raise ValueError("venn: number of sets must be >= 1")
-        return [_default_name(i) for i in range(sets)], {}, []
+        return [default_name(i) for i in range(sets)], {}, []
     if isinstance(sets, Mapping):
         try:
             membership = is_membership_input(sets)

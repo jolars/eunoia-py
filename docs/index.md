@@ -42,7 +42,8 @@ fit.plot(quantities=True);
 - **Several shapes.** Fit with circles, ellipses, squares, or rectangles.
   Ellipses handle relationships that circles cannot draw exactly.
 - **Flexible input.** Pass per-region areas, inclusive set sizes, membership
-  lists, or a pandas/polars DataFrame read as a membership matrix.
+  lists, a pandas/polars DataFrame, or a numpy boolean array read as a
+  membership matrix.
 - **Venn diagrams too.** {func}`~eunoia.venn` draws topological Venn diagrams
   for one to five sets.
 - **Matplotlib native.** Plots are ordinary `Axes`, so they slot into figures,

@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Collection, Mapping, Sequence
 from typing import Any, Literal, cast, overload
 
+import numpy.typing as npt
 from narwhals.typing import IntoFrame
 
 from eunoia._dataframe import dataframe_to_combinations, is_dataframe
@@ -25,6 +26,7 @@ from eunoia._models import (
     S,
     Square,
 )
+from eunoia._numpy import is_ndarray, ndarray_to_combinations
 from eunoia._parse import (
     canonicalize,
     is_membership_input,
@@ -33,9 +35,12 @@ from eunoia._parse import (
     to_inclusive,
 )
 
-EulerInput = Mapping[str, float] | Mapping[str, Collection[str]] | IntoFrame
-"""Region areas (``{"A&B": 3}``), membership lists (``{"A": ["x", "y"]}``), or a
-DataFrame (pandas, polars, … via narwhals) used as a membership matrix."""
+EulerInput = (
+    Mapping[str, float] | Mapping[str, Collection[str]] | IntoFrame | npt.NDArray[Any]
+)
+"""Region areas (``{"A&B": 3}``), membership lists (``{"A": ["x", "y"]}``), a
+DataFrame (pandas, polars, … via narwhals), or a numpy boolean array used as a
+membership matrix."""
 
 
 Loss = Literal[
@@ -71,6 +76,7 @@ def euler(
     values: EulerInput,
     *,
     input: Literal["exclusive", "inclusive"] = ...,
+    names: Sequence[str] | None = ...,
     shape: Literal["circle"] = ...,
     seed: int | None = ...,
     complement: float | None = ...,
@@ -88,6 +94,7 @@ def euler(
     values: EulerInput,
     *,
     input: Literal["exclusive", "inclusive"] = ...,
+    names: Sequence[str] | None = ...,
     shape: Literal["ellipse"],
     seed: int | None = ...,
     complement: float | None = ...,
@@ -105,6 +112,7 @@ def euler(
     values: EulerInput,
     *,
     input: Literal["exclusive", "inclusive"] = ...,
+    names: Sequence[str] | None = ...,
     shape: Literal["square"],
     seed: int | None = ...,
     complement: float | None = ...,
@@ -122,6 +130,7 @@ def euler(
     values: EulerInput,
     *,
     input: Literal["exclusive", "inclusive"] = ...,
+    names: Sequence[str] | None = ...,
     shape: Literal["rectangle"],
     seed: int | None = ...,
     complement: float | None = ...,
@@ -138,6 +147,7 @@ def euler(
     values: EulerInput,
     *,
     input: Literal["exclusive", "inclusive"] = "exclusive",
+    names: Sequence[str] | None = None,
     shape: Literal["circle", "ellipse", "square", "rectangle"] = "circle",
     seed: int | None = None,
     complement: float | None = None,
@@ -163,15 +173,24 @@ def euler(
           as a membership matrix: each column is a set, each row an observation,
           and a truthy cell denotes membership. Columns must be boolean or
           ``0/1`` numeric.
+        * a numpy boolean array used as a membership matrix (the matrix idiom
+          from eulerr): a 2-D ``(n_observations, n_sets)`` array, or a 1-D array
+          read as a single set. Values must be boolean or ``0/1`` numeric;
+          ``NaN`` cells count as non-members. Set names come from ``names`` or
+          are generated (``"A"``, ``"B"``, …).
 
-        For the latter two, each element/row is counted into the canonical
-        region of the sets it belongs to, yielding exclusive per-region counts
-        (so ``input`` must stay ``"exclusive"``).
+        For the membership-list, DataFrame, and array forms, each element/row is
+        counted into the canonical region of the sets it belongs to, yielding
+        exclusive per-region counts (so ``input`` must stay ``"exclusive"``).
     input:
         ``"exclusive"`` (default): values are per-region areas, with no
         overlap from other sets included.
         ``"inclusive"``: values are total set sizes that include overlaps;
         the eunoia core converts internally.
+    names:
+        Set names for numpy-array input, one per column (or a single name for a
+        1-D array). Defaults to ``"A"``, ``"B"``, …. Only valid for array input;
+        other forms carry their own names and passing ``names`` raises.
     shape:
         ``"circle"`` (default), ``"ellipse"``, ``"square"``, or
         ``"rectangle"``.
@@ -226,7 +245,19 @@ def euler(
             f"'rectangle', got {shape!r}"
         )
 
-    if is_dataframe(values):
+    if names is not None and not is_ndarray(values):
+        raise EunoiaError("invalid_input: names= is only valid for numpy array input")
+
+    if is_ndarray(values):
+        if input != "exclusive":
+            raise EunoiaError(
+                "invalid_input: array input is always exclusive; "
+                "do not pass input='inclusive'"
+            )
+        combinations = ndarray_to_combinations(values, names)
+        canonical_keys = [c for c, _ in combinations]  # already canonical
+        original_values = {c: v for c, v in combinations}
+    elif is_dataframe(values):
         if input != "exclusive":
             raise EunoiaError(
                 "invalid_input: DataFrame input is always exclusive; "

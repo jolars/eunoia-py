@@ -80,6 +80,26 @@ eu.euler(df).original_values
 Rows that belong to no set are dropped, and `venn(df)` takes the column names as
 the set names. The same works for polars frames.
 
+## NumPy arrays
+
+A plain numpy boolean array is read as a membership matrix too (the matrix idiom
+from eulerr): a 2D `(n_observations, n_sets)` array, or a 1D array for a single
+set. An array carries no column names, so pass them with `names=` (otherwise
+sets are named `A`, `B`, …):
+
+```{code-cell}
+import numpy as np
+
+rng = np.random.default_rng(0)
+arr = rng.random((100, 3)) < 0.4  # 3 boolean columns
+eu.euler(arr, names=["A", "B", "C"]).original_values
+```
+
+Values may also be `0`/`1` numeric, and `NaN` cells count as non-members. This
+scales to many columns: a 13-column boolean matrix is too many sets for a true
+Venn diagram, but `eu.euler(arr, shape="circle")` still fits an
+area-proportional Euler diagram.
+
 ## Three sets with ellipses
 
 Ellipses are more flexible than circles and can fit many three-set arrangements

@@ -44,7 +44,10 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
 - [x] **DataFrame input**: pandas, polars, etc. as a wide membership matrix
       (each column a set, each row an observation). Routed through `narwhals`
       rather than the deprecated `__dataframe__` interchange protocol.
-- [ ] **numpy bool ndarray input**: the matrix idiom from eulerr.
+- [x] **numpy bool ndarray input**: the matrix idiom from eulerr. Done: a 2D
+      `(n_observations, n_sets)` boolean/`0`/`1` array (or 1D single set) is read
+      as a membership matrix by `euler()`/`venn()`, with set names from a new
+      `names=` kwarg (default `A`, `B`, …). See `_numpy.py`.
 - [x] **Optimizer and tolerance knobs** on `euler()`: `optimizer=`, `tolerance=`,
       `n_restarts=`, `max_iterations=`.
 - [x] **`labels=dict`for plot**: per-set custom label text and style (math text
