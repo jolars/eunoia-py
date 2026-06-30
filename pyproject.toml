@@ -12,7 +12,8 @@ requires-python = ">=3.11"
 authors = [{ name = "Johan Larsson", email = "johan@jolars.co" }]
 keywords = ["euler", "venn", "diagram", "visualization", "set"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: Matplotlib",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
