@@ -1,4 +1,7 @@
 flavor = "gfm"
 
+[flavor-overrides]
+"docs/*.md" = "myst"
+
 [formatters]
 python = "ruff"
