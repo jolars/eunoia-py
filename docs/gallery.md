@@ -304,7 +304,8 @@ fit.plot(legend={"loc": "upper right", "title": "Sets"});
 ### Custom label text and style
 
 `labels` can be a dict for per-set control. Map a set name to a replacement
-string (matplotlib [mathtext](https://matplotlib.org/stable/users/explain/text/mathtext.html)
+string (matplotlib
+[mathtext](https://matplotlib.org/stable/users/explain/text/mathtext.html)
 works, which is part of why we picked matplotlib), to an `Axes.text` kwargs dict
 (with an optional `"text"` key for custom text), or to `None`/`False` to hide
 that set's label. A dict whose keys are *not* set names (e.g.
