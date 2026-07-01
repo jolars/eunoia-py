@@ -11,7 +11,7 @@ customization options available through {meth}`~eunoia.EulerFit.plot`. It is the
 Python counterpart to the [eulerr
 gallery](https://jolars.github.io/eulerr/articles/gallery.html).
 
-```{code-cell}
+```{code-cell} python
 import matplotlib.pyplot as plt
 
 import eunoia as eu
@@ -23,7 +23,7 @@ import eunoia as eu
 
 Here we use squares instead of the default circles.
 
-```{code-cell}
+```{code-cell} python
 fit = eu.euler(
     {
         "A": 10,
@@ -36,7 +36,8 @@ fit = eu.euler(
     },
     shape="square",
 )
-fit.plot();
+
+fit.plot()
 ```
 
 ### Disjoint sets
@@ -44,28 +45,30 @@ fit.plot();
 Rename the sets simply by choosing the dictionary keys. A flat `edges` dict is
 applied to every outline.
 
-```{code-cell}
+```{code-cell} python
 fit = eu.euler({"Tom": 1, "Greg": 1, "Alberta": 1})
-fit.plot(edges={"linestyle": "--"});
+
+fit.plot(edges={"linestyle": "--"})
 ```
 
 To style each outline independently, pass `edges` as a dict keyed by set name
 (each value a dict of `PathPatch` kwargs) or as a sequence of such dicts, one
 per set in shape order, mirroring how `colors` accepts a per-set dict.
 
-```{code-cell}
+```{code-cell} python
 fit = eu.euler({"Tom": 1, "Greg": 1, "Alberta": 1})
+
 fit.plot(
     edges={
         "Tom": {"linestyle": "--", "linewidth": 2},
         "Greg": {"linestyle": ":"},
     },
-);
+)
 ```
 
 ### A set contained in the intersection of two sets
 
-```{code-cell}
+```{code-cell} python
 fit = eu.euler(
     {
         "A": 15,
@@ -80,14 +83,14 @@ fit = eu.euler(
 fit.plot(
     colors=["black", "cyan", "orange"],
     edges={"edgecolor": "white", "linewidth": 2},
-);
+)
 ```
 
 ### Two sets intersecting inside a third
 
 Here we override individual region fills with per-region `fills` styles.
 
-```{code-cell}
+```{code-cell} python
 fit = eu.euler(
     {
         "A": 15,
@@ -99,13 +102,14 @@ fit = eu.euler(
         "A&B&C": 2,
     }
 )
+
 fit.plot(
     fills={
         "A&B&C": {"facecolor": "orange"},
         "A&B": {"facecolor": "lightblue"},
         "A&C": {"facecolor": "lightsalmon"},
     },
-);
+)
 ```
 
 ### Difficult set (for circles!)
@@ -113,19 +117,19 @@ fit.plot(
 This relationship cannot be drawn exactly with circles but works well with
 ellipses.
 
-```{code-cell}
+```{code-cell} python
 fit = eu.euler(
     {"A": 7, "B": 6, "C": 0, "A&B": 0, "A&C": 1, "B&C": 1, "A&B&C": 2},
     shape="ellipse",
 )
-fit.plot(quantities=True);
+fit.plot(quantities=True)
 ```
 
 ### Russian doll
 
 Sets intersecting inside other sets.
 
-```{code-cell}
+```{code-cell} python
 fit = eu.euler(
     {
         "A": 15,
@@ -137,7 +141,7 @@ fit = eu.euler(
         "A&B&C": 5,
     }
 )
-fit.plot();
+fit.plot()
 ```
 
 ### Wilkinson set relationship
@@ -145,7 +149,7 @@ fit.plot();
 This set relationship is taken from Wilkinson et al. It works best with
 ellipses. We show the *fitted* values rather than the requested ones.
 
-```{code-cell}
+```{code-cell} python
 fit = eu.euler(
     {
         "A": 4,
@@ -167,12 +171,12 @@ fit = eu.euler(
     },
     shape="ellipse",
 )
-fit.plot(quantities="fitted", edges={"linestyle": ":"});
+fit.plot(quantities="fitted", edges={"linestyle": ":"})
 ```
 
 ### Gene set
 
-```{code-cell}
+```{code-cell} python
 fit = eu.euler(
     {
         "SE": 13,
@@ -185,12 +189,12 @@ fit = eu.euler(
         "SE&Anti-CCP&DAS28": 1,
     }
 )
-fit.plot(quantities=True);
+fit.plot(quantities=True)
 ```
 
 ### Three sets intersecting inside a fourth
 
-```{code-cell}
+```{code-cell} python
 fit = eu.euler(
     {
         "A": 30,
@@ -203,14 +207,14 @@ fit = eu.euler(
         "A&B&C&D": 1,
     }
 )
-fit.plot();
+fit.plot()
 ```
 
 ### eulerAPE combination
 
 A combination taken from the eulerAPE article, fit with ellipses.
 
-```{code-cell}
+```{code-cell} python
 fit = eu.euler(
     {
         "a": 3491,
@@ -223,14 +227,14 @@ fit = eu.euler(
     },
     shape="ellipse",
 )
-fit.plot();
+fit.plot()
 ```
 
 ### Four uniform interactions
 
 This time we fit the diagram using rectangles.
 
-```{code-cell}
+```{code-cell} python
 fit = eu.euler(
     {
         "Frodo": 10,
@@ -251,7 +255,7 @@ fit = eu.euler(
     },
     shape="rectangle",
 )
-fit.plot();
+fit.plot()
 ```
 
 ### Two circles intersecting completely
@@ -269,9 +273,9 @@ Pass `complement=` to {func}`~eunoia.euler` to reserve area outside every set;
 it comes back as a container that {meth}`~eunoia.EulerFit.plot` draws behind
 everything. The `complement=` plot keyword styles that box.
 
-```{code-cell}
+```{code-cell} python
 fit = eu.euler({"A": 10, "B": 8, "A&B": 4}, complement=20)
-fit.plot(complement={"facecolor": "#eeeeee"}, quantities=True);
+fit.plot(complement={"facecolor": "#eeeeee"}, quantities=True)
 ```
 
 ### Colors as a sequence or a mapping
@@ -279,11 +283,9 @@ fit.plot(complement={"facecolor": "#eeeeee"}, quantities=True);
 `colors` accepts either a sequence (one per set, in fit order) or a mapping from
 set name to color.
 
-```{code-cell}
-fit = eu.euler(
-    {"A": 10, "B": 7, "C": 8, "A&B": 3, "A&C": 4, "B&C": 2, "A&B&C": 1}
-)
-fit.plot(colors={"A": "#e41a1c", "B": "#377eb8", "C": "#4daf4a"});
+```{code-cell} python
+fit = eu.euler({"A": 10, "B": 7, "C": 8, "A&B": 3, "A&C": 4, "B&C": 2, "A&B&C": 1})
+fit.plot(colors={"A": "#e41a1c", "B": "#377eb8", "C": "#4daf4a"})
 ```
 
 ### A legend instead of inline labels
@@ -294,11 +296,10 @@ leader line, but for very dense diagrams a legend can still be cleaner. Passing
 labels off by default (pass `labels=True` to keep both). A dict is forwarded to
 matplotlib's `Axes.legend`, so you can control placement and title.
 
-```{code-cell}
-fit = eu.euler(
-    {"A": 10, "B": 7, "C": 8, "A&B": 3, "A&C": 4, "B&C": 2, "A&B&C": 1}
-)
-fit.plot(legend={"loc": "upper right", "title": "Sets"});
+```{code-cell} python
+fit = eu.euler({"A": 10, "B": 7, "C": 8, "A&B": 3, "A&C": 4, "B&C": 2, "A&B&C": 1})
+
+fit.plot(legend={"loc": "upper right", "title": "Sets"})
 ```
 
 ### Custom label text and style
@@ -311,14 +312,14 @@ works, which is part of why we picked matplotlib), to an `Axes.text` kwargs dict
 that set's label. A dict whose keys are *not* set names (e.g.
 `{"fontsize": 14}`) is a uniform style applied to every label instead.
 
-```{code-cell}
+```{code-cell} python
 fit = eu.euler({"alpha": 10, "beta": 7, "alpha&beta": 3})
 fit.plot(
     labels={
         "alpha": {"text": r"$\alpha$", "fontsize": 22},
         "beta": {"text": r"$\beta$", "fontsize": 22, "color": "crimson"},
     },
-);
+)
 ```
 
 ### Original versus fitted quantities
@@ -326,18 +327,21 @@ fit.plot(
 Drawing into axes we create ourselves lets us place two diagrams side by side to
 compare the requested values against what the layout achieved.
 
-```{code-cell}
+```{code-cell} python
 fit = eu.euler(
     {"A": 7, "B": 6, "A&C": 1, "B&C": 1, "A&B&C": 2, "C": 0},
     shape="ellipse",
 )
 
 fig, (left, right) = plt.subplots(1, 2, figsize=(9, 4))
+
 fit.plot(ax=left, quantities="original")
 left.set_title("original")
+
 fit.plot(ax=right, quantities="fitted")
 right.set_title("fitted")
-fig;
+
+fig
 ```
 
 ### Counts and percentages
@@ -347,7 +351,7 @@ display type—`"counts"` (the raw value, the default) or `"percent"` (the
 region's share of the total)—while a dict combines a type, a value source, and
 text styling. Passing both types stacks the count above its percentage.
 
-```{code-cell}
+```{code-cell} python
 fit = eu.euler(
     {
         "SE": 13,
@@ -360,7 +364,8 @@ fit = eu.euler(
         "SE&Anti-CCP&DAS28": 1,
     }
 )
-fit.plot(quantities={"type": ["counts", "percent"], "fontsize": 8});
+
+fit.plot(quantities={"type": ["counts", "percent"], "fontsize": 8})
 ```
 
 ## Venn diagrams
@@ -373,31 +378,37 @@ the ellipse, which supports one through five sets.
 
 ### Two and three sets
 
-```{code-cell}
+```{code-cell} python
 fig, (left, right) = plt.subplots(1, 2, figsize=(9, 4))
+
 eu.venn(2).plot(ax=left)
 eu.venn(["A", "B", "C"]).plot(ax=right)
-fig;
+
+fig
 ```
 
 ### Four and five sets
 
-```{code-cell}
+```{code-cell} python
 fig, (left, right) = plt.subplots(1, 2, figsize=(9, 4))
+
 eu.venn(4).plot(ax=left)
 eu.venn(5).plot(ax=right)
-fig;
+
+fig
 ```
 
 ### Squares and rectangles
 
 Square and rectangle Venn diagrams support up to three sets.
 
-```{code-cell}
+```{code-cell} python
 fig, (left, right) = plt.subplots(1, 2, figsize=(9, 4))
+
 eu.venn(3, shape="square").plot(ax=left)
 eu.venn(3, shape="rectangle").plot(ax=right)
-fig;
+
+fig
 ```
 
 ### Rotated rectangles
@@ -406,11 +417,13 @@ Rotated rectangles support up to four sets. The four-set layout tilts the
 rectangles so that all 15 regions open up, the rectangular analogue of the
 classic four-ellipse Venn diagram.
 
-```{code-cell}
+```{code-cell} python
 fig, (left, right) = plt.subplots(1, 2, figsize=(9, 4))
+
 eu.venn(3, shape="rotated_rectangle").plot(ax=left)
 eu.venn(4, shape="rotated_rectangle").plot(ax=right)
-fig;
+
+fig
 ```
 
 ### With region quantities
@@ -420,13 +433,18 @@ but the values are kept as `original_values` and `plot()` labels each region
 automatically (pass `quantities=False` to suppress them). This is the usual
 "Venn diagram with subset sizes" plot.
 
-```{code-cell}
+```{code-cell} python
 eu.venn(
     {
-        "A": 12, "B": 9, "C": 7,
-        "A&B": 4, "A&C": 3, "B&C": 2, "A&B&C": 1,
+        "A": 12,
+        "B": 9,
+        "C": 7,
+        "A&B": 4,
+        "A&C": 3,
+        "B&C": 2,
+        "A&B&C": 1,
     }
-).plot();
+).plot()
 ```
 
 Use `input="inclusive"` when the values are total set sizes (overlaps included)
@@ -437,6 +455,6 @@ rather than per-region counts.
 `venn` accepts the same membership-list input as `euler`; it counts each element
 into its region, so the quantities are shown just as above.
 
-```{code-cell}
-eu.venn({"A": ["x", "y", "z"], "B": ["y", "z", "w"], "C": ["z", "w", "q"]}).plot();
+```{code-cell} python
+eu.venn({"A": ["x", "y", "z"], "B": ["y", "z", "w"], "C": ["z", "w", "q"]}).plot()
 ```
