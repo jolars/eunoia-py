@@ -142,15 +142,18 @@ reproduce with `task benchmark`.
 
 ### Accuracy, grouped by objective
 
-`{include} _generated/benchmark_table.md`
+```{include} _generated/benchmark_table.md
+```
 
-\`\`\`{figure} \_static/benchmarks/objective_groups.png :alt: Grouped bar
-charts, one panel per objective, log scale. :width: 100%
+```{figure} _static/benchmarks/objective_groups.png
+:alt: Grouped bar charts, one panel per objective, log scale.
+:width: 100%
 
 Each panel is one objective; bars are the scale-invariant score for that
 objective (lower is better, log scale). Within a panel every fitter minimized
 the same loss, so the comparison is apples-to-apples. Bars are absent where a
-package cannot represent that set count. \`\`\`
+package cannot represent that set count.
+```
 
 Three things stand out:
 
@@ -185,27 +188,32 @@ objective to match the data is itself part of what eunoia offers here.
 Accuracy is not the whole story; here is end-to-end `fit` time (one
 representative configuration per package).
 
-`{include} _generated/benchmark_timing.md`
+```{include} _generated/benchmark_timing.md
+```
 
-\`\`\`{figure} \_static/benchmarks/timing.png :alt: Grouped bar chart of median
-fit time per case, log scale. :width: 100%
+```{figure} _static/benchmarks/timing.png
+:alt: Grouped bar chart of median fit time per case, log scale.
+:width: 100%
 
 Median fit time per case (log scale), each package under the same configuration
 as the gallery. `matplotlib-venn` is fastest but capped at three sets; eunoia
 and `matplotlib-set-diagrams` are broadly comparable, both taking up to a few
 seconds on the hardest high-set specs. (Separately, eunoia's non-smooth losses,
 `"sum_absolute"` and `"log_sum_absolute"`, are markedly slower to optimize than
-the smooth `"sum_squared"` default shown here.) \`\`\`
+the smooth `"sum_squared"` default shown here.)
+```
 
 ### Fitted layouts
 
-\`\`\`{figure} \_static/benchmarks/gallery.png :alt: Grid of fitted layouts, one
-column per fitter, one row per case. :width: 100%
+```{figure} _static/benchmarks/gallery.png
+:alt: Grid of fitted layouts, one column per fitter, one row per case.
+:width: 100%
 
 Fitted layouts on representative corpus cases (eunoia under its default squared
 loss; set-diagrams under `"squared"`). The four-, five-, and six-set rows show
 `matplotlib-venn` dropping out, and eunoia's ellipse column staying faithful
-where the circle columns visibly distort. \`\`\`
+where the circle columns visibly distort.
+```
 
 ## When to reach for what
 
