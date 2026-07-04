@@ -289,6 +289,12 @@ def _place_region_labels(
     measured: dict[str, list[_MeasuredLine]] = {}
 
     for _ in range(_PLACE_MAX_ITERS):
+        # ``set_aspect("equal")`` only rescales the transform at draw time (via
+        # ``apply_aspect``), so measuring text against ``transData`` beforehand
+        # uses unequal x/y scales and mismeasures width. Apply it now -- and
+        # again each round, since the limits change as exterior labels expand
+        # the canvas -- so measured sizes match what is finally rendered.
+        ax.apply_aspect()
         sizes: dict[str, tuple[float, float]] = {}
         measured = {}
         for region, lines in region_lines.items():

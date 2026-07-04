@@ -11,6 +11,7 @@ matplotlib.use("Agg")
 
 import eunoia as eu
 import matplotlib.pyplot as plt
+import pytest
 from eunoia._eunoia import _place_labels
 
 
@@ -100,3 +101,48 @@ def test_plot_clean_diagram_has_no_leaders() -> None:
     ax = fit.plot(quantities=True)
     assert len(ax.lines) == 0
     plt.close(ax.figure)
+
+
+def test_measured_block_size_matches_rendered() -> None:
+    """Regression: text is measured against ``transData``, whose x/y scales are
+    only equalized once the aspect is applied. Measuring before ``apply_aspect``
+    under-measures width, so the core is told a too-narrow box and the drawn
+    text overflows its region. The size we feed the core must match what renders.
+    """
+    from eunoia import _plot
+
+    captured: dict[str, tuple[float, float]] = {}
+    orig = _plot._place_labels
+
+    def spy(
+        rings: Any,
+        sizes: dict[str, tuple[float, float]],
+        container: Any = None,
+        exterior: str = "raycast",
+    ) -> Any:
+        captured.update(sizes)  # last round wins, matching the final placement
+        return orig(rings, sizes, container, exterior=exterior)
+
+    _plot._place_labels = spy
+    try:
+        # A horizontal two-circle layout: the data bbox is wider than tall, so a
+        # stale (non-equal-aspect) transform mismeasures width by ~34%.
+        fit = eu.euler({"Alpha": 10, "B": 10, "Alpha&B": 4})
+        ax = fit.plot(labels=True, quantities=False)
+    finally:
+        _plot._place_labels = orig
+
+    fig = ax.figure
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    inv = ax.transData.inverted()
+    text = next(t for t in ax.texts if t.get_text() == "Alpha")
+    bb = text.get_window_extent(renderer)
+    (x0, y0) = inv.transform((bb.x0, bb.y0))
+    (x1, y1) = inv.transform((bb.x1, bb.y1))
+    rendered_w, rendered_h = abs(x1 - x0), abs(y1 - y0)
+
+    fed_w, fed_h = captured["Alpha"]
+    assert rendered_w == pytest.approx(fed_w, rel=0.05)
+    assert rendered_h == pytest.approx(fed_h, rel=0.05)
+    plt.close(fig)
