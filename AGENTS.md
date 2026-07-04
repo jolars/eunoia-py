@@ -79,6 +79,21 @@ Both array and DataFrame input are always exclusive (reject `input="inclusive"`)
 and share `matrix_to_combinations` for identical canonicalization. No Rust
 change; the core still gets a pre-aggregated `list[(combo, count)]`.
 
+**Member identities** (`ids=` / `EulerFit.members`): a pure Python-side companion
+to the counts (never crosses the FFI). `parse_membership_input` returns
+`(combinations, {combo: [member, ...]})` since membership-list input names its
+members intrinsically; array/DataFrame recover them only when `ids=` is given
+(`matrix_to_members`, the non-aggregating parallel to `matrix_to_combinations`).
+`ids=` is a per-row sequence (array or DataFrame) or, for a DataFrame, a column
+name that is read as the members and excluded from the set columns
+(`_dataframe._read_frame`). `ids=` is rejected for membership-list/area/int/
+name-sequence input, mirroring the array-only `names=` rule. Member lists are
+sorted per region for reproducibility; `EulerFit.members` is `None` when no
+identities exist. `plot(members=...)` (`_resolve_members` in `_plot.py`, mirrors
+`_resolve_quantities`) newline-joins each region's names into one label block,
+appended after the set-name and quantity lines; `max` caps the list with a
+`"+N more"` line. Styled via the `members` `eunoia.options` category.
+
 **Canonical keys** everywhere in returned dicts: `"B&A"` -> `"A&B"` via
 `_parse.canonicalize` (see `test_canonical_keys_in_output`).
 

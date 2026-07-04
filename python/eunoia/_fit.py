@@ -28,7 +28,7 @@ from eunoia._models import (
     S,
     Square,
 )
-from eunoia._numpy import is_ndarray, ndarray_to_combinations
+from eunoia._numpy import is_ndarray, ndarray_to_combinations, ndarray_to_members
 from eunoia._parse import (
     canonicalize,
     is_membership_input,
@@ -80,6 +80,7 @@ def euler(
     *,
     input: Literal["exclusive", "inclusive"] = ...,
     names: Sequence[str] | None = ...,
+    ids: str | Sequence[object] | None = ...,
     shape: Literal["circle"] = ...,
     seed: int | None = ...,
     complement: float | None = ...,
@@ -98,6 +99,7 @@ def euler(
     *,
     input: Literal["exclusive", "inclusive"] = ...,
     names: Sequence[str] | None = ...,
+    ids: str | Sequence[object] | None = ...,
     shape: Literal["ellipse"],
     seed: int | None = ...,
     complement: float | None = ...,
@@ -116,6 +118,7 @@ def euler(
     *,
     input: Literal["exclusive", "inclusive"] = ...,
     names: Sequence[str] | None = ...,
+    ids: str | Sequence[object] | None = ...,
     shape: Literal["square"],
     seed: int | None = ...,
     complement: float | None = ...,
@@ -134,6 +137,7 @@ def euler(
     *,
     input: Literal["exclusive", "inclusive"] = ...,
     names: Sequence[str] | None = ...,
+    ids: str | Sequence[object] | None = ...,
     shape: Literal["rectangle"],
     seed: int | None = ...,
     complement: float | None = ...,
@@ -152,6 +156,7 @@ def euler(
     *,
     input: Literal["exclusive", "inclusive"] = ...,
     names: Sequence[str] | None = ...,
+    ids: str | Sequence[object] | None = ...,
     shape: Literal["rotated_rectangle"],
     seed: int | None = ...,
     complement: float | None = ...,
@@ -169,6 +174,7 @@ def euler(
     *,
     input: Literal["exclusive", "inclusive"] = "exclusive",
     names: Sequence[str] | None = None,
+    ids: str | Sequence[object] | None = None,
     shape: Literal[
         "circle", "ellipse", "square", "rectangle", "rotated_rectangle"
     ] = "circle",
@@ -220,6 +226,14 @@ def euler(
         Set names for numpy-array input, one per column (or a single name for a
         1-D array). Defaults to ``"A"``, ``"B"``, …. Only valid for array input;
         other forms carry their own names and passing ``names`` raises.
+    ids:
+        Per-observation member identifiers, so the fit retains *who* is in each
+        region (surfaced as :attr:`~EulerFit.members` and drawable with
+        ``plot(members=True)``). Only valid for array and DataFrame input: pass a
+        sequence with one entry per row (array or DataFrame), or, for a
+        DataFrame, the name of a column to read the identifiers from and exclude
+        from the sets. Membership-list input carries its members intrinsically
+        (no ``ids`` needed); passing ``ids`` with any other form raises.
     shape:
         ``"circle"`` (default), ``"ellipse"``, ``"square"``,
         ``"rectangle"``, or ``"rotated_rectangle"``.
@@ -284,6 +298,8 @@ def euler(
     if names is not None and not is_ndarray(values):
         raise EunoiaError("invalid_input: names= is only valid for numpy array input")
 
+    members_map: dict[str, list[str]] | None = None
+
     if is_ndarray(values):
         if input != "exclusive":
             raise EunoiaError(
@@ -293,16 +309,27 @@ def euler(
         combinations = ndarray_to_combinations(values, names)
         canonical_keys = [c for c, _ in combinations]  # already canonical
         original_values = {c: v for c, v in combinations}
+        if ids is not None:
+            if isinstance(ids, str):
+                raise EunoiaError(
+                    "invalid_input: ids as a column name is only valid for "
+                    "DataFrame input; pass a per-row sequence for array input"
+                )
+            members_map = ndarray_to_members(values, names, ids)
     elif is_dataframe(values):
         if input != "exclusive":
             raise EunoiaError(
                 "invalid_input: DataFrame input is always exclusive; "
                 "do not pass input='inclusive'"
             )
-        combinations = dataframe_to_combinations(values)
+        _, combinations, members_map = dataframe_to_combinations(values, ids)
         canonical_keys = [c for c, _ in combinations]  # already canonical
         original_values = {c: v for c, v in combinations}
     else:
+        if ids is not None:
+            raise EunoiaError(
+                "invalid_input: ids= is only valid for array or DataFrame input"
+            )
         mapping = cast("Mapping[str, Any]", values)
         try:
             membership = is_membership_input(mapping)
@@ -315,7 +342,7 @@ def euler(
                     "invalid_input: membership-list input is always exclusive; "
                     "do not pass input='inclusive'"
                 )
-            combinations = parse_membership_input(mapping)
+            combinations, members_map = parse_membership_input(mapping)
             canonical_keys = [c for c, _ in combinations]  # already canonical
             original_values = {c: v for c, v in combinations}
         else:
@@ -344,6 +371,7 @@ def euler(
             original_values,
             canonical_keys,
             input,
+            members_map,
         )
 
     if shape == "ellipse":
@@ -365,6 +393,7 @@ def euler(
             original_values,
             canonical_keys,
             input,
+            members_map,
         )
 
     if shape == "square":
@@ -386,6 +415,7 @@ def euler(
             original_values,
             canonical_keys,
             input,
+            members_map,
         )
 
     if shape == "rectangle":
@@ -407,6 +437,7 @@ def euler(
             original_values,
             canonical_keys,
             input,
+            members_map,
         )
 
     result_rr = _fit_rotated_rectangles(
@@ -427,6 +458,7 @@ def euler(
         original_values,
         canonical_keys,
         input,
+        members_map,
     )
 
 
@@ -436,6 +468,7 @@ def _finish(
     original_values: dict[str, float],
     canonical_keys: list[str],
     input: str,
+    members: dict[str, list[str]] | None = None,
 ) -> EulerFit[S]:
     """Assemble an ``EulerFit`` from a raw Rust result and built shapes."""
     fitted_exclusive = result["fitted_exclusive"]
@@ -456,6 +489,7 @@ def _finish(
         stress=float(result["stress"]),
         loss=float(result["loss"]),
         container=build_container(result.get("container")),
+        members=members,
         plot_data=build_plot_data(result),
     )
 

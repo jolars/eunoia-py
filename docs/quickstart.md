@@ -57,6 +57,28 @@ set names):
 eu.venn({"A": ["x", "y"], "B": ["y", "z"]}).plot();
 ```
 
+## Member labels
+
+When the fit knows *who* is in each region, `plot(members=True)` draws the member
+names in place of (or alongside) the counts. This works for membership-list
+input automatically, and for array or DataFrame input when you pass `ids=` (see
+below). Long lists that do not fit inside a region are pushed outside with a
+leader line; cap them with `members={"max": n}`, which lists the first `n` names
+and adds a `"+N more"` line:
+
+```{code-cell}
+fit = eu.euler(
+    {
+        "A": ["ada", "alan", "grace"],
+        "B": ["alan", "grace", "linus"],
+    }
+)
+fit.plot(members=True, quantities=False);
+```
+
+The names are available on the fit as `fit.members` (a mapping from canonical
+region key to the sorted member names), so you can use them without plotting.
+
 ## DataFrames
 
 A pandas or polars DataFrame (anything [narwhals](https://narwhals-dev.github.io/narwhals/)
@@ -80,6 +102,21 @@ eu.euler(df).original_values
 Rows that belong to no set are dropped, and `venn(df)` takes the column names as
 the set names. The same works for polars frames.
 
+To keep member labels (see above) for a frame, pass `ids=` naming a column of
+per-row identifiers; that column is read as the members and excluded from the
+sets:
+
+```{code-cell}
+df = pd.DataFrame(
+    {
+        "A": [1, 1, 0],
+        "B": [0, 1, 1],
+        "name": ["ada", "alan", "grace"],
+    }
+)
+eu.euler(df, ids="name").plot(members=True);
+```
+
 ## NumPy arrays
 
 A plain numpy boolean array is read as a membership matrix too (the matrix idiom
@@ -99,6 +136,9 @@ Values may also be `0`/`1` numeric, and `NaN` cells count as non-members. This
 scales to many columns: a 13-column boolean matrix is too many sets for a true
 Venn diagram, but `eu.euler(arr, shape="circle")` still fits an
 area-proportional Euler diagram.
+
+Arrays carry no row labels, so to keep member labels pass `ids=` a sequence with
+one identifier per row: `eu.euler(arr, names=["A", "B", "C"], ids=row_labels)`.
 
 ## Three sets with ellipses
 

@@ -32,6 +32,7 @@ def render(
     edges: dict[str, Any] | Sequence[dict[str, Any]] | None = None,
     labels: bool | dict[str, Any] | None = None,
     quantities: bool | str | dict[str, Any] | None = None,
+    members: bool | dict[str, Any] | None = None,
     legend: bool | dict[str, Any] = False,
     complement: dict[str, Any] | None = None,
 ) -> Axes:
@@ -163,6 +164,19 @@ def render(
                 continue
             line_style = {**opts["quantities"], **q_style}
             region_lines.setdefault(combo, []).append((fmt(values[combo]), line_style))
+
+    # Member names go into their region's block below any set name and quantity.
+    # Only regions we actually drew (present in ``region_pieces``) can be placed;
+    # a region with members but no geometry is skipped rather than measured
+    # against a ring the core does not have.
+    mem = _resolve_members(fit, members)
+    if mem is not None:
+        mem_text, mem_style = mem
+        for combo, text in mem_text.items():
+            if combo not in region_pieces:
+                continue
+            line_style = {**opts["members"], **mem_style}
+            region_lines.setdefault(combo, []).append((text, line_style))
 
     # Establish the data->display transform from the diagram geometry before
     # measuring any text: matplotlib only knows text extents in pixels, and only
@@ -523,6 +537,55 @@ def _resolve_set_labels(
 
 
 _QUANTITY_TYPES = ("counts", "percent")
+
+
+def _resolve_members(
+    fit: EulerFit[Any],
+    members: bool | dict[str, Any] | None,
+) -> tuple[dict[str, str], dict[str, Any]] | None:
+    """Resolve the ``members`` kwarg to per-region member text and text kwargs.
+
+    Returns ``None`` when members are off. Otherwise returns
+    ``({region: text}, text_kwargs)`` where each ``text`` newline-joins that
+    region's (already sorted) member names, capped by an optional ``max``.
+
+    ``members`` may be:
+
+    * ``None`` or ``False`` (default): off.
+    * ``True`` (or an empty dict): on, listing every member name.
+    * a dict: ``{"max": int, **text_kwargs}``. ``max`` caps how many names are
+      listed per region, replacing the remainder with a ``"+N more"`` line; any
+      other keys are forwarded to ``ax.text`` (e.g. ``color``, ``fontsize``).
+    """
+    if members is None or members is False:
+        return None
+    if fit.members is None:
+        raise ValueError(
+            "members display requested but this fit carries no member "
+            "identities; member names are available for membership-list input, "
+            "or array/DataFrame input with ids="
+        )
+    max_n: int | None = None
+    text_kwargs: dict[str, Any] = {}
+    if isinstance(members, dict):
+        cfg = dict(members)
+        raw_max = cfg.pop("max", None)
+        if raw_max is not None:
+            if isinstance(raw_max, bool) or not isinstance(raw_max, int) or raw_max < 1:
+                raise ValueError("members 'max' must be a positive integer")
+            max_n = raw_max
+        text_kwargs = cfg
+
+    out: dict[str, str] = {}
+    for region, names in fit.members.items():
+        if not names:
+            continue
+        if max_n is not None and len(names) > max_n:
+            lines = [*names[:max_n], f"+{len(names) - max_n} more"]
+        else:
+            lines = list(names)
+        out[region] = "\n".join(lines)
+    return out, text_kwargs
 
 
 def _resolve_quantities(

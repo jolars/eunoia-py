@@ -125,6 +125,11 @@ class EulerFit(Generic[S]):
     container:
         The fitted universe box, when the diagram was fit with
         ``complement``; otherwise ``None``.
+    members:
+        For membership-list input, or array/DataFrame input with ``ids=``, a
+        mapping from canonical region key to the sorted member names in that
+        region; ``None`` for area/int input that carries no identities. Enables
+        ``plot(members=True)``.
     """
 
     shapes: tuple[S, ...]
@@ -136,6 +141,7 @@ class EulerFit(Generic[S]):
     stress: float
     loss: float
     container: Container | None = None
+    members: dict[str, list[str]] | None = field(default=None, repr=False)
     plot_data: dict[str, Any] = field(default_factory=dict, repr=False, compare=False)
 
     def __repr__(self) -> str:
@@ -177,6 +183,7 @@ class EulerFit(Generic[S]):
         edges: dict[str, Any] | Sequence[dict[str, Any]] | None = None,
         labels: bool | dict[str, Any] | None = None,
         quantities: bool | str | dict[str, Any] | None = None,
+        members: bool | dict[str, Any] | None = None,
         legend: bool | dict[str, Any] = False,
         complement: dict[str, Any] | None = None,
     ) -> Axes:
@@ -226,6 +233,16 @@ class EulerFit(Generic[S]):
             "color": "dimgray", "fontsize": 8}``. ``type`` may name both
             ``"counts"`` and ``"percent"`` to stack the count above the
             percentage; any other keys are forwarded to ``ax.text``.
+        members:
+            Show each region's member names (available only when the fit carries
+            :attr:`members`, i.e. membership-list input, or array/DataFrame input
+            with ``ids=``; requesting them otherwise raises). ``None`` (default)
+            or ``False`` shows nothing; ``True`` lists every member. A dict adds
+            options and text styling: ``max`` caps how many names are listed per
+            region, replacing the rest with a ``"+N more"`` line, and any other
+            keys are forwarded to ``ax.text`` (e.g. ``color``, ``fontsize``).
+            Long member lists that do not fit inside a region are placed outside
+            with a leader line; use ``max`` to keep blocks compact.
         legend:
             Draw a legend mapping each set to a color swatch, useful when
             in-diagram labels overlap. ``True`` uses matplotlib defaults; a
@@ -251,6 +268,7 @@ class EulerFit(Generic[S]):
             edges=edges,
             labels=labels,
             quantities=quantities,
+            members=members,
             legend=legend,
             complement=complement,
         )

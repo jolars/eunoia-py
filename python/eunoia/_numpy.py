@@ -58,6 +58,35 @@ def matrix_to_combinations(
     return list(out.items())
 
 
+def matrix_to_members(
+    names: Sequence[str],
+    matrix: npt.NDArray[np.bool_],
+    ids: Sequence[object],
+) -> dict[str, list[str]]:
+    """Map each row's canonical region to its ``ids`` entry, keeping identities.
+
+    Unlike :func:`matrix_to_combinations`, rows are *not* collapsed: every row
+    contributes its id to the region of the columns that are true. All-false
+    rows are dropped, ids are stringified, and each region's list is sorted for
+    reproducibility. ``ids`` must have exactly one entry per row. Shared by the
+    DataFrame and numpy-array member paths."""
+    if len(ids) != matrix.shape[0]:
+        raise EunoiaError(
+            f"invalid_input: ids has {len(ids)} entries but the data has "
+            f"{matrix.shape[0]} row(s)"
+        )
+    out: dict[str, list[str]] = {}
+    for row, ident in zip(matrix, ids, strict=True):
+        sets = [names[i] for i in range(len(names)) if row[i]]
+        if not sets:
+            continue
+        combo = canonicalize("&".join(sets))
+        out.setdefault(combo, []).append(str(ident))
+    for members in out.values():
+        members.sort()
+    return out
+
+
 def resolve_set_names(n_sets: int, names: Sequence[str] | None) -> list[str]:
     """Names for ``n_sets`` columns: generated if ``names is None``, else checked.
 
@@ -131,3 +160,15 @@ def ndarray_to_combinations(
 ) -> list[tuple[str, float]]:
     """Count an array membership matrix into ``[(canonical_combo, count), ...]``."""
     return ndarray_to_named_combinations(arr, names)[1]
+
+
+def ndarray_to_members(
+    arr: npt.NDArray[Any], names: Sequence[str] | None, ids: Sequence[object]
+) -> dict[str, list[str]]:
+    """Read an array membership matrix into ``{canonical_combo: [member, ...]}``.
+
+    ``ids`` supplies one member identifier per row (arrays carry no row labels),
+    keyed by the same canonical regions as :func:`ndarray_to_combinations`."""
+    matrix = _as_bool_matrix(arr)
+    resolved = resolve_set_names(matrix.shape[1], names)
+    return matrix_to_members(resolved, matrix, ids)

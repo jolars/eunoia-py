@@ -9,7 +9,6 @@ import numpy.typing as npt
 from narwhals.typing import IntoFrame
 
 from eunoia._dataframe import (
-    dataframe_column_names,
     dataframe_to_combinations,
     is_dataframe,
 )
@@ -36,6 +35,7 @@ from eunoia._models import (
 from eunoia._numpy import (
     default_name,
     is_ndarray,
+    ndarray_to_members,
     ndarray_to_named_combinations,
 )
 from eunoia._parse import (
@@ -63,6 +63,7 @@ def venn(
     complement: float | None = ...,
     input: Literal["exclusive", "inclusive"] = ...,
     names: Sequence[str] | None = ...,
+    ids: str | Sequence[object] | None = ...,
 ) -> VennFit[Ellipse]: ...
 
 
@@ -74,6 +75,7 @@ def venn(
     complement: float | None = ...,
     input: Literal["exclusive", "inclusive"] = ...,
     names: Sequence[str] | None = ...,
+    ids: str | Sequence[object] | None = ...,
 ) -> VennFit[Circle]: ...
 
 
@@ -85,6 +87,7 @@ def venn(
     complement: float | None = ...,
     input: Literal["exclusive", "inclusive"] = ...,
     names: Sequence[str] | None = ...,
+    ids: str | Sequence[object] | None = ...,
 ) -> VennFit[Square]: ...
 
 
@@ -96,6 +99,7 @@ def venn(
     complement: float | None = ...,
     input: Literal["exclusive", "inclusive"] = ...,
     names: Sequence[str] | None = ...,
+    ids: str | Sequence[object] | None = ...,
 ) -> VennFit[Rectangle]: ...
 
 
@@ -107,6 +111,7 @@ def venn(
     complement: float | None = ...,
     input: Literal["exclusive", "inclusive"] = ...,
     names: Sequence[str] | None = ...,
+    ids: str | Sequence[object] | None = ...,
 ) -> VennFit[RotatedRectangle]: ...
 
 
@@ -119,6 +124,7 @@ def venn(
     complement: float | None = None,
     input: Literal["exclusive", "inclusive"] = "exclusive",
     names: Sequence[str] | None = None,
+    ids: str | Sequence[object] | None = None,
 ) -> (
     VennFit[Circle]
     | VennFit[Ellipse]
@@ -175,6 +181,13 @@ def venn(
         Set names for numpy-array input, one per column (or a single name for a
         1-D array). Defaults to ``"A"``, ``"B"``, …. Only valid for array input;
         other forms carry their own names and passing ``names`` raises.
+    ids:
+        Per-observation member identifiers, retained as
+        :attr:`~EulerFit.members` and drawable with ``plot(members=True)``. Only
+        valid for array and DataFrame input: a sequence with one entry per row,
+        or, for a DataFrame, a column name to read identifiers from and exclude
+        from the sets. Membership-list input carries its members intrinsically;
+        passing ``ids`` with any other form raises.
 
     Returns
     -------
@@ -200,7 +213,9 @@ def venn(
             f"invalid_input: input must be 'exclusive' or 'inclusive', got {input!r}"
         )
 
-    names, original_values, canonical_keys = _resolve_input(sets, input, names)
+    names, original_values, canonical_keys, members_map = _resolve_input(
+        sets, input, names, ids
+    )
     result: Any = _venn_rust(len(names), shape, names, complement)
 
     if shape == "circle":
@@ -214,7 +229,9 @@ def venn(
     else:
         shapes = build_rotated_rectangles(result["shapes"])
 
-    return _make_venn(result, shapes, original_values, canonical_keys, input)
+    return _make_venn(
+        result, shapes, original_values, canonical_keys, input, members_map
+    )
 
 
 def _make_venn(
@@ -223,6 +240,7 @@ def _make_venn(
     original_values: dict[str, float],
     canonical_keys: list[str],
     input: str,
+    members: dict[str, list[str]] | None = None,
 ) -> VennFit[S]:
     """Assemble a ``VennFit`` from a raw ``_venn`` result and built shapes.
 
@@ -250,20 +268,26 @@ def _make_venn(
         stress=0.0,
         loss=0.0,
         container=build_container(result.get("container")),
+        members=members,
         plot_data=build_plot_data(result),
     )
 
 
 def _resolve_input(
-    sets: VennInput, input: str, names: Sequence[str] | None
-) -> tuple[list[str], dict[str, float], list[str]]:
-    """Resolve ``sets`` into set names, ``original_values`` and canonical keys.
+    sets: VennInput,
+    input: str,
+    names: Sequence[str] | None,
+    ids: str | Sequence[object] | None,
+) -> tuple[list[str], dict[str, float], list[str], dict[str, list[str]] | None]:
+    """Resolve ``sets`` into set names, ``original_values``, canonical keys, and
+    an optional ``members`` map.
 
     Mirrors :func:`euler`'s input handling for the value-carrying forms
     (region-area mapping, membership lists, DataFrame, numpy array). ``int`` and
     plain name-sequence input carry no quantities, so ``original_values`` is
     empty and the canonical-key list is too. ``names`` is only honored for array
-    input; supplying it with any other form raises.
+    input; supplying it with any other form raises. ``ids`` supplies member
+    identifiers for array/DataFrame input; passing it with any other form raises.
     """
     if is_ndarray(sets):
         if input != "exclusive":
@@ -273,7 +297,15 @@ def _resolve_input(
             )
         set_names, combinations = ndarray_to_named_combinations(sets, names)
         original_values = {c: v for c, v in combinations}
-        return set_names, original_values, list(original_values)
+        members_map: dict[str, list[str]] | None = None
+        if ids is not None:
+            if isinstance(ids, str):
+                raise EunoiaError(
+                    "invalid_input: ids as a column name is only valid for "
+                    "DataFrame input; pass a per-row sequence for array input"
+                )
+            members_map = ndarray_to_members(sets, names, ids)
+        return set_names, original_values, list(original_values), members_map
 
     if names is not None:
         raise EunoiaError("invalid_input: names= is only valid for numpy array input")
@@ -284,9 +316,14 @@ def _resolve_input(
                 "invalid_input: DataFrame input is always exclusive; "
                 "do not pass input='inclusive'"
             )
-        names = dataframe_column_names(sets)
-        original_values = {c: v for c, v in dataframe_to_combinations(sets)}
-        return names, original_values, list(original_values)
+        set_names, combinations, members_map = dataframe_to_combinations(sets, ids)
+        original_values = {c: v for c, v in combinations}
+        return set_names, original_values, list(original_values), members_map
+
+    if ids is not None:
+        raise EunoiaError(
+            "invalid_input: ids= is only valid for array or DataFrame input"
+        )
 
     # bool is an int subclass; reject it explicitly to avoid venn(True).
     if isinstance(sets, bool):
@@ -294,7 +331,7 @@ def _resolve_input(
     if isinstance(sets, int):
         if sets < 1:
             raise ValueError("venn: number of sets must be >= 1")
-        return [default_name(i) for i in range(sets)], {}, []
+        return [default_name(i) for i in range(sets)], {}, [], None
     if isinstance(sets, Mapping):
         try:
             membership = is_membership_input(sets)
@@ -310,8 +347,9 @@ def _resolve_input(
             # Membership keys are the set names (preserve their order); a set
             # with no exclusive members still gets a shape.
             names = list(members)
-            original_values = {c: v for c, v in parse_membership_input(members)}
-            return names, original_values, list(original_values)
+            combinations, members_map = parse_membership_input(members)
+            original_values = {c: v for c, v in combinations}
+            return names, original_values, list(original_values), members_map
         area_map = cast("Mapping[str, float]", sets)
         names = []
         for key in area_map:
@@ -325,7 +363,7 @@ def _resolve_input(
             ck: float(v)
             for ck, v in zip(canonical_keys, area_map.values(), strict=True)
         }
-        return names, original_values, canonical_keys
+        return names, original_values, canonical_keys, None
     if isinstance(sets, str):
         raise TypeError("venn: pass a list of set names, not a single string")
     names = [str(s) for s in cast("Sequence[str]", sets)]
@@ -333,4 +371,4 @@ def _resolve_input(
         raise ValueError("venn: need at least one set name")
     if len(set(names)) != len(names):
         raise ValueError("venn: set names must be unique")
-    return names, {}, []
+    return names, {}, [], None

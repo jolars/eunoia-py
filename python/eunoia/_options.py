@@ -10,9 +10,9 @@ scoped overrides::
         fit.plot()                          # restored to prior on exit
 
 Options are grouped into categories that mirror the kwargs dicts in
-``_plot.render``: ``fills``, ``edges``, ``labels``, ``quantities``, ``legend``,
-and ``complement`` are each a dict of matplotlib keyword arguments, while
-``palette`` is the default color source (a colormap name or a sequence of
+``_plot.render``: ``fills``, ``edges``, ``labels``, ``quantities``, ``members``,
+``legend``, and ``complement`` are each a dict of matplotlib keyword arguments,
+while ``palette`` is the default color source (a colormap name or a sequence of
 colors) used when ``plot(colors=...)`` is not given.
 
 Precedence inside ``render`` is: an explicit ``plot(...)`` keyword argument >
@@ -42,6 +42,7 @@ _DEFAULTS: dict[str, Any] = {
     "edges": {"linewidth": 1.0, "edgecolor": "black"},
     "labels": {"fontsize": 11},
     "quantities": {"fontsize": 9, "color": "dimgray"},
+    "members": {"fontsize": 9},
     "legend": {},
     "complement": {"facecolor": "#f0f0f0", "edgecolor": "0.4", "linewidth": 1.0},
 }
@@ -49,7 +50,7 @@ _DEFAULTS: dict[str, Any] = {
 # Categories whose value is a dict of matplotlib kwargs (merged key-by-key on
 # update). Everything else (just ``palette``) is replaced wholesale.
 _MAPPING_CATEGORIES = frozenset(
-    {"fills", "edges", "labels", "quantities", "legend", "complement"}
+    {"fills", "edges", "labels", "quantities", "members", "legend", "complement"}
 )
 
 _state: ContextVar[dict[str, Any]] = ContextVar("eunoia_options")
@@ -125,8 +126,9 @@ def options(**changes: Any) -> dict[str, Any] | _OptionsContext:
             fit.plot()
 
     Mapping categories (``fills``, ``edges``, ``labels``, ``quantities``,
-    ``legend``, ``complement``) are merged key-by-key with the current values;
-    ``palette`` is replaced wholesale. Unknown categories raise ``ValueError``.
+    ``members``, ``legend``, ``complement``) are merged key-by-key with the
+    current values; ``palette`` is replaced wholesale. Unknown categories raise
+    ``ValueError``.
     """
     if not changes:
         return get_options()

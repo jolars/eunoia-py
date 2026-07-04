@@ -25,6 +25,7 @@
    .. autosummary::
    
       ~VennFit.container
+      ~VennFit.members
       ~VennFit.shapes
       ~VennFit.original_values
       ~VennFit.fitted_values

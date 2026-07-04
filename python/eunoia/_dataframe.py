@@ -13,6 +13,7 @@ and polars, rather than the (now deprecated) dataframe interchange protocol.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Any, TypeGuard
 
 import narwhals as nw
@@ -21,7 +22,7 @@ import numpy.typing as npt
 from narwhals.typing import IntoFrame
 
 from eunoia._eunoia import EunoiaError
-from eunoia._numpy import matrix_to_combinations
+from eunoia._numpy import matrix_to_combinations, matrix_to_members
 
 
 def is_dataframe(obj: object) -> TypeGuard[IntoFrame]:
@@ -54,37 +55,61 @@ def _column_to_bool(series: nw.Series[Any], name: str) -> npt.NDArray[np.bool_]:
     return membership
 
 
-def _extract_bool_matrix(obj: IntoFrame) -> tuple[list[str], npt.NDArray[np.bool_]]:
-    """Read a frame into column names and an ``(n_rows, n_sets)`` bool matrix."""
+def _read_frame(
+    obj: IntoFrame, ids: str | Sequence[object] | None
+) -> tuple[list[str], npt.NDArray[np.bool_], list[str] | None]:
+    """Collect a frame into set names, an ``(n_rows, n_sets)`` bool matrix, and
+    an optional per-row id list.
+
+    ``ids`` may name a column (dropped from the set columns and read as the
+    member-id source) or be an explicit per-row sequence; ``None`` means no
+    member ids. Ids are stringified."""
     frame = nw.from_native(obj)
     if isinstance(frame, nw.LazyFrame):
         frame = frame.collect()
-    names = frame.columns
-    if not names:
+    all_names = list(frame.columns)
+    if not all_names:
         raise EunoiaError("invalid_input: DataFrame has no columns")
     if frame.shape[0] == 0:
         raise EunoiaError("invalid_input: DataFrame has no rows")
-    columns = [_column_to_bool(frame[name], name) for name in names]
-    return names, np.column_stack(columns)
+
+    id_values: list[str] | None = None
+    set_names = all_names
+    if isinstance(ids, str):
+        if ids not in all_names:
+            raise EunoiaError(
+                f"invalid_input: ids column {ids!r} not found in DataFrame"
+            )
+        id_values = [str(v) for v in frame[ids].to_list()]
+        set_names = [n for n in all_names if n != ids]
+        if not set_names:
+            raise EunoiaError(
+                "invalid_input: DataFrame has no set columns besides ids "
+                f"column {ids!r}"
+            )
+    elif ids is not None:
+        id_values = [str(v) for v in ids]
+
+    columns = [_column_to_bool(frame[name], name) for name in set_names]
+    return set_names, np.column_stack(columns), id_values
 
 
-def dataframe_to_combinations(obj: IntoFrame) -> list[tuple[str, float]]:
-    """Count a membership-matrix frame into ``[(canonical_combo, count), ...]``.
+def dataframe_to_combinations(
+    obj: IntoFrame, ids: str | Sequence[object] | None = None
+) -> tuple[list[str], list[tuple[str, float]], dict[str, list[str]] | None]:
+    """Read a membership-matrix frame into ``(set_names, [(combo, count)], members)``.
 
     Each row is assigned to the canonical region of the columns that are true;
-    all-false rows (member of no set) are dropped. Returns the same shape the
-    Rust binding consumes. Counting is shared with the numpy-array path via
+    all-false rows (member of no set) are dropped. When ``ids`` is given (a
+    column name or an explicit per-row sequence) the third element maps each
+    region to its member ids; otherwise it is ``None``. Counting and
+    canonicalization are shared with the numpy-array path via
     :func:`eunoia._numpy.matrix_to_combinations`."""
-    names, matrix = _extract_bool_matrix(obj)
-    return matrix_to_combinations(names, matrix)
-
-
-def dataframe_column_names(obj: IntoFrame) -> list[str]:
-    """Return the frame's column names (the set names, for ``venn``)."""
-    frame = nw.from_native(obj)
-    if isinstance(frame, nw.LazyFrame):
-        frame = frame.collect()
-    names = frame.columns
-    if not names:
-        raise EunoiaError("invalid_input: DataFrame has no columns")
-    return names
+    set_names, matrix, id_values = _read_frame(obj, ids)
+    combinations = matrix_to_combinations(set_names, matrix)
+    members = (
+        matrix_to_members(set_names, matrix, id_values)
+        if id_values is not None
+        else None
+    )
+    return set_names, combinations, members

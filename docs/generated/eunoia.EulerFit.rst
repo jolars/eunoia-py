@@ -25,6 +25,7 @@
    .. autosummary::
    
       ~EulerFit.container
+      ~EulerFit.members
       ~EulerFit.shapes
       ~EulerFit.original_values
       ~EulerFit.fitted_values

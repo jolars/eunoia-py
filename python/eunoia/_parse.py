@@ -48,25 +48,31 @@ def is_membership_input(values: Mapping[str, object]) -> bool:
 
 def parse_membership_input(
     values: Mapping[str, Collection[object]],
-) -> list[tuple[str, float]]:
-    """Convert membership lists to exclusive region counts.
+) -> tuple[list[tuple[str, float]], dict[str, list[str]]]:
+    """Convert membership lists to exclusive region counts and member lists.
 
     Each element is assigned to the canonical combination of the sets it
     belongs to, then elements are counted per region. Elements are deduplicated
     within a set and stringified, so ``{"A": ["x", "x"], "B": [1]}`` is valid.
-    Returns ``[(canonical_combo, count), ...]`` for the Rust binding."""
+    Returns ``([(canonical_combo, count), ...], {canonical_combo: [member, ...]})``:
+    the first for the Rust binding, the second (member names sorted within each
+    region for reproducibility) for member labels."""
     membership: dict[str, set[str]] = {}
     for set_name, members in values.items():
         for element in set(members):
             membership.setdefault(str(element), set()).add(set_name)
 
     counts: dict[str, float] = {}
-    for sets in membership.values():
+    members_map: dict[str, list[str]] = {}
+    for element, sets in membership.items():
         if not sets:
             continue
         combo = canonicalize("&".join(sorted(sets)))
         counts[combo] = counts.get(combo, 0.0) + 1.0
-    return list(counts.items())
+        members_map.setdefault(combo, []).append(element)
+    for names in members_map.values():
+        names.sort()
+    return list(counts.items()), members_map
 
 
 def to_inclusive(
