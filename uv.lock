@@ -514,6 +514,10 @@ docs = [
     { name = "sphinx-autobuild" },
     { name = "sphinx-copybutton" },
 ]
+plotly = [
+    { name = "fonttools" },
+    { name = "plotly" },
+]
 
 [package.dev-dependencies]
 benchmark = [
@@ -532,16 +536,18 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "fonttools", marker = "extra == 'plotly'", specifier = ">=4.0" },
     { name = "furo", marker = "extra == 'docs'" },
     { name = "matplotlib", specifier = ">=3.8" },
     { name = "myst-nb", marker = "extra == 'docs'" },
     { name = "narwhals", specifier = ">=1.9" },
     { name = "numpy", specifier = ">=1.26" },
+    { name = "plotly", marker = "extra == 'plotly'", specifier = ">=5.0" },
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=7" },
     { name = "sphinx-autobuild", marker = "extra == 'docs'" },
     { name = "sphinx-copybutton", marker = "extra == 'docs'" },
 ]
-provides-extras = ["docs"]
+provides-extras = ["docs", "plotly"]
 
 [package.metadata.requires-dev]
 benchmark = [
@@ -1786,6 +1792,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/9f/4a/0883b8e3802965322523f0b200ecf33d31f10991d0401162f4b23c698b42/platformdirs-4.9.6.tar.gz", hash = "sha256:3bfa75b0ad0db84096ae777218481852c0ebc6c727b3168c1b9e0118e458cf0a", size = 29400, upload-time = "2026-04-09T00:04:10.812Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/75/a6/a0a304dc33b49145b21f4808d763822111e67d1c3a32b524a1baf947b6e1/platformdirs-4.9.6-py3-none-any.whl", hash = "sha256:e61adb1d5e5cb3441b4b7710bea7e4c12250ca49439228cc1021c00dcfac0917", size = 21348, upload-time = "2026-04-09T00:04:09.463Z" },
+]
+
+[[package]]
+name = "plotly"
+version = "6.8.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "narwhals" },
+    { name = "packaging" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/94/fd/d72c292d78aadb93d1a9bcd76bf3c678271040c7cf10abe5788b33040a39/plotly-6.8.0.tar.gz", hash = "sha256:e088e7ddc68d4f70e3d66659224727a45296d71d2b8284181862d3d8f1f0d88f", size = 6915161, upload-time = "2026-06-03T18:33:40.226Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f9/14/abe5ce876ab5b66ee3c691bf537fcd43d037aea55d447aacf74630a8f31e/plotly-6.8.0-py3-none-any.whl", hash = "sha256:13c5c4a0f70b74cab1913eda0de49b826df5931708eb6f9c3010040614700ec8", size = 9902055, upload-time = "2026-06-03T18:33:34.26Z" },
 ]
 
 [[package]]
