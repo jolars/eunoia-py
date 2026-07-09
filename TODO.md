@@ -110,16 +110,14 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
 ## Defer until later
 
 - [ ] **`error_plot(fit)`**: diagnostic plot of region errors.
-- [ ] **Plotly backend**: an interactive renderer alongside matplotlib, behind
+- [x] **Plotly backend**: an interactive renderer alongside matplotlib, behind
       a `eunoia[plotly]` extra (lazily imported). Motivated by hover tooltips
       (discussion #34), which matplotlib can't serve cleanly in static HTML or
-      notebooks; member-on-hover falls out as per-region `hovertext`. The
-      geometry half of `plot_data` (`region_pieces`, `*_anchors`,
-      `shape_outlines`, `container`) is already backend-agnostic. The blocker is
-      text measurement: our size-aware label placement measures blocks via
-      matplotlib's renderer (`get_window_extent` on `RendererAgg`), and plotly
-      has no synchronous text metrics. Sequence it as (1) factor `_plot.render`
-      into a backend-neutral plot model + a thin matplotlib emitter, (2)
-      decouple text measurement from mpl (e.g. `fontTools`/PIL metrics), (3) add
-      the plotly emitter as a purely additive step. `eunoia.options` categories
-      would need to become backend-neutral or backend-tagged.
+      notebooks; member-on-hover falls out as per-region `hovertext`. Shipped as
+      `EulerFit.plot_plotly()`: backend-neutral content helpers factored into
+      `_render_common.py` (shared with the matplotlib emitter), text measured
+      Axes-free via fontTools (`_metrics.py`), and the plotly emitter
+      (`_plotly.py`) added as a purely additive step. `eunoia.options` categories
+      are read and translated to plotly properties (colors, `alpha`,
+      `linewidth`, `fontsize`); a fuller backend-neutral/tagged options split can
+      follow if a second interactive backend is added.

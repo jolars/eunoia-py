@@ -31,6 +31,9 @@ dependencies = ["matplotlib>=3.8", "narwhals>=1.9", "numpy>=1.26"]
 
 [project.optional-dependencies]
 docs = ["sphinx>=7", "furo", "myst-nb", "sphinx-copybutton", "sphinx-autobuild"]
+# Interactive plotly backend (EulerFit.plot_plotly). fonttools measures text
+# for label placement without a matplotlib renderer (see eunoia._metrics).
+plotly = ["plotly>=5.0", "fonttools>=4.0"]
 
 [dependency-groups]
 dev = [
@@ -70,6 +73,12 @@ python_version = "3.11"
 strict = true
 files = ["python/eunoia"]
 
+# The optional plotly backend and its fonttools text metrics ship no (complete)
+# type stubs; the modules that use them are otherwise strictly typed.
+[[tool.mypy.overrides]]
+module = ["plotly.*", "fontTools.*"]
+ignore_missing_imports = true
+
 [tool.pyright]
 include = ["python/eunoia"]
 pythonVersion = "3.11"
@@ -80,6 +89,9 @@ typeCheckingMode = "strict"
 reportUnknownMemberType = "none"
 reportUnknownVariableType = "none"
 reportUnknownArgumentType = "none"
+# fonttools (and older plotly) ship no type stubs; the plotly backend is
+# otherwise strictly typed. mypy strict does the heavy lifting.
+reportMissingTypeStubs = "none"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

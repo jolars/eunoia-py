@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 if TYPE_CHECKING:
+    import plotly.graph_objects as go
     from matplotlib.axes import Axes
 
 
@@ -271,6 +272,72 @@ class EulerFit(Generic[S]):
             members=members,
             legend=legend,
             complement=complement,
+        )
+
+    def plot_plotly(
+        self,
+        *,
+        width: int = 700,
+        height: int | None = None,
+        colors: Sequence[Any] | dict[str, Any] | None = None,
+        fills: dict[str, dict[str, Any]] | None = None,
+        edges: dict[str, Any] | Sequence[dict[str, Any]] | None = None,
+        labels: bool | dict[str, Any] | None = None,
+        quantities: bool | str | dict[str, Any] | None = None,
+        members: bool | dict[str, Any] | None = None,
+        legend: bool | dict[str, Any] = False,
+        complement: dict[str, Any] | None = None,
+        hover: bool | str = True,
+    ) -> go.Figure:
+        """Render the fitted diagram to an interactive plotly figure.
+
+        The interactive counterpart to :meth:`plot`, requiring the optional
+        ``eunoia[plotly]`` extra (``pip install 'eunoia[plotly]'``). It draws the
+        same area-proportional geometry and size-aware labels, but as a
+        :class:`plotly.graph_objects.Figure` with per-region hover tooltips --
+        useful for dense multi-set diagrams where member names do not fit inside
+        small regions.
+
+        Most parameters mirror :meth:`plot` (``colors``, ``fills``, ``edges``,
+        ``labels``, ``quantities``, ``members``, ``legend``, ``complement``);
+        style dicts are read as the analogous plotly properties (the honored
+        keys are colors, ``alpha``, ``linewidth``, and ``fontsize``). The
+        plotly-only parameters are:
+
+        Parameters
+        ----------
+        width:
+            Figure width in pixels (default 700). The height defaults to
+            whatever preserves the diagram's aspect ratio.
+        height:
+            Figure height in pixels. ``None`` (default) derives it from
+            ``width`` and the diagram's aspect ratio.
+        hover:
+            Per-region hover tooltips. ``True`` (default) shows each region's
+            key, its count, and -- when the fit carries :attr:`members` -- its
+            member names; ``"members"`` or ``"quantities"`` restrict the
+            tooltip to one of those; ``False`` disables hover.
+
+        Returns
+        -------
+        plotly.graph_objects.Figure
+            The interactive figure.
+        """
+        from eunoia._plotly import render_plotly
+
+        return render_plotly(
+            self,
+            width=width,
+            height=height,
+            colors=colors,
+            fills=fills,
+            edges=edges,
+            labels=labels,
+            quantities=quantities,
+            members=members,
+            legend=legend,
+            complement=complement,
+            hover=hover,
         )
 
 

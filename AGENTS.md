@@ -37,8 +37,11 @@ The Rust side is `src/lib.rs` (the PyO3 module: `_fit_*` fns, `_venn`,
 where most filenames are self-describing; `ls` it for the current set. The
 non-obvious ones: `_models.py` (the shape dataclasses + `EulerFit[S]`), `_fit.py`
 and `_venn.py` (the public `euler`/`venn` plus shared `build_*` helpers),
-`_eunoia.pyi` (hand-written stubs for the compiled module). The Architecture
-section below explains how these fit together.
+`_eunoia.pyi` (hand-written stubs for the compiled module). Rendering is split:
+`_render_common.py` (backend-neutral content helpers), `_plot.py` (matplotlib
+emitter + `EulerFit.plot`), `_plotly.py` + `_metrics.py` (the optional plotly
+emitter + `EulerFit.plot_plotly`). The Architecture section below explains how
+these fit together.
 
 ## Architecture
 
@@ -135,7 +138,27 @@ key-by-key) plus `palette` (cmap name or color sequence, replaced wholesale).
 State is a `ContextVar` (thread/async-safe).
 
 **`EulerFit.plot_data` is public** (no underscore): pyright strict flags
-cross-module access to single-underscore names as `reportPrivateUsage`.
+cross-module access to single-underscore names as `reportPrivateUsage`. For the
+same reason, the rendering helpers shared by both emitters live in
+`_render_common.py` with *public* names (`resolve_quantities`, `blend_region_color`,
+`region_rings`, ...); `_plot.py` imports them under `_`-aliases to keep its body
+unchanged, while `_plotly.py` imports them directly.
+
+**Plotly backend** (optional `eunoia[plotly]` extra, `EulerFit.plot_plotly` ->
+`plotly.graph_objects.Figure`). Purely additive: `_plotly.render_plotly` reuses
+the `_render_common` helpers and the `_place_labels` FFI, then emits fills,
+outlines, container, and leaders as layout *shapes* (SVG paths; holes via the
+even-odd rule), labels as annotations, and one transparent fill-hover
+`go.Scatter` per region carrying `hovertext` (member-on-hover, discussion #34's
+motivation). Because plotly has no synchronous text metrics, blocks are measured
+Axes-free by `_metrics.FontMetrics` (fontTools glyph advances; font located via
+matplotlib's `font_manager`, which is always present); the measure->place loop
+mirrors `_plot._place_region_labels`. Metrics are approximate (the browser font
+differs), which is fine -- placement only needs a rough fit and hover covers the
+rest. `eunoia.options` is read and translated to plotly properties (colors,
+`alpha`, `linewidth`, `fontsize`); mpl-only keys are ignored. plotly/fontTools
+ship no (full) stubs, so both are `ignore_missing_imports` in mypy and
+`reportMissingTypeStubs = "none"` in pyright.
 
 **Errors:** a single `EunoiaError(ValueError)` for all `DiagramError` variants.
 The Rust binding prefixes the message with the variant name (`undefined_set: ...`,
