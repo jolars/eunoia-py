@@ -109,9 +109,9 @@ checksum = "91622ff5e7162018101f2fea40d6ebf4a78bbe5a49736a2020649edf9693679e"
 
 [[package]]
 name = "eunoia"
-version = "1.6.0"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dbe7a7703c3733ec4a75b38838ef8c17177fd6a6d954759aa94d1c513955ec0d"
+checksum = "194f60551549d6e2b16ddc54dd7a4c5967762020876ea13b944517722389a291"
 dependencies = [
  "basin",
  "finitediff",
