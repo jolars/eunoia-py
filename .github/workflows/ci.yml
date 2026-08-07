@@ -95,4 +95,4 @@ jobs:
       - id: versionary
         uses: jolars/versionary@v1
         with:
-          github-token: ${{ secrets.RELEASE_TOKEN }}
+          token: ${{ secrets.RELEASE_TOKEN }}
