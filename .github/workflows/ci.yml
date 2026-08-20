@@ -93,6 +93,6 @@ jobs:
           python-version: "3.12"
 
       - id: versionary
-        uses: jolars/versionary@v0
+        uses: jolars/versionary@v1
         with:
           github-token: ${{ secrets.RELEASE_TOKEN }}
