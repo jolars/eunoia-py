@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.0](https://github.com/jolars/eunoia-py/compare/v0.5.0...v0.6.0) (2026-08-21)
+
+### Features
+- add Eunoia 1.9 rendering features ([`1dd8d8f`](https://github.com/jolars/eunoia-py/commit/1dd8d8fef620238e8a06ec93d5bbee7053c13371))
+- add interactive plotly backend ([`edfd6e8`](https://github.com/jolars/eunoia-py/commit/edfd6e87dfea3cee7fbc816015fa277538951e74))
+- draw set members inside diagram regions ([`57b8985`](https://github.com/jolars/eunoia-py/commit/57b89851a679b6e825b3258d4249fc7f241c09b8))
+
+### Bug Fixes
+- apply aspect before measuring label text ([`0894bd5`](https://github.com/jolars/eunoia-py/commit/0894bd548d63bd65b5d3086bc6098f4e2741a5f5))
+
 ## [0.5.0](https://github.com/jolars/eunoia-py/compare/v0.4.0...v0.5.0) (2026-06-29)
 
 ### Features

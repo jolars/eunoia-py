@@ -21,7 +21,7 @@ from eunoia._models import (
 from eunoia._options import get_options, options, reset_options
 from eunoia._venn import venn
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 __all__ = [
     "Circle",
