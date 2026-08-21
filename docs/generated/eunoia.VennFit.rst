@@ -15,6 +15,7 @@
    
       ~VennFit.__init__
       ~VennFit.plot
+      ~VennFit.plot_plotly
    
    
 

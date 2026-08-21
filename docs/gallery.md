@@ -66,6 +66,37 @@ fit.plot(
 )
 ```
 
+### Exterior set names and matched leaders
+
+Set names can hug the outside of their own shapes without leaders. Region
+blocks that do not fit can independently use matched boundary labeling, which
+keeps straight leaders from crossing.
+
+```{code-cell} python
+fit = eu.euler({"Alpha": 12, "Beta": 10, "Gamma": 8, "Alpha&Beta": 4,
+                "Alpha&Gamma": 3, "Beta&Gamma": 2, "Alpha&Beta&Gamma": 1})
+fit.plot(
+    quantities=True,
+    labels={"set_position": "outside", "placement": "matched"},
+)
+```
+
+### Unit glyphs and packed members
+
+Unit glyphs encode exact integer frequencies as equal-sized dots. Membership
+input can instead show who belongs to each region by packing each retained name
+at a shared, automatically reduced font scale.
+
+```{code-cell} python
+fit = eu.euler({"A": ["Ada", "Grace", "Barbara"],
+                "B": ["Grace", "Alan", "Edsger"]})
+
+fig, (left, right) = plt.subplots(1, 2, figsize=(9, 4))
+fit.plot(ax=left, glyphs=True, quantities=False)
+fit.plot(ax=right, members={"mode": "packed"}, quantities=False)
+fig
+```
+
 ### A set contained in the intersection of two sets
 
 ```{code-cell} python
@@ -374,7 +405,8 @@ fit.plot(quantities={"type": ["counts", "percent"], "fontsize": 8})
 accepts an integer count, a list of names, or a mapping. The default shape is
 the ellipse, which supports one through five sets.
 
-``{note} Circle Venn diagrams are unsupported in the pinned Eunoia core and raise an {class}`~eunoia.EunoiaError`. Use ellipses (1–5 sets) or squares/rectangles (1–3 sets).``
+Circle, square, and rectangle Venn diagrams support one through three sets;
+rotated rectangles support four, and ellipses support up to five.
 
 ### Two and three sets
 

@@ -32,8 +32,8 @@ Or via `Taskfile.yml` (`go-task`): `task build`, `task test`, `task lint`,
 
 ## Layout
 
-The Rust side is `src/lib.rs` (the PyO3 module: `_fit_*` fns, `_venn`,
-`_place_labels`, `EunoiaError`). The Python package lives in `python/eunoia/`,
+The Rust side is `src/lib.rs` (the PyO3 module: `_fit_*` fns, `_venn`, label and
+glyph placement bindings, `EunoiaError`). The Python package lives in `python/eunoia/`,
 where most filenames are self-describing; `ls` it for the current set. The
 non-obvious ones: `_models.py` (the shape dataclasses + `EulerFit[S]`), `_fit.py`
 and `_venn.py` (the public `euler`/`venn` plus shared `build_*` helpers),
@@ -92,10 +92,10 @@ name that is read as the members and excluded from the set columns
 (`_dataframe._read_frame`). `ids=` is rejected for membership-list/area/int/
 name-sequence input, mirroring the array-only `names=` rule. Member lists are
 sorted per region for reproducibility; `EulerFit.members` is `None` when no
-identities exist. `plot(members=...)` (`_resolve_members` in `_plot.py`, mirrors
-`_resolve_quantities`) newline-joins each region's names into one label block,
-appended after the set-name and quantity lines; `max` caps the list with a
-`"+N more"` line. Styled via the `members` `eunoia.options` category.
+identities exist. `plot(members=...)` newline-joins each region's names into one
+label block by default; `mode="packed"` instead measures and packs each name via
+the core's `place_glyph_boxes`. `max` caps either mode with a `"+N more"` item.
+Styled via the `members` `eunoia.options` category.
 
 **Canonical keys** everywhere in returned dicts: `"B&A"` -> `"A&B"` via
 `_parse.canonicalize` (see `test_canonical_keys_in_output`).
@@ -117,14 +117,17 @@ block in data units (throwaway `Text` + `get_window_extent` on a standalone
 `RendererAgg`, then pixel->data via `ax.transData.inverted()`), and calls the
 `_place_labels` FFI (binds `eunoia::plotting::place_labels`). Blocks that fit land
 at the largest-inscribed-rect center; blocks that don't are pushed outside with a
-straight leader line (`Line2D`). `_place_labels` rebuilds `RegionPolygons`
+leader line (`Line2D`). `labels["placement"]` selects raycast, force-directed,
+matched, or elbow placement. `labels["set_position"] = "outside"` measures set
+names separately and calls `place_set_labels`, which hugs each name to its own
+outline without a leader. `_place_labels` rebuilds `RegionPolygons`
 statelessly from `region_pieces` via `classify_into_pieces` + `from_map` (the
 `#[non_exhaustive]` `RegionPiece` can't be constructed directly). The
-measure->place loop in `_place_region_labels` re-measures when exterior labels
+measure->place loops re-measure when exterior labels
 enlarge the canvas, bounded by `_PLACE_MAX_ITERS`; interior-only diagrams settle
 in one pass. `render` does *not* call `relim`/`autoscale_view` (would clip the
-expanded limits). Exterior policy is deterministic `raycast`, so seeded fits
-render reproducibly. We key labels by region (via `set_anchor_regions`), not by
+expanded limits). The default exterior policy is deterministic `raycast`, so
+seeded fits render reproducibly. We key labels by region (via `set_anchor_regions`), not by
 float-comparing anchor points: the optimizer is reproducible only to fp
 precision, so the two copies of a point differ by ~1e-8.
 
@@ -132,7 +135,7 @@ precision, so the two copies of a point differ by ~1e-8.
 one callable that reads (no args -> snapshot) or sets (category kwargs -> merge,
 returns a context manager restoring prior state on exit); `reset_options()`
 reverts to built-ins. Categories mirror `render`'s kwargs dicts
-(`fills`/`edges`/`labels`/`quantities`/`legend`/`complement`, each merged
+(`fills`/`edges`/`labels`/`quantities`/`members`/`glyphs`/`legend`/`complement`, each merged
 key-by-key) plus `palette` (cmap name or color sequence, replaced wholesale).
 `_DEFAULTS` is the fallback; precedence is explicit kwarg > option > built-in.
 State is a `ContextVar` (thread/async-safe).
@@ -160,6 +163,13 @@ rest. `eunoia.options` is read and translated to plotly properties (colors,
 ship no (full) stubs, so both are `ignore_missing_imports` in mypy and
 `reportMissingTypeStubs = "none"` in pyright.
 
+**Glyphs.** `plot(glyphs=True)` reads the core-serialized requested-exclusive
+values (including the complement), requires integer counts, and calls
+`place_glyphs`; both renderers color the equal-sized marks from their region.
+Packed member names and unit glyphs receive every measured region/set label box
+as a keep-out obstacle. Fixed-radius or member-box overflow emits a
+`UserWarning` with the per-region shortfall.
+
 **Errors:** a single `EunoiaError(ValueError)` for all `DiagramError` variants.
 The Rust binding prefixes the message with the variant name (`undefined_set: ...`,
 `invalid_value: ...`) for string-matching. A subclass hierarchy can be added
@@ -175,7 +185,7 @@ core `LossType`). Default `"sum_squared"`; others include `"sum_absolute"`,
 ellipses.
 
 `optimizer=` is a snake_case string (`"levenberg_marquardt"`, `"lbfgs"`,
-`"nelder_mead"`, `"cma_es_lm"`, `"trf"`, `"cma_es_trf"`, `"mads"`) mapped by
+`"nelder_mead"`, `"cma_es"`, `"cma_es_lm"`, `"trf"`, `"cma_es_trf"`, `"mads"`) mapped by
 `parse_optimizer`. `tolerance=`, `n_restarts=`, `max_iterations=`, `n_threads=`
 expose the matching `Fitter` builder methods. Python passes scalars through the
 FFI unvalidated; Rust applies them with guarded `if let Some(..)` chaining.
@@ -202,7 +212,7 @@ All these apply to `euler` only.
 
 ## Eunoia core API
 
-We pin `eunoia = "1.6"` in `Cargo.toml`. Key points: the public enums are
+We pin `eunoia = "1.9"` in `Cargo.toml`. Key points: the public enums are
 `#[non_exhaustive]`, so `map_err`'s `DiagramError` match and the `PlacementKind`
 match in `_place_labels` carry a `_` catch-all. The 1.x default optimizer is
 reproducible only to fp precision, not bit-exact. (Source paths below cite the

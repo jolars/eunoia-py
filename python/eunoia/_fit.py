@@ -65,6 +65,7 @@ Optimizer = Literal[
     "levenberg_marquardt",
     "lbfgs",
     "nelder_mead",
+    "cma_es",
     "cma_es_lm",
     "trf",
     "cma_es_trf",
@@ -255,7 +256,7 @@ def euler(
         core default, ``"cma_es_trf"`` (CMA-ES global escape with a bounded
         trust-region-reflective polish). Other options trade robustness for
         speed: ``"levenberg_marquardt"``, ``"lbfgs"``, ``"nelder_mead"``,
-        ``"cma_es_lm"``, ``"trf"``, ``"mads"`` (a derivative-free
+        ``"cma_es"``, ``"cma_es_lm"``, ``"trf"``, ``"mads"`` (a derivative-free
         mesh-adaptive direct search). See :data:`Optimizer`.
     tolerance:
         Cost-change convergence tolerance for the final-stage optimizer.
@@ -572,4 +573,5 @@ def build_plot_data(result: Mapping[str, Any]) -> dict[str, Any]:
         "set_anchors": result["set_anchors"],
         "set_anchor_regions": result["set_anchor_regions"],
         "shape_outlines": result["shape_outlines"],
+        "requested_exclusive": result["requested_exclusive"],
     }

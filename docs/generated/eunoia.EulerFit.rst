@@ -15,6 +15,7 @@
    
       ~EulerFit.__init__
       ~EulerFit.plot
+      ~EulerFit.plot_plotly
    
    
 

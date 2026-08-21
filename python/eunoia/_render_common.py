@@ -13,6 +13,7 @@ required dependency, so this is available regardless of backend.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Any
 
@@ -29,6 +30,8 @@ _QUANTITY_TYPES = ("counts", "percent")
 
 def region_rings(
     region_pieces: dict[str, list[dict[str, Any]]],
+    *,
+    include_complement: bool = False,
 ) -> dict[str, list[list[tuple[float, float]]]]:
     """Flatten each region's pieces to a list of boundary rings.
 
@@ -38,7 +41,7 @@ def region_rings(
     """
     rings: dict[str, list[list[tuple[float, float]]]] = {}
     for combo, pieces in region_pieces.items():
-        if combo == "":
+        if combo == "" and not include_complement:
             continue
         region: list[list[tuple[float, float]]] = []
         for piece in pieces:
@@ -175,6 +178,102 @@ def resolve_set_labels(
     return resolved
 
 
+_LABEL_CONTROL_KEYS = frozenset({"set_position", "set_placement", "placement"})
+
+
+def split_label_options(
+    options: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Separate renderer text kwargs from Eunoia placement controls."""
+    style = dict(options)
+    controls = {key: style.pop(key) for key in _LABEL_CONTROL_KEYS if key in style}
+    return style, controls
+
+
+def resolve_label_controls(
+    option_controls: dict[str, Any], explicit_controls: dict[str, Any]
+) -> tuple[str, dict[str, Any], dict[str, Any]]:
+    """Merge and validate set-name and region-label placement controls."""
+    controls = {**option_controls, **explicit_controls}
+    set_position = controls.get("set_position", "inside")
+    if set_position not in ("inside", "outside"):
+        raise ValueError("labels 'set_position' must be 'inside' or 'outside'")
+
+    raw_placement = controls.get("placement", "raycast")
+    if isinstance(raw_placement, str):
+        placement = {"strategy": raw_placement}
+    elif isinstance(raw_placement, dict):
+        placement = dict(raw_placement)
+    else:
+        raise TypeError("labels 'placement' must be a string or a mapping")
+    strategy = placement.setdefault("strategy", "raycast")
+    if strategy not in ("raycast", "force_directed", "matched", "elbow"):
+        raise ValueError(
+            "labels placement strategy must be 'raycast', 'force_directed', "
+            "'matched', or 'elbow'"
+        )
+
+    raw_set_placement = controls.get("set_placement", {})
+    if not isinstance(raw_set_placement, dict):
+        raise TypeError("labels 'set_placement' must be a mapping")
+    return str(set_position), placement, dict(raw_set_placement)
+
+
+_MEMBER_PACKING_KEYS = frozenset(
+    {
+        "mode",
+        "max",
+        "arrangement",
+        "scale",
+        "min_scale",
+        "gap",
+        "seed",
+        "precision",
+        "max_attempts",
+    }
+)
+
+
+def resolve_member_display(
+    fit: EulerFit[Any],
+    members: bool | dict[str, Any] | None,
+    defaults: dict[str, Any] | None = None,
+) -> tuple[str, dict[str, list[str]], dict[str, Any], dict[str, Any]] | None:
+    """Resolve member content, packing options, and text style."""
+    if members is None or members is False:
+        return None
+    if fit.members is None:
+        raise ValueError(
+            "members display requested but this fit carries no member "
+            "identities; member names are available for membership-list input, "
+            "or array/DataFrame input with ids="
+        )
+
+    cfg = dict(defaults or {})
+    if isinstance(members, dict):
+        cfg.update(members)
+    mode = cfg.pop("mode", "list")
+    if mode not in ("list", "packed"):
+        raise ValueError("members 'mode' must be 'list' or 'packed'")
+    raw_max = cfg.pop("max", None)
+    max_n: int | None = None
+    if raw_max is not None:
+        if isinstance(raw_max, bool) or not isinstance(raw_max, int) or raw_max < 1:
+            raise ValueError("members 'max' must be a positive integer")
+        max_n = raw_max
+
+    packing = {key: cfg.pop(key) for key in tuple(cfg) if key in _MEMBER_PACKING_KEYS}
+    content: dict[str, list[str]] = {}
+    for region, names in fit.members.items():
+        if not names:
+            continue
+        if max_n is not None and len(names) > max_n:
+            content[region] = [*names[:max_n], f"+{len(names) - max_n} more"]
+        else:
+            content[region] = list(names)
+    return str(mode), content, packing, cfg
+
+
 def resolve_members(
     fit: EulerFit[Any],
     members: bool | dict[str, Any] | None,
@@ -193,35 +292,68 @@ def resolve_members(
       listed per region, replacing the remainder with a ``"+N more"`` line; any
       other keys are forwarded to the text call (e.g. ``color``, ``fontsize``).
     """
-    if members is None or members is False:
+    resolved = resolve_member_display(fit, members)
+    if resolved is None:
         return None
-    if fit.members is None:
-        raise ValueError(
-            "members display requested but this fit carries no member "
-            "identities; member names are available for membership-list input, "
-            "or array/DataFrame input with ids="
-        )
-    max_n: int | None = None
-    text_kwargs: dict[str, Any] = {}
-    if isinstance(members, dict):
-        cfg = dict(members)
-        raw_max = cfg.pop("max", None)
-        if raw_max is not None:
-            if isinstance(raw_max, bool) or not isinstance(raw_max, int) or raw_max < 1:
-                raise ValueError("members 'max' must be a positive integer")
-            max_n = raw_max
-        text_kwargs = cfg
+    mode, content, _, style = resolved
+    if mode != "list":
+        raise ValueError("packed members must be handled by the renderer")
+    return {region: "\n".join(names) for region, names in content.items()}, style
 
-    out: dict[str, str] = {}
-    for region, names in fit.members.items():
-        if not names:
-            continue
-        if max_n is not None and len(names) > max_n:
-            lines = [*names[:max_n], f"+{len(names) - max_n} more"]
-        else:
-            lines = list(names)
-        out[region] = "\n".join(lines)
-    return out, text_kwargs
+
+_GLYPH_PLACEMENT_KEYS = frozenset(
+    {"arrangement", "radius", "gap", "seed", "precision", "max_attempts"}
+)
+
+
+def resolve_glyph_options(
+    glyphs: bool | dict[str, Any], defaults: dict[str, Any]
+) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    """Resolve glyph placement controls and renderer style."""
+    if glyphs is False:
+        return None
+    cfg = dict(defaults)
+    if isinstance(glyphs, dict):
+        cfg.update(glyphs)
+    placement = {
+        key: cfg.pop(key) for key in tuple(cfg) if key in _GLYPH_PLACEMENT_KEYS
+    }
+    return placement, cfg
+
+
+def requested_glyph_counts(fit: EulerFit[Any]) -> dict[str, int]:
+    """Return exact requested-exclusive unit counts for glyph placement."""
+    raw = fit.plot_data.get("requested_exclusive", {})
+    if not raw:
+        raise ValueError("glyphs require diagram quantities")
+    counts: dict[str, int] = {}
+    for region, value in raw.items():
+        number = float(value)
+        rounded = round(number)
+        tolerance = 1e-9 * max(1.0, abs(number))
+        if not math.isfinite(number) or number < 0 or abs(number - rounded) > tolerance:
+            raise ValueError(
+                "glyph quantities must be finite, nonnegative integers in "
+                f"exclusive form; region {region!r} has {number}"
+            )
+        if rounded > 0:
+            counts[str(region)] = int(rounded)
+    return counts
+
+
+def shift_color(color: Any, amount: float) -> RGBA:
+    """Move a color toward white (positive) or black (negative)."""
+    r, g, b, a = mcolors.to_rgba(color)
+    amount = max(-1.0, min(1.0, float(amount)))
+    if amount >= 0:
+        return (
+            r + (1.0 - r) * amount,
+            g + (1.0 - g) * amount,
+            b + (1.0 - b) * amount,
+            a,
+        )
+    factor = 1.0 + amount
+    return (r * factor, g * factor, b * factor, a)
 
 
 def resolve_quantities(

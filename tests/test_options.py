@@ -101,6 +101,16 @@ def test_palette_sequence_option(simple_fit: eu.EulerFit[eu.Circle]) -> None:
     plt.close(ax.figure)
 
 
+def test_glyph_options_merge_and_apply(simple_fit: eu.EulerFit[eu.Circle]) -> None:
+    eu.options(glyphs={"facecolor": "red", "gap": 0.1})
+    assert eu.options()["glyphs"]["gap"] == 0.1
+    ax = simple_fit.plot(glyphs=True, labels=False)
+    circles = [patch for patch in ax.patches if patch.__class__.__name__ == "Circle"]
+    assert circles
+    assert all(patch.get_facecolor()[0] == pytest.approx(1.0) for patch in circles)
+    plt.close(ax.figure)
+
+
 def test_complement_option_styles_container() -> None:
     fit = eu.euler({"A": 10, "B": 5, "A&B": 3}, complement=20)
     eu.options(complement={"facecolor": "#123456"})

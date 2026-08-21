@@ -5,13 +5,13 @@ use eunoia::geometry::shapes::{Circle, Ellipse, Polygon, Rectangle, RotatedRecta
 use eunoia::geometry::traits::{DiagramShape, Polygonize};
 use eunoia::loss::LossType;
 use eunoia::plotting::{
-    ExteriorPolicy, LeaderStrategy, PlacementKind, PlacementStrategy, PlotOptions, RegionPiece,
-    RegionPolygons, TetherSource, classify_into_pieces, place_labels,
+    ElbowOptions, ExteriorPolicy, GlyphArrangement, GlyphBoxOptions, GlyphOptions, LabelPlacement,
+    LeaderStrategy, PlacementKind, PlacementStrategy, PlotOptions, RegionPiece, RegionPolygons,
+    SetLabelStrategy, TetherSource, classify_into_pieces, place_glyph_boxes, place_glyphs,
+    place_labels, place_set_labels,
 };
 use eunoia::spec::{Combination, DiagramSpec};
-use eunoia::{
-    DiagramError, DiagramSpecBuilder, Fitter, InputType, Layout, Optimizer, VennDiagram,
-};
+use eunoia::{DiagramError, DiagramSpecBuilder, Fitter, InputType, Layout, Optimizer, VennDiagram};
 use pyo3::create_exception;
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -72,13 +72,14 @@ fn parse_optimizer(optimizer: &str) -> PyResult<Optimizer> {
         "levenberg_marquardt" => Ok(Optimizer::LevenbergMarquardt),
         "lbfgs" => Ok(Optimizer::Lbfgs),
         "nelder_mead" => Ok(Optimizer::NelderMead),
+        "cma_es" => Ok(Optimizer::CmaEs),
         "cma_es_lm" => Ok(Optimizer::CmaEsLm),
         "trf" => Ok(Optimizer::Trf),
         "cma_es_trf" => Ok(Optimizer::CmaEsTrf),
         "mads" => Ok(Optimizer::Mads),
         other => Err(EunoiaError::new_err(format!(
             "invalid_optimizer: unknown optimizer '{other}'; one of \
-             'levenberg_marquardt', 'lbfgs', 'nelder_mead', 'cma_es_lm', \
+             'levenberg_marquardt', 'lbfgs', 'nelder_mead', 'cma_es', 'cma_es_lm', \
              'trf', 'cma_es_trf', 'mads'"
         ))),
     }
@@ -132,6 +133,7 @@ where
 
 fn fill_metrics<'py, S>(
     py: Python<'py>,
+    spec: &DiagramSpec,
     layout: &Layout<S>,
     dict: &Bound<'py, PyDict>,
 ) -> PyResult<()>
@@ -143,6 +145,15 @@ where
         fitted.set_item(combo.to_string(), *val)?;
     }
     dict.set_item("fitted_exclusive", fitted)?;
+
+    let requested = PyDict::new(py);
+    for (combo, val) in layout.requested() {
+        requested.set_item(combo.to_string(), *val)?;
+    }
+    if let Some(complement) = spec.complement() {
+        requested.set_item("", complement)?;
+    }
+    dict.set_item("requested_exclusive", requested)?;
 
     let region_error_dict = PyDict::new(py);
     for (combo, val) in layout.region_error() {
@@ -308,7 +319,7 @@ where
     }
     result.set_item("shapes", shapes)?;
 
-    fill_metrics(py, layout, &result)?;
+    fill_metrics(py, spec, layout, &result)?;
     fill_plot_data(py, spec, layout, &result)?;
     fill_container(py, layout, &result)?;
     Ok(result)
@@ -544,13 +555,18 @@ where
 }
 
 #[pyfunction]
-#[pyo3(signature = (n, shape, names=None, complement=None))]
+#[pyo3(signature = (
+    n, shape, names=None, complement=None, combinations=None,
+    input_kind="exclusive"
+))]
 fn _venn<'py>(
     py: Python<'py>,
     n: usize,
     shape: &str,
     names: Option<Vec<String>>,
     complement: Option<f64>,
+    combinations: Option<Vec<(String, f64)>>,
+    input_kind: &str,
 ) -> PyResult<Bound<'py, PyDict>> {
     if let Some(ref names) = names {
         if names.len() != n {
@@ -560,7 +576,7 @@ fn _venn<'py>(
             )));
         }
     }
-    match shape {
+    let result = match shape {
         "circle" => {
             let (layout, spec) = venn_layout::<Circle>(n, names, complement)?;
             build_result(py, &spec, &layout, ser_circle)
@@ -585,7 +601,24 @@ fn _venn<'py>(
             "invalid_shape: shape must be 'circle', 'ellipse', 'square', \
              'rectangle' or 'rotated_rectangle', got '{other}'"
         ))),
+    }?;
+
+    // Venn geometry is canonical and therefore has its own synthetic spec.
+    // When the caller supplied quantities, validate and canonicalize those
+    // through the same DiagramSpec path as euler(), then replace the synthetic
+    // requested values with the user's exclusive counts for glyph rendering.
+    let requested = PyDict::new(py);
+    if let Some(combinations) = combinations {
+        let quantity_spec = build_spec(&combinations, input_kind, complement)?;
+        for (combo, value) in quantity_spec.exclusive_areas() {
+            requested.set_item(combo.to_string(), *value)?;
+        }
+        if let Some(value) = quantity_spec.complement() {
+            requested.set_item("", value)?;
+        }
     }
+    result.set_item("requested_exclusive", requested)?;
+    Ok(result)
 }
 
 /// Place labels in their regions, accounting for label size.
@@ -599,10 +632,79 @@ fn _venn<'py>(
 /// interior placements have `tether`/`leader_end` `None` and no waypoints;
 /// exterior placements carry the leader geometry the renderer draws as the
 /// polyline `tether -> leader_waypoints... -> leader_end`.
+fn build_regions(rings: &HashMap<String, Vec<Vec<(f64, f64)>>>) -> RegionPolygons {
+    let mut map: HashMap<Combination, Vec<RegionPiece>> = HashMap::new();
+    for (combo_str, region_rings) in rings {
+        let polys: Vec<Polygon> = region_rings
+            .iter()
+            .map(|ring| Polygon::new(ring.iter().map(|&(x, y)| Point::new(x, y)).collect()))
+            .collect();
+        let pieces = classify_into_pieces(polys);
+        if pieces.is_empty() {
+            continue;
+        }
+        // `Combination`'s FromStr is infallible.
+        let combo: Combination = combo_str.parse().unwrap_or_else(|_| Combination::new(&[]));
+        map.insert(combo, pieces);
+    }
+    RegionPolygons::from_map(map)
+}
+
+fn rectangles(values: Option<Vec<(f64, f64, f64, f64)>>) -> Vec<Rectangle> {
+    values
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|(x, y, w, h)| {
+            x.is_finite() && y.is_finite() && w.is_finite() && h.is_finite() && *w > 0.0 && *h > 0.0
+        })
+        .map(|(x, y, w, h)| Rectangle::new(Point::new(x, y), w, h))
+        .collect()
+}
+
+fn parse_arrangement(arrangement: Option<&str>) -> PyResult<GlyphArrangement> {
+    match arrangement {
+        Some("random") => Ok(GlyphArrangement::Random),
+        Some("uniform") | None => Ok(GlyphArrangement::Uniform),
+        Some(other) => Err(EunoiaError::new_err(format!(
+            "invalid_glyph_arrangement: arrangement must be 'uniform' or 'random', got '{other}'"
+        ))),
+    }
+}
+
+fn placement_to_pydict<'py>(
+    py: Python<'py>,
+    placement: &LabelPlacement,
+) -> PyResult<Bound<'py, PyDict>> {
+    let d = PyDict::new(py);
+    d.set_item("anchor", (placement.anchor.x(), placement.anchor.y()))?;
+    let kind = match placement.kind {
+        PlacementKind::Interior => "interior",
+        PlacementKind::ExteriorRaycast => "exterior_raycast",
+        PlacementKind::ExteriorForceDirected => "exterior_force_directed",
+        PlacementKind::ExteriorElbow => "exterior_elbow",
+        PlacementKind::ExteriorMatched => "exterior_matched",
+        PlacementKind::ExteriorSet => "exterior_set",
+        // `PlacementKind` is #[non_exhaustive].
+        _ => "exterior",
+    };
+    d.set_item("kind", kind)?;
+    d.set_item("tether", placement.tether.as_ref().map(|p| (p.x(), p.y())))?;
+    d.set_item(
+        "leader_end",
+        placement.leader_end.as_ref().map(|p| (p.x(), p.y())),
+    )?;
+    let waypoints = PyList::empty(py);
+    for p in &placement.leader_waypoints {
+        waypoints.append((p.x(), p.y()))?;
+    }
+    d.set_item("leader_waypoints", waypoints)?;
+    Ok(d)
+}
+
 #[pyfunction]
 #[pyo3(signature = (
     rings, sizes, container=None, precision=None, exterior=None, tether=None,
-    leader_gap=None, margin=None, iterations=None
+    leader_gap=None, margin=None, iterations=None, min_gap=None
 ))]
 #[allow(clippy::too_many_arguments)]
 fn _place_labels<'py>(
@@ -616,32 +718,22 @@ fn _place_labels<'py>(
     leader_gap: Option<f64>,
     margin: Option<f64>,
     iterations: Option<usize>,
+    min_gap: Option<f64>,
 ) -> PyResult<Bound<'py, PyDict>> {
-    // Rebuild the region polygons from the serialized rings. `classify_into_pieces`
-    // groups rings into outer/hole pieces by containment, so we can pass a flat
-    // ring list per region without tracking which ring was an outer vs a hole.
-    let mut map: HashMap<Combination, Vec<RegionPiece>> = HashMap::new();
-    for (combo_str, region_rings) in &rings {
-        let polys: Vec<Polygon> = region_rings
-            .iter()
-            .map(|ring| Polygon::new(ring.iter().map(|&(x, y)| Point::new(x, y)).collect()))
-            .collect();
-        let pieces = classify_into_pieces(polys);
-        if pieces.is_empty() {
-            continue;
-        }
-        // `Combination`'s FromStr is infallible.
-        let combo: Combination = combo_str.parse().unwrap_or_else(|_| Combination::new(&[]));
-        map.insert(combo, pieces);
-    }
-    let regions = RegionPolygons::from_map(map);
+    let regions = build_regions(&rings);
 
-    let exterior_policy = match exterior {
-        Some("force_directed") => ExteriorPolicy::ForceDirected { margin, iterations },
-        Some("raycast") | None => ExteriorPolicy::Raycast { margin },
+    let leader = match exterior {
+        Some("force_directed") => {
+            LeaderStrategy::Straight(ExteriorPolicy::ForceDirected { margin, iterations })
+        }
+        Some("matched") => LeaderStrategy::Straight(ExteriorPolicy::Matched { margin }),
+        Some("elbow") => {
+            LeaderStrategy::Elbow(ElbowOptions::default().margin(margin).min_gap(min_gap))
+        }
+        Some("raycast") | None => LeaderStrategy::Straight(ExteriorPolicy::Raycast { margin }),
         Some(other) => {
             return Err(EunoiaError::new_err(format!(
-                "invalid_placement: exterior must be 'raycast' or 'force_directed', got '{other}'"
+                "invalid_placement: exterior must be 'raycast', 'force_directed', 'matched', or 'elbow', got '{other}'"
             )));
         }
     };
@@ -655,7 +747,7 @@ fn _place_labels<'py>(
         }
     };
     let mut strategy = PlacementStrategy::default()
-        .leader(LeaderStrategy::Straight(exterior_policy))
+        .leader(leader)
         .tether(tether_source);
     if let Some(p) = precision {
         strategy = strategy.precision(p);
@@ -670,27 +762,163 @@ fn _place_labels<'py>(
 
     let out = PyDict::new(py);
     for (combo, placement) in &placements {
-        let d = PyDict::new(py);
-        d.set_item("anchor", (placement.anchor.x(), placement.anchor.y()))?;
-        let kind = match placement.kind {
-            PlacementKind::Interior => "interior",
-            PlacementKind::ExteriorRaycast => "exterior_raycast",
-            PlacementKind::ExteriorForceDirected => "exterior_force_directed",
-            PlacementKind::ExteriorElbow => "exterior_elbow",
-            // `PlacementKind` is #[non_exhaustive]; treat unknown future
-            // kinds as generic exterior placements (they carry leader data).
-            _ => "exterior",
-        };
-        d.set_item("kind", kind)?;
-        d.set_item("tether", placement.tether.as_ref().map(|p| (p.x(), p.y())))?;
-        d.set_item("leader_end", placement.leader_end.as_ref().map(|p| (p.x(), p.y())))?;
-        let waypoints = PyList::empty(py);
-        for p in &placement.leader_waypoints {
-            waypoints.append((p.x(), p.y()))?;
-        }
-        d.set_item("leader_waypoints", waypoints)?;
-        out.set_item(combo, d)?;
+        out.set_item(combo, placement_to_pydict(py, placement)?)?;
     }
+    Ok(out)
+}
+
+#[pyfunction]
+#[pyo3(signature = (
+    outlines, sizes, container=None, margin=None, angular_steps=None,
+    precision=None, obstacles=None
+))]
+fn _place_set_labels<'py>(
+    py: Python<'py>,
+    outlines: HashMap<String, Vec<(f64, f64)>>,
+    sizes: HashMap<String, (f64, f64)>,
+    container: Option<(f64, f64, f64, f64)>,
+    margin: Option<f64>,
+    angular_steps: Option<usize>,
+    precision: Option<f64>,
+    obstacles: Option<Vec<(f64, f64, f64, f64)>>,
+) -> PyResult<Bound<'py, PyDict>> {
+    let polygons: HashMap<String, Polygon> = outlines
+        .into_iter()
+        .map(|(name, vertices)| {
+            let polygon = Polygon::new(
+                vertices
+                    .into_iter()
+                    .map(|(x, y)| Point::new(x, y))
+                    .collect(),
+            );
+            (name, polygon)
+        })
+        .collect();
+    let mut strategy = SetLabelStrategy::default()
+        .margin(margin)
+        .obstacles(rectangles(obstacles));
+    if let Some(steps) = angular_steps {
+        strategy = strategy.angular_steps(steps);
+    }
+    if let Some(value) = precision {
+        strategy = strategy.precision(value);
+    }
+    let container_rect = container.map(|(x, y, w, h)| Rectangle::new(Point::new(x, y), w, h));
+    let placements = place_set_labels(&polygons, &sizes, container_rect.as_ref(), &strategy);
+    let out = PyDict::new(py);
+    for (name, placement) in &placements {
+        out.set_item(name, placement_to_pydict(py, placement)?)?;
+    }
+    Ok(out)
+}
+
+#[pyfunction]
+#[pyo3(signature = (
+    rings, counts, arrangement=None, radius=None, gap=None, seed=None,
+    precision=None, max_attempts=None, obstacles=None
+))]
+#[allow(clippy::too_many_arguments)]
+fn _place_glyphs<'py>(
+    py: Python<'py>,
+    rings: HashMap<String, Vec<Vec<(f64, f64)>>>,
+    counts: HashMap<String, usize>,
+    arrangement: Option<&str>,
+    radius: Option<f64>,
+    gap: Option<f64>,
+    seed: Option<u64>,
+    precision: Option<f64>,
+    max_attempts: Option<u32>,
+    obstacles: Option<Vec<(f64, f64, f64, f64)>>,
+) -> PyResult<Bound<'py, PyDict>> {
+    let regions = build_regions(&rings);
+    let mut options = GlyphOptions::default()
+        .arrangement(parse_arrangement(arrangement)?)
+        .radius(radius)
+        .obstacles(rectangles(obstacles));
+    if let Some(value) = gap {
+        options = options.gap(value);
+    }
+    if let Some(value) = seed {
+        options = options.seed(value);
+    }
+    if let Some(value) = precision {
+        options = options.precision(value);
+    }
+    if let Some(value) = max_attempts {
+        options = options.max_attempts(value);
+    }
+    let placed = place_glyphs(&regions, &counts, &options);
+    let out = PyDict::new(py);
+    out.set_item("radius", placed.radius)?;
+    let positions = PyDict::new(py);
+    for (combo, points) in &placed.positions {
+        let values: Vec<(f64, f64)> = points.iter().map(|p| (p.x(), p.y())).collect();
+        positions.set_item(combo, values)?;
+    }
+    out.set_item("positions", positions)?;
+    out.set_item("unplaced", placed.unplaced)?;
+    Ok(out)
+}
+
+#[pyfunction]
+#[pyo3(signature = (
+    rings, sizes, arrangement=None, scale=None, min_scale=None, gap=None,
+    seed=None, precision=None, max_attempts=None, obstacles=None
+))]
+#[allow(clippy::too_many_arguments)]
+fn _place_glyph_boxes<'py>(
+    py: Python<'py>,
+    rings: HashMap<String, Vec<Vec<(f64, f64)>>>,
+    sizes: HashMap<String, Vec<(f64, f64)>>,
+    arrangement: Option<&str>,
+    scale: Option<f64>,
+    min_scale: Option<f64>,
+    gap: Option<f64>,
+    seed: Option<u64>,
+    precision: Option<f64>,
+    max_attempts: Option<u32>,
+    obstacles: Option<Vec<(f64, f64, f64, f64)>>,
+) -> PyResult<Bound<'py, PyDict>> {
+    let regions = build_regions(&rings);
+    let mut options = GlyphBoxOptions::default()
+        .arrangement(parse_arrangement(arrangement)?)
+        .scale(scale)
+        .obstacles(rectangles(obstacles));
+    if let Some(value) = min_scale {
+        options = options.min_scale(value);
+    }
+    if let Some(value) = gap {
+        options = options.gap(value);
+    }
+    if let Some(value) = seed {
+        options = options.seed(value);
+    }
+    if let Some(value) = precision {
+        options = options.precision(value);
+    }
+    if let Some(value) = max_attempts {
+        options = options.max_attempts(value);
+    }
+    let placed = place_glyph_boxes(&regions, &sizes, &options);
+    let out = PyDict::new(py);
+    out.set_item("scale", placed.scale)?;
+    let boxes = PyDict::new(py);
+    for (combo, rects) in &placed.boxes {
+        let values: Vec<(f64, f64, f64, f64)> = rects
+            .iter()
+            .map(|rect| {
+                (
+                    rect.center().x(),
+                    rect.center().y(),
+                    rect.width(),
+                    rect.height(),
+                )
+            })
+            .collect();
+        boxes.set_item(combo, values)?;
+    }
+    out.set_item("boxes", boxes)?;
+    out.set_item("unplaced", placed.unplaced)?;
     Ok(out)
 }
 
@@ -710,5 +938,8 @@ fn _eunoia(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(_fit_rotated_rectangles, m)?)?;
     m.add_function(wrap_pyfunction!(_venn, m)?)?;
     m.add_function(wrap_pyfunction!(_place_labels, m)?)?;
+    m.add_function(wrap_pyfunction!(_place_set_labels, m)?)?;
+    m.add_function(wrap_pyfunction!(_place_glyphs, m)?)?;
+    m.add_function(wrap_pyfunction!(_place_glyph_boxes, m)?)?;
     Ok(())
 }

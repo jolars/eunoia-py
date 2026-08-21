@@ -103,6 +103,37 @@ def test_members_render_annotations(member_fit: eu.EulerFit[eu.Circle]) -> None:
     assert "g1" in joined
 
 
+def test_packed_members_render_individual_annotations() -> None:
+    fit = eu.euler({"A": ["g1", "g2", "g3"], "B": ["g2", "g3", "g4"]})
+    fig = fit.plot_plotly(members={"mode": "packed"}, labels=False)
+    texts = [a.text for a in fig.layout.annotations]
+    assert {"g1", "g2", "g3", "g4"} <= set(texts)
+    assert not any("<br>" in text for text in texts)
+
+
+def test_unit_glyphs_render_as_marker_trace(
+    simple_fit: eu.EulerFit[eu.Circle],
+) -> None:
+    fig = simple_fit.plot_plotly(glyphs=True, labels=False)
+    glyph_traces = [t for t in fig.data if str(t.name).endswith(" glyphs")]
+    assert sum(len(t.x) for t in glyph_traces) == 18
+
+
+def test_exterior_set_labels_render_without_leaders(
+    simple_fit: eu.EulerFit[eu.Circle],
+) -> None:
+    fig = simple_fit.plot_plotly(
+        labels={"set_position": "outside"}, quantities=False, hover=False
+    )
+    assert {a.text for a in fig.layout.annotations} >= {"A", "B"}
+    leaders = [
+        shape
+        for shape in fig.layout.shapes
+        if shape.type == "path" and shape.line.width == 0.8
+    ]
+    assert not leaders
+
+
 def test_legend_traces(simple_fit: eu.EulerFit[eu.Circle]) -> None:
     fig = simple_fit.plot_plotly(legend=True)
     assert fig.layout.showlegend

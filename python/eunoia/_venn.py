@@ -216,7 +216,8 @@ def venn(
     names, original_values, canonical_keys, members_map = _resolve_input(
         sets, input, names, ids
     )
-    result: Any = _venn_rust(len(names), shape, names, complement)
+    combinations = list(original_values.items()) if original_values else None
+    result: Any = _venn_rust(len(names), shape, names, complement, combinations, input)
 
     if shape == "circle":
         shapes: Any = build_circles(result["shapes"])

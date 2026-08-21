@@ -38,8 +38,10 @@ plt.show()
 
 `euler()` also accepts inclusive counts, DataFrames, and NumPy arrays;
 `shape=` switches between circles, ellipses, squares, and rectangles;
-`venn()` draws topological diagrams; and `eunoia.options(...)` sets global
-plotting defaults. See the documentation for the full API.
+`venn()` draws topological diagrams; `plot(glyphs=True)` adds one countable dot
+per unit; `plot(members={"mode": "packed"})` packs retained member names into
+their regions; and `eunoia.options(...)` sets global plotting defaults. See the
+documentation for the full API.
 
 ## Documentation
 

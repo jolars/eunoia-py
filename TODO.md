@@ -103,9 +103,9 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
 
 ## Eunoia core upstream tracking
 
-- [x] Bump `eunoia` pin (currently `"0.15"` in `Cargo.toml`) toward upstream
-      (local checkout is already at 0.18.0). Pre-1.0 means minor bumps may break,
-      so track tightly. Re-verify the bound API surface listed in `AGENTS.md`.
+- [x] Track stable Eunoia core releases. The wrapper now pins 1.9 and exposes
+      matched and exterior set-label placement, unit glyphs, and packed member
+      labels.
 
 ## Defer until later
 

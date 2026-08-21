@@ -9,7 +9,10 @@ __all__ = [
     "_fit_rectangles",
     "_fit_rotated_rectangles",
     "_fit_squares",
+    "_place_glyph_boxes",
+    "_place_glyphs",
     "_place_labels",
+    "_place_set_labels",
     "_smoke",
     "_venn",
 ]
@@ -64,6 +67,7 @@ class _RegionPiece(TypedDict):
 class _CircleResult(TypedDict):
     shapes: list[_CircleDict]
     fitted_exclusive: dict[str, float]
+    requested_exclusive: dict[str, float]
     region_error: dict[str, float]
     diag_error: float
     stress: float
@@ -80,6 +84,7 @@ class _CircleResult(TypedDict):
 class _EllipseResult(TypedDict):
     shapes: list[_EllipseDict]
     fitted_exclusive: dict[str, float]
+    requested_exclusive: dict[str, float]
     region_error: dict[str, float]
     diag_error: float
     stress: float
@@ -96,6 +101,7 @@ class _EllipseResult(TypedDict):
 class _SquareResult(TypedDict):
     shapes: list[_SquareDict]
     fitted_exclusive: dict[str, float]
+    requested_exclusive: dict[str, float]
     region_error: dict[str, float]
     diag_error: float
     stress: float
@@ -112,6 +118,7 @@ class _SquareResult(TypedDict):
 class _RectangleResult(TypedDict):
     shapes: list[_RectangleDict]
     fitted_exclusive: dict[str, float]
+    requested_exclusive: dict[str, float]
     region_error: dict[str, float]
     diag_error: float
     stress: float
@@ -128,6 +135,7 @@ class _RectangleResult(TypedDict):
 class _RotatedRectangleResult(TypedDict):
     shapes: list[_RotatedRectangleDict]
     fitted_exclusive: dict[str, float]
+    requested_exclusive: dict[str, float]
     region_error: dict[str, float]
     diag_error: float
     stress: float
@@ -207,6 +215,8 @@ def _venn(
     shape: str,
     names: list[str] | None = None,
     complement: float | None = None,
+    combinations: list[tuple[str, float]] | None = None,
+    input_kind: str = "exclusive",
 ) -> (
     _CircleResult
     | _EllipseResult
@@ -232,4 +242,49 @@ def _place_labels(
     leader_gap: float | None = None,
     margin: float | None = None,
     iterations: int | None = None,
+    min_gap: float | None = None,
 ) -> dict[str, _Placement]: ...
+def _place_set_labels(
+    outlines: dict[str, list[tuple[float, float]]],
+    sizes: dict[str, tuple[float, float]],
+    container: tuple[float, float, float, float] | None = None,
+    margin: float | None = None,
+    angular_steps: int | None = None,
+    precision: float | None = None,
+    obstacles: list[tuple[float, float, float, float]] | None = None,
+) -> dict[str, _Placement]: ...
+
+class _GlyphPlacements(TypedDict):
+    radius: float
+    positions: dict[str, list[tuple[float, float]]]
+    unplaced: dict[str, int]
+
+def _place_glyphs(
+    rings: dict[str, list[list[tuple[float, float]]]],
+    counts: dict[str, int],
+    arrangement: str | None = None,
+    radius: float | None = None,
+    gap: float | None = None,
+    seed: int | None = None,
+    precision: float | None = None,
+    max_attempts: int | None = None,
+    obstacles: list[tuple[float, float, float, float]] | None = None,
+) -> _GlyphPlacements: ...
+
+class _GlyphBoxPlacements(TypedDict):
+    scale: float
+    boxes: dict[str, list[tuple[float, float, float, float]]]
+    unplaced: dict[str, int]
+
+def _place_glyph_boxes(
+    rings: dict[str, list[list[tuple[float, float]]]],
+    sizes: dict[str, list[tuple[float, float]]],
+    arrangement: str | None = None,
+    scale: float | None = None,
+    min_scale: float | None = None,
+    gap: float | None = None,
+    seed: int | None = None,
+    precision: float | None = None,
+    max_attempts: int | None = None,
+    obstacles: list[tuple[float, float, float, float]] | None = None,
+) -> _GlyphBoxPlacements: ...

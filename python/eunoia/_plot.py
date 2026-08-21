@@ -2,15 +2,23 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, cast
 
 import matplotlib.pyplot as plt
+from matplotlib.font_manager import FontProperties
+from matplotlib.patches import Circle as MplCircle
 from matplotlib.patches import Patch, PathPatch
 from matplotlib.patches import Rectangle as MplRectangle
 from matplotlib.path import Path
 
-from eunoia._eunoia import _place_labels
+from eunoia._eunoia import (
+    _place_glyph_boxes,
+    _place_glyphs,
+    _place_labels,
+    _place_set_labels,
+)
 from eunoia._models import VennFit
 from eunoia._options import get_options
 from eunoia._render_common import (
@@ -19,9 +27,10 @@ from eunoia._render_common import (
 from eunoia._render_common import (
     region_rings as _region_rings,
 )
-from eunoia._render_common import (
-    resolve_members as _resolve_members,
-)
+from eunoia._render_common import requested_glyph_counts as _requested_glyph_counts
+from eunoia._render_common import resolve_glyph_options as _resolve_glyph_options
+from eunoia._render_common import resolve_label_controls as _resolve_label_controls
+from eunoia._render_common import resolve_member_display as _resolve_member_display
 from eunoia._render_common import (
     resolve_quantities as _resolve_quantities,
 )
@@ -34,6 +43,8 @@ from eunoia._render_common import (
 from eunoia._render_common import (
     resolve_set_labels as _resolve_set_labels,
 )
+from eunoia._render_common import shift_color as _shift_color
+from eunoia._render_common import split_label_options as _split_label_options
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -51,6 +62,7 @@ def render(
     labels: bool | dict[str, Any] | None = None,
     quantities: bool | str | dict[str, Any] | None = None,
     members: bool | dict[str, Any] | None = None,
+    glyphs: bool | dict[str, Any] = False,
     legend: bool | dict[str, Any] = False,
     complement: dict[str, Any] | None = None,
 ) -> Axes:
@@ -101,13 +113,19 @@ def render(
     # In-diagram set labels default off when a legend is shown (the legend
     # carries the names instead); an explicit ``labels=`` always wins. A dict
     # turns labels on and carries per-set text/style overrides.
+    option_label_style, option_label_controls = _split_label_options(opts["labels"])
+    explicit_label_controls: dict[str, Any] = {}
     label_specs: dict[str, tuple[str, dict[str, Any]] | None]
     if isinstance(labels, dict):
         show_labels = True
-        label_specs = _resolve_set_labels(set_names, labels)
+        label_input, explicit_label_controls = _split_label_options(labels)
+        label_specs = _resolve_set_labels(set_names, label_input)
     else:
         show_labels = (not bool(legend)) if labels is None else bool(labels)
         label_specs = {name: (name, {}) for name in set_names}
+    set_position, placement_config, set_placement_config = _resolve_label_controls(
+        option_label_controls, explicit_label_controls
+    )
 
     # Region fills
     for combo, pieces in region_pieces.items():
@@ -161,19 +179,23 @@ def render(
     # fall back to the raw set anchor point (no size-aware placement).
     fallback_names: list[tuple[float, float, str, dict[str, Any]]] = []
 
+    outside_names: dict[str, tuple[str, dict[str, Any]]] = {}
     if show_labels:
         for name in set_names:
             spec = label_specs.get(name)
             if spec is None:
                 continue
             text, style = spec
-            line_style: dict[str, Any] = {**opts["labels"], **style}
-            region = set_anchor_regions.get(name)
-            if region is not None and region in region_pieces:
-                region_lines.setdefault(region, []).append((text, line_style))
-            elif name in set_anchors:
-                x, y = set_anchors[name]
-                fallback_names.append((x, y, text, line_style))
+            line_style: dict[str, Any] = {**option_label_style, **style}
+            if set_position == "outside":
+                outside_names[name] = (text, line_style)
+            else:
+                region = set_anchor_regions.get(name)
+                if region is not None and region in region_pieces:
+                    region_lines.setdefault(region, []).append((text, line_style))
+                elif name in set_anchors:
+                    x, y = set_anchors[name]
+                    fallback_names.append((x, y, text, line_style))
 
     if quant is not None:
         _, fmt, q_style = quant
@@ -187,14 +209,22 @@ def render(
     # Only regions we actually drew (present in ``region_pieces``) can be placed;
     # a region with members but no geometry is skipped rather than measured
     # against a ring the core does not have.
-    mem = _resolve_members(fit, members)
-    if mem is not None:
-        mem_text, mem_style = mem
-        for combo, text in mem_text.items():
-            if combo not in region_pieces:
-                continue
-            line_style = {**opts["members"], **mem_style}
-            region_lines.setdefault(combo, []).append((text, line_style))
+    member_display = _resolve_member_display(fit, members, opts["members"])
+    packed_members: (
+        tuple[dict[str, list[str]], dict[str, Any], dict[str, Any]] | None
+    ) = None
+    if member_display is not None:
+        member_mode, member_content, member_packing, member_style = member_display
+        if member_mode == "packed":
+            packed_members = (member_content, member_packing, member_style)
+        else:
+            for combo, names in member_content.items():
+                if combo not in region_pieces:
+                    continue
+                line_style = dict(member_style)
+                region_lines.setdefault(combo, []).append(
+                    ("\n".join(names), line_style)
+                )
 
     # Establish the data->display transform from the diagram geometry before
     # measuring any text: matplotlib only knows text extents in pixels, and only
@@ -203,16 +233,69 @@ def render(
     ax.autoscale_view()
     ax.set_aspect("equal")
 
+    container_box = (
+        (container.center.x, container.center.y, container.width, container.height)
+        if container is not None
+        else None
+    )
+    rings = _region_rings(region_pieces)
+    placements: dict[str, Any] = {}
+    measured: dict[str, list[_MeasuredLine]] = {}
     if region_lines:
-        container_box = (
-            (container.center.x, container.center.y, container.width, container.height)
-            if container is not None
-            else None
-        )
         placements, measured = _place_region_labels(
-            ax, region_lines, _region_rings(region_pieces), container_box
+            ax, region_lines, rings, container_box, placement_config
         )
-        _draw_region_labels(ax, placements, measured)
+
+    label_obstacles = _placement_boxes(placements, measured)
+    set_placements: dict[str, Any] = {}
+    set_measured: dict[str, _MeasuredLine] = {}
+    if outside_names:
+        set_placements, set_measured = _place_exterior_set_labels(
+            ax,
+            outside_names,
+            shape_outlines,
+            container_box,
+            set_placement_config,
+            label_obstacles,
+        )
+        label_obstacles.extend(_set_placement_boxes(set_placements, set_measured))
+
+    packed_result: (
+        tuple[dict[str, list[str]], dict[str, Any], dict[str, Any]] | None
+    ) = None
+    if packed_members is not None:
+        packed_result = _place_packed_members(
+            ax,
+            packed_members,
+            _region_rings(region_pieces, include_complement=True),
+            label_obstacles,
+        )
+        label_obstacles.extend(_packed_member_boxes(packed_result[1]))
+
+    glyph_options = _resolve_glyph_options(glyphs, opts["glyphs"])
+    if glyph_options is not None:
+        _draw_glyphs(
+            ax,
+            fit,
+            _region_rings(region_pieces, include_complement=True),
+            set_colors,
+            glyph_options,
+            label_obstacles,
+            opts["complement"],
+        )
+
+    if packed_result is not None:
+        _draw_packed_members(ax, packed_result)
+
+    if region_lines:
+        _draw_region_labels(
+            ax,
+            placements,
+            measured,
+            cast("dict[str, Any]", placement_config.get("leader", {})),
+        )
+    if outside_names:
+        _draw_exterior_set_labels(ax, outside_names, set_placements)
 
     for fx, fy, ftext, fstyle in fallback_names:
         ax.text(fx, fy, ftext, ha="center", va="center", **fstyle)
@@ -251,6 +334,7 @@ _PLACE_MAX_ITERS = 4
 
 _Line = tuple[str, dict[str, Any]]
 _MeasuredLine = tuple[str, dict[str, Any], float, float]
+_Box = tuple[float, float, float, float]
 
 
 def _measure_renderer(fig: Any) -> Any:
@@ -285,6 +369,7 @@ def _place_region_labels(
     region_lines: dict[str, list[_Line]],
     rings: dict[str, list[list[tuple[float, float]]]],
     container: tuple[float, float, float, float] | None,
+    placement: dict[str, Any],
 ) -> tuple[dict[str, Any], dict[str, list[_MeasuredLine]]]:
     """Measure each region's stacked text and place it with the core.
 
@@ -315,12 +400,34 @@ def _place_region_labels(
             sizes[region] = (max(d[2] for d in dims), sum(d[3] for d in dims))
             measured[region] = dims
 
-        placements = _place_labels(rings, sizes, container, exterior="raycast")
+        placement_kwargs = {
+            key: value
+            for key, value in {
+                "precision": placement.get("precision"),
+                "exterior": placement.get("strategy", "raycast"),
+                "tether": placement.get("tether"),
+                "leader_gap": placement.get("leader_gap"),
+                "margin": placement.get("margin"),
+                "iterations": placement.get("iterations"),
+                "min_gap": placement.get("min_gap"),
+            }.items()
+            if value is not None
+        }
+        placements = _place_labels(rings, sizes, container, **placement_kwargs)
 
         extra: list[tuple[float, float]] = []
-        for pl in placements.values():
+        for region, pl in placements.items():
             if str(pl["kind"]).startswith("exterior"):
-                extra.append(pl["anchor"])
+                dims = measured[region]
+                width = max(d[2] for d in dims)
+                height = sum(d[3] for d in dims)
+                x, y = pl["anchor"]
+                extra.extend(
+                    [
+                        (x - width / 2.0, y - height / 2.0),
+                        (x + width / 2.0, y + height / 2.0),
+                    ]
+                )
                 if pl["leader_end"] is not None:
                     extra.append(pl["leader_end"])
         if not extra:
@@ -338,6 +445,7 @@ def _draw_region_labels(
     ax: Axes,
     placements: dict[str, Any],
     measured: dict[str, list[_MeasuredLine]],
+    leader_style: dict[str, Any] | None = None,
 ) -> None:
     """Draw each placed block: leader line (if exterior) then stacked lines."""
     for region, dims in measured.items():
@@ -364,8 +472,13 @@ def _draw_region_labels(
                 *(p[1] for p in waypoints),
                 placement["leader_end"][1],
             ]
-            leader_color = dims[0][1].get("color", "dimgray")
-            ax.plot(xs, ys, color=leader_color, linewidth=0.8, zorder=2.5)
+            line_kwargs: dict[str, Any] = {
+                "color": dims[0][1].get("color", "dimgray"),
+                "linewidth": 0.8,
+                "zorder": 2.5,
+                **(leader_style or {}),
+            }
+            ax.plot(xs, ys, **line_kwargs)
 
         # Stack the lines centered on the anchor (which is the block's center),
         # top line first, each placed with ``va="top"`` at a descending cursor.
@@ -382,6 +495,209 @@ def _draw_region_labels(
                 **draw_style,
             )
             y_cursor -= h
+
+
+def _placement_boxes(
+    placements: dict[str, Any], measured: dict[str, list[_MeasuredLine]]
+) -> list[_Box]:
+    boxes: list[_Box] = []
+    for region, placement in placements.items():
+        dims = measured.get(region)
+        if not dims:
+            continue
+        x, y = placement["anchor"]
+        boxes.append((x, y, max(d[2] for d in dims), sum(d[3] for d in dims)))
+    return boxes
+
+
+def _set_placement_boxes(
+    placements: dict[str, Any], measured: dict[str, _MeasuredLine]
+) -> list[_Box]:
+    return [
+        (
+            placement["anchor"][0],
+            placement["anchor"][1],
+            measured[name][2],
+            measured[name][3],
+        )
+        for name, placement in placements.items()
+        if name in measured
+    ]
+
+
+def _place_exterior_set_labels(
+    ax: Axes,
+    names: dict[str, tuple[str, dict[str, Any]]],
+    outlines: dict[str, list[tuple[float, float]]],
+    container: tuple[float, float, float, float] | None,
+    config: dict[str, Any],
+    obstacles: list[_Box],
+) -> tuple[dict[str, Any], dict[str, _MeasuredLine]]:
+    renderer = _measure_renderer(ax.figure)
+    placements: dict[str, Any] = {}
+    measured: dict[str, _MeasuredLine] = {}
+    for _ in range(_PLACE_MAX_ITERS):
+        ax.apply_aspect()
+        measured = {}
+        sizes: dict[str, tuple[float, float]] = {}
+        for name, (text, style) in names.items():
+            width, height = _text_data_size(ax, renderer, text, style)
+            measured[name] = (text, style, width, height)
+            sizes[name] = (width, height)
+        placements = _place_set_labels(
+            outlines,
+            sizes,
+            container,
+            margin=config.get("margin"),
+            angular_steps=config.get("angular_steps"),
+            precision=config.get("precision"),
+            obstacles=obstacles,
+        )
+        extra = [
+            point
+            for x, y, width, height in _set_placement_boxes(placements, measured)
+            for point in (
+                (x - width / 2.0, y - height / 2.0),
+                (x + width / 2.0, y + height / 2.0),
+            )
+        ]
+        before = (*ax.get_xlim(), *ax.get_ylim())
+        if extra:
+            ax.update_datalim(extra)
+            ax.autoscale_view()
+        if not extra or (*ax.get_xlim(), *ax.get_ylim()) == before:
+            break
+    return placements, measured
+
+
+def _draw_exterior_set_labels(
+    ax: Axes,
+    names: dict[str, tuple[str, dict[str, Any]]],
+    placements: dict[str, Any],
+) -> None:
+    for name, placement in placements.items():
+        spec = names.get(name)
+        if spec is None:
+            continue
+        text, style = spec
+        ax.text(
+            placement["anchor"][0],
+            placement["anchor"][1],
+            text,
+            ha=style.get("ha", "center"),
+            va="center",
+            **{k: v for k, v in style.items() if k not in ("ha", "va")},
+        )
+
+
+def _place_packed_members(
+    ax: Axes,
+    spec: tuple[dict[str, list[str]], dict[str, Any], dict[str, Any]],
+    rings: dict[str, list[list[tuple[float, float]]]],
+    obstacles: list[_Box],
+) -> tuple[dict[str, list[str]], dict[str, Any], dict[str, Any]]:
+    content, packing, style = spec
+    renderer = _measure_renderer(ax.figure)
+    ax.apply_aspect()
+    sizes: dict[str, list[tuple[float, float]]] = {}
+    for region, names in content.items():
+        if region not in rings:
+            continue
+        sizes[region] = [_text_data_size(ax, renderer, name, style) for name in names]
+    placed = _place_glyph_boxes(
+        rings,
+        sizes,
+        arrangement=packing.get("arrangement"),
+        scale=packing.get("scale"),
+        min_scale=packing.get("min_scale"),
+        gap=packing.get("gap"),
+        seed=packing.get("seed"),
+        precision=packing.get("precision"),
+        max_attempts=packing.get("max_attempts"),
+        obstacles=obstacles,
+    )
+    if placed["unplaced"]:
+        warnings.warn(
+            f"packed member labels did not fit: {placed['unplaced']}",
+            UserWarning,
+            stacklevel=3,
+        )
+    return content, cast("dict[str, Any]", placed), style
+
+
+def _packed_member_boxes(placed: dict[str, Any]) -> list[_Box]:
+    return [box for boxes in placed["boxes"].values() for box in boxes]
+
+
+def _font_size_points(style: dict[str, Any]) -> float:
+    return float(FontProperties(size=style.get("fontsize", 9)).get_size_in_points())
+
+
+def _draw_packed_members(
+    ax: Axes,
+    result: tuple[dict[str, list[str]], dict[str, Any], dict[str, Any]],
+) -> None:
+    content, placed, style = result
+    font_size = _font_size_points(style) * float(placed["scale"])
+    draw_style = {k: v for k, v in style.items() if k not in ("fontsize", "ha", "va")}
+    for region, boxes in placed["boxes"].items():
+        for name, (x, y, _, _) in zip(content.get(region, []), boxes, strict=False):
+            ax.text(
+                x,
+                y,
+                name,
+                fontsize=font_size,
+                ha=style.get("ha", "center"),
+                va="center",
+                zorder=2.8,
+                **draw_style,
+            )
+
+
+def _draw_glyphs(
+    ax: Axes,
+    fit: EulerFit[Any],
+    rings: dict[str, list[list[tuple[float, float]]]],
+    set_colors: dict[str, Any],
+    resolved: tuple[dict[str, Any], dict[str, Any]],
+    obstacles: list[_Box],
+    complement_style: dict[str, Any],
+) -> None:
+    placement, style = resolved
+    counts = _requested_glyph_counts(fit)
+    placed = _place_glyphs(
+        rings,
+        counts,
+        arrangement=placement.get("arrangement"),
+        radius=placement.get("radius"),
+        gap=placement.get("gap"),
+        seed=placement.get("seed"),
+        precision=placement.get("precision"),
+        max_attempts=placement.get("max_attempts"),
+        obstacles=obstacles,
+    )
+    if placed["unplaced"]:
+        warnings.warn(
+            f"unit glyphs did not fit: {placed['unplaced']}",
+            UserWarning,
+            stacklevel=3,
+        )
+    tint = float(style.pop("tint", 0.45))
+    edge_tint = float(style.pop("edge_tint", -0.35))
+    for region, points in placed["positions"].items():
+        base = (
+            complement_style.get("facecolor", "#f0f0f0")
+            if region == ""
+            else _blend_region_color(region, set_colors)
+        )
+        circle_style: dict[str, Any] = {
+            "facecolor": _shift_color(base, tint),
+            "edgecolor": _shift_color(base, edge_tint),
+            "zorder": 2.0,
+            **style,
+        }
+        for x, y in points:
+            ax.add_patch(MplCircle((x, y), placed["radius"], **circle_style))
 
 
 def _make_compound_path(

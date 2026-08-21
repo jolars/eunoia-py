@@ -15,7 +15,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.29", features = ["extension-module", "abi3-py311"] }
-eunoia = { version = "1.6", features = ["parallel"] }
+eunoia = { version = "1.9", features = ["parallel"] }
 
 [profile.release]
 lto = "thin"

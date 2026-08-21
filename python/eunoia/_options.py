@@ -9,9 +9,9 @@ scoped overrides::
     with eu.options(labels={"fontsize": 14}):
         fit.plot()                          # restored to prior on exit
 
-Options are grouped into categories that mirror the kwargs dicts in
+Options are grouped into categories that mirror the keyword dictionaries in
 ``_plot.render``: ``fills``, ``edges``, ``labels``, ``quantities``, ``members``,
-``legend``, and ``complement`` are each a dict of matplotlib keyword arguments,
+``legend``, ``glyphs``, and ``complement`` are each a dict of plotting options,
 while ``palette`` is the default color source (a colormap name or a sequence of
 colors) used when ``plot(colors=...)`` is not given.
 
@@ -43,6 +43,7 @@ _DEFAULTS: dict[str, Any] = {
     "labels": {"fontsize": 11},
     "quantities": {"fontsize": 9, "color": "dimgray"},
     "members": {"fontsize": 9},
+    "glyphs": {"tint": 0.45, "alpha": 1.0, "linewidth": 0.5},
     "legend": {},
     "complement": {"facecolor": "#f0f0f0", "edgecolor": "0.4", "linewidth": 1.0},
 }
@@ -50,7 +51,16 @@ _DEFAULTS: dict[str, Any] = {
 # Categories whose value is a dict of matplotlib kwargs (merged key-by-key on
 # update). Everything else (just ``palette``) is replaced wholesale.
 _MAPPING_CATEGORIES = frozenset(
-    {"fills", "edges", "labels", "quantities", "members", "legend", "complement"}
+    {
+        "fills",
+        "edges",
+        "labels",
+        "quantities",
+        "members",
+        "glyphs",
+        "legend",
+        "complement",
+    }
 )
 
 _state: ContextVar[dict[str, Any]] = ContextVar("eunoia_options")
@@ -126,7 +136,7 @@ def options(**changes: Any) -> dict[str, Any] | _OptionsContext:
             fit.plot()
 
     Mapping categories (``fills``, ``edges``, ``labels``, ``quantities``,
-    ``members``, ``legend``, ``complement``) are merged key-by-key with the
+    ``members``, ``glyphs``, ``legend``, ``complement``) are merged key-by-key with the
     current values; ``palette`` is replaced wholesale. Unknown categories raise
     ``ValueError``.
     """

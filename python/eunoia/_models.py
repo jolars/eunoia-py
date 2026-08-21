@@ -185,6 +185,7 @@ class EulerFit(Generic[S]):
         labels: bool | dict[str, Any] | None = None,
         quantities: bool | str | dict[str, Any] | None = None,
         members: bool | dict[str, Any] | None = None,
+        glyphs: bool | dict[str, Any] = False,
         legend: bool | dict[str, Any] = False,
         complement: dict[str, Any] | None = None,
     ) -> Axes:
@@ -220,6 +221,14 @@ class EulerFit(Generic[S]):
             as mathtext ``r"$\alpha$"``), or ``None`` or ``False`` to hide that
             set; or a **uniform** ``ax.text`` kwargs dict (no key a set name)
             applied to every label, e.g. ``{"fontsize": 14}``.
+            Three reserved keys control placement rather than text style:
+            ``set_position`` is ``"inside"`` (default) or ``"outside"``;
+            ``set_placement`` configures exterior set names with ``margin``,
+            ``angular_steps``, and ``precision``; and ``placement`` selects
+            the fallback for region blocks—``"raycast"``,
+            ``"force_directed"``, ``"matched"``, or ``"elbow"``—or a dict
+            with ``strategy``, ``margin``, ``iterations``, ``min_gap``,
+            ``precision``, ``tether``, ``leader_gap``, and ``leader``.
         quantities:
             Show per-region values. ``None`` (default) shows nothing for an
             :class:`EulerFit`; for a :class:`VennFit` it shows the supplied
@@ -243,7 +252,18 @@ class EulerFit(Generic[S]):
             region, replacing the rest with a ``"+N more"`` line, and any other
             keys are forwarded to ``ax.text`` (e.g. ``color``, ``fontsize``).
             Long member lists that do not fit inside a region are placed outside
-            with a leader line; use ``max`` to keep blocks compact.
+            with a leader line; use ``max`` to keep blocks compact. Set
+            ``mode="packed"`` in the dict to pack each name individually
+            inside its region. Packed mode also accepts ``arrangement``,
+            ``scale``, ``min_scale``, ``gap``, ``seed``, ``precision``, and
+            ``max_attempts``.
+        glyphs:
+            Draw one equal-sized dot per requested exclusive unit. ``False``
+            (default) disables glyphs; ``True`` uses automatic sizing and a
+            uniform arrangement. A dict accepts ``arrangement`` (``"uniform"``
+            or ``"random"``), ``radius``, ``gap``, ``seed``, ``precision``,
+            and ``max_attempts``, plus circle style overrides. Quantities must
+            be finite, nonnegative integers; they are never rounded silently.
         legend:
             Draw a legend mapping each set to a color swatch, useful when
             in-diagram labels overlap. ``True`` uses matplotlib defaults; a
@@ -270,6 +290,7 @@ class EulerFit(Generic[S]):
             labels=labels,
             quantities=quantities,
             members=members,
+            glyphs=glyphs,
             legend=legend,
             complement=complement,
         )
@@ -285,6 +306,7 @@ class EulerFit(Generic[S]):
         labels: bool | dict[str, Any] | None = None,
         quantities: bool | str | dict[str, Any] | None = None,
         members: bool | dict[str, Any] | None = None,
+        glyphs: bool | dict[str, Any] = False,
         legend: bool | dict[str, Any] = False,
         complement: dict[str, Any] | None = None,
         hover: bool | str = True,
@@ -299,7 +321,8 @@ class EulerFit(Generic[S]):
         small regions.
 
         Most parameters mirror :meth:`plot` (``colors``, ``fills``, ``edges``,
-        ``labels``, ``quantities``, ``members``, ``legend``, ``complement``);
+        ``labels``, ``quantities``, ``members``, ``glyphs``, ``legend``, and
+        ``complement``);
         style dicts are read as the analogous plotly properties (the honored
         keys are colors, ``alpha``, ``linewidth``, and ``fontsize``). The
         plotly-only parameters are:
@@ -335,6 +358,7 @@ class EulerFit(Generic[S]):
             labels=labels,
             quantities=quantities,
             members=members,
+            glyphs=glyphs,
             legend=legend,
             complement=complement,
             hover=hover,
