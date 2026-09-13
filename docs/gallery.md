@@ -119,7 +119,8 @@ fit.plot(
 
 ### Two sets intersecting inside a third
 
-Here we override individual region fills with per-region `fills` styles.
+Per-region `fills` give A alone a neutral gray, the two inner regions blue and
+red, and their overlap purple.
 
 ```{code-cell} python
 fit = eu.euler(
@@ -136,9 +137,10 @@ fit = eu.euler(
 
 fit.plot(
     fills={
-        "A&B&C": {"facecolor": "orange"},
-        "A&B": {"facecolor": "lightblue"},
-        "A&C": {"facecolor": "lightsalmon"},
+        "A": {"facecolor": "lightgray"},
+        "A&B": {"facecolor": "cornflowerblue"},
+        "A&C": {"facecolor": "lightcoral"},
+        "A&B&C": {"facecolor": "mediumpurple"},
     },
 )
 ```
