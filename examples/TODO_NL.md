@@ -35,21 +35,48 @@ issue found along the way. Reproduce with `examples/viset_repro.ipynb`
 
 ## Item 6: Different fonts change how many members fit
 
-Same code and seed, switching fonts (DejaVu Sans, IBM Plex Mono, Inter) leaves
-a different number of members out in constrained figures, e.g.
-`figsize=(15, 3)`.
+### 1. The error
 
-- [x] Reproduced (`seed=1`, 15x3): DejaVu Sans 2, Inter 4, IBM Plex Mono 10
-  did not fit (plus `CYP3A4`, `NR1I2` not drawn: zero-area triple region,
-  item 5).
-- [x] Each font is really used (checked with `get_fontname()`).
-- [x] Static `plot()` looks like expected behaviour: wider font, fewer names
-  fit. Names are measured in the same font they are drawn in.
-- [ ] Check Plotly: `default_measurer()` is called without a font family and
-  the Plotly `font` dict only passes size and colour, so `fontfamily` is
-  likely ignored there.
-- [ ] Fix Plotly if so, then tests.
-- [ ] Report the static result to Johan as expected behaviour.
+- With the same code and seed, changing only the font (IBM Plex Mono, Inter,
+  DejaVu Sans) changes how many members are left out.
+- It happens in tight figures, e.g. `figsize=(15, 3)`, with the static `plot()`.
+- Result: which names appear depends on the font, and the missing ones drop
+  with only a warning.
+- Related, from Item 4: when space runs out, a whole intersection's members
+  can vanish together, not just the one that doesn't fit.
+- Measured (`seed=1`, 15x3), names left out:
+  - DejaVu Sans: 2
+  - Inter: 4
+  - IBM Plex Mono: 10
+  - Every font: `CYP3A4`, `NR1I2` never drawn (zero-area triple region,
+    item 5).
+
+### 2. Options
+
+- **Shrink past the floor (no-drop).** Keep shrinking text until all names
+  fit, so every font shows every member. Cost: text can get very small.
+- **"+N more" marker.** Drop names visibly instead of silently. Reuses the
+  existing `max` behaviour. Smallest, safest change.
+- **Both, as an opt-in `overflow=` setting** (`"drop"` stays the default, plus
+  `"shrink"` and `"more"`). Most complete; needs Johan to agree on the API.
+- **Fix only the all-or-nothing drop.** Make a crowded region lose one name at
+  a time, not all. Narrow, but it depends on where the dropping happens,
+  possibly in Rust.
+
+## Tell Johan (what I fixed)
+
+- Item 7: Plotly title
+  - Default top margin is now 50 px, so titles show.
+  - New `title=` option on `plot_plotly()`.
+  - No `height` given: figure grows by 50 px.
+- Plotly hover text
+  - Problem: with 1 name per line, small figures cut off the whole tooltip.
+  - Now: more than 1 column only when the tooltip is taller than the figure.
+  - Max tooltip height = figure height − 50 px (top margin) − 30 px (buffer),
+    so there's space above and below and it doesn't get cut off.
+  - Columns are aligned and left-aligned.
+  - Title and `n =` stay on their own lines.
+  - Titles now have spaces around `&` (`A & B`, not `A&B`).
 
 ## Before committing
 

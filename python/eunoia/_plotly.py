@@ -861,15 +861,20 @@ def _hover_text(
     """
     want_counts = hover in (True, "all", "quantities", "counts")
     want_members = hover in (True, "all", "members")
-    lines = [f"<b>{combo}</b>"]
+    lines = [f"<b>{' & '.join(combo.split('&'))}</b>"]
     if want_counts and values is not None and combo in values:
         lines.append(f"n = {values[combo]:.3g}")
     if want_members and members_map is not None and members_map.get(combo):
         names = members_map[combo]
         per_line = -(-len(names) // max_rows)
-        lines.extend(
-            " ".join(names[i : i + per_line]) for i in range(0, len(names), per_line)
-        )
+        # Pad each name to its column's longest (monospace font) so columns align.
+        widths = [max(len(n) for n in names[j::per_line]) for j in range(per_line)]
+        for i in range(0, len(names), per_line):
+            row = names[i : i + per_line]
+            cells = [
+                n + "&nbsp;" * (widths[j] - len(n)) for j, n in enumerate(row[:-1])
+            ]
+            lines.append("&nbsp;&nbsp;".join([*cells, row[-1]]))
     return "<br>".join(lines)
 
 
@@ -913,6 +918,11 @@ def _add_hover(
                     mode="lines",
                     hoveron="fills",
                     hoverinfo="text",
+                    # TEMP: font test, revert after checking.
+                    hoverlabel={
+                        "font": {"family": "IBM Plex Mono, monospace"},
+                        "align": "left",
+                    },
                     text=text,
                     name=combo,
                     showlegend=False,
