@@ -599,6 +599,7 @@ def _place_packed_members(
     content, packing, style = spec
     renderer = _measure_renderer(ax.figure)
     ax.apply_aspect()
+    style = normalize_member_font(ax, renderer, style)
     sizes: dict[str, list[tuple[float, float]]] = {}
     for region, names in content.items():
         if region not in rings:
@@ -617,12 +618,30 @@ def _place_packed_members(
         obstacles=obstacles,
     )
     if placed["unplaced"]:
+        lines = [
+            f"  {' & '.join(region.split('&'))}: {', '.join(content[region][-n:])}"
+            for region, n in placed["unplaced"].items()
+        ]
         warnings.warn(
-            f"packed member labels did not fit: {placed['unplaced']}",
+            "some member names did not fit and were left out:\n"
+            + "\n".join(lines)
+            + "\nTry a larger figsize or lower the min_scale in .plot",
             UserWarning,
-            stacklevel=3,
+            stacklevel=4,
         )
     return content, cast("dict[str, Any]", placed), style
+
+
+def normalize_member_font(
+    ax: Axes, renderer: Any, style: dict[str, Any]
+) -> dict[str, Any]:
+    """Resize the font so its box height equals the font size."""
+    size = _font_size_points(style)
+    artist = ax.text(0.0, 0.0, "X", **{k: v for k, v in style.items() if k != "ha"})
+    box_height = artist.get_window_extent(renderer=renderer).height
+    box_height *= 72.0 / renderer.dpi
+    artist.remove()
+    return {**style, "fontsize": size * size / box_height}
 
 
 def _packed_member_boxes(placed: dict[str, Any]) -> list[_Box]:

@@ -77,6 +77,22 @@ issue found along the way. Reproduce with `examples/viset_repro.ipynb`
   - Columns are aligned and left-aligned.
   - Title and `n =` stay on their own lines.
   - Titles now have spaces around `&` (`A & B`, not `A&B`).
+- Item 6: fonts change how many names fit
+  - Tried: making every font start with the same box height
+    (`normalize_member_font`). It still doesn't remove the dropping.
+  - Side effect: some fonts appear smaller than others, even at the same
+    requested font size.
+  - Fix: the warning is better written to help people with it. It lists the
+    missing names per intersection, suggests a larger figsize or a lower
+    `min_scale` in `.plot`, and points at the user's `fit.plot(...)` line.
+
+## Additional bug found
+
+- "Randomness" after a kernel restart
+  - Every restart, the shapes and their positions could change, with or
+    without `seed=`, especially with ellipses or rectangles.
+  - Fix: eunoia now starts from the first set in the data and plots in the
+    order the data was given to `euler()` (`_parse.py`, `dict.fromkeys`).
 
 ## Before committing
 
