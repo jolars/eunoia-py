@@ -6,9 +6,6 @@ devenv.local.yaml
 # direnv
 .direnv
 
-# example script output
-repro-out/
-
 # pre-commit
 .pre-commit-config.yaml
 
