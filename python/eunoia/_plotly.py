@@ -79,6 +79,7 @@ def render_plotly(
     legend: bool | dict[str, Any] = False,
     complement: dict[str, Any] | None = None,
     hover: bool | str = True,
+    title: str | None = None,
     measurer: TextMeasurer | None = None,
 ) -> Any:
     """Render an ``EulerFit`` to a plotly Figure. See ``EulerFit.plot_plotly``."""
@@ -246,13 +247,12 @@ def render_plotly(
     for fx, fy, ftext, fstyle in fallback_names:
         _add_label_line(fig, fx, fy, ftext, fstyle, xanchor="center", yanchor="middle")
 
-    if hover:
-        _add_hover(fig, fit, region_pieces, hover)
-
     if legend:
         _add_legend(fig, set_names, set_colors, fill_alpha)
 
-    _finalize_layout(fig, bounds, width, height, bool(legend))
+    _finalize_layout(fig, bounds, width, height, bool(legend), title)
+    if hover:
+        _add_hover(fig, fit, region_pieces, hover)
     return fig
 
 
@@ -852,6 +852,7 @@ def _hover_text(
     values: dict[str, float] | None,
     members_map: dict[str, list[str]] | None,
     hover: bool | str,
+    max_rows: int,
 ) -> str | None:
     """Compose a region's tooltip from its key, count, and member names.
 
@@ -860,11 +861,20 @@ def _hover_text(
     """
     want_counts = hover in (True, "all", "quantities", "counts")
     want_members = hover in (True, "all", "members")
-    lines = [f"<b>{combo}</b>"]
+    lines = [f"<b>{' & '.join(combo.split('&'))}</b>"]
     if want_counts and values is not None and combo in values:
         lines.append(f"n = {values[combo]:.3g}")
     if want_members and members_map is not None and members_map.get(combo):
-        lines.extend(members_map[combo])
+        names = members_map[combo]
+        per_line = -(-len(names) // max_rows)
+        # Pad each name to its column's longest (monospace font) so columns align.
+        widths = [max(len(n) for n in names[j::per_line]) for j in range(per_line)]
+        for i in range(0, len(names), per_line):
+            row = names[i : i + per_line]
+            cells = [
+                n + "&nbsp;" * (widths[j] - len(n)) for j, n in enumerate(row[:-1])
+            ]
+            lines.append("&nbsp;&nbsp;".join([*cells, row[-1]]))
     return "<br>".join(lines)
 
 
@@ -884,10 +894,12 @@ def _add_hover(
     # Prefer the values the user would recognize (input scale) for the count.
     values = fit.original_values or fit.fitted_values
     members_map = fit.members
+    max_height = fig.layout.height - fig.layout.margin.t - 30
+    max_rows = max(1, (max_height // 17) - 2)
     for combo, pieces in region_pieces.items():
         if combo == "":
             continue
-        text = _hover_text(combo, values, members_map, hover)
+        text = _hover_text(combo, values, members_map, hover, max_rows)
         if not text:
             continue
         for piece in pieces:
@@ -906,6 +918,11 @@ def _add_hover(
                     mode="lines",
                     hoveron="fills",
                     hoverinfo="text",
+                    # TEMP: font test, revert after checking.
+                    hoverlabel={
+                        "font": {"family": "IBM Plex Mono, monospace"},
+                        "align": "left",
+                    },
                     text=text,
                     name=combo,
                     showlegend=False,
@@ -945,18 +962,21 @@ def _finalize_layout(
     width: int,
     height: int | None,
     show_legend: bool,
+    title: str | None,
 ) -> None:
     xmin, xmax, ymin, ymax = bounds
     dw = (xmax - xmin) or 1.0
     dh = (ymax - ymin) or 1.0
     pad = 0.02 * max(dw, dh)
+    title_margin = 50
     if height is None:
-        height = round(width * (dh + 2 * pad) / (dw + 2 * pad))
+        height = round(width * (dh + 2 * pad) / (dw + 2 * pad)) + title_margin
 
     fig.update_layout(
         width=width,
         height=height,
-        margin={"l": 0, "r": 0, "t": 0, "b": 0},
+        margin={"l": 0, "r": 0, "t": title_margin, "b": 0},
+        title=title,
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="white",
         showlegend=show_legend,

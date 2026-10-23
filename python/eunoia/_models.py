@@ -310,6 +310,7 @@ class EulerFit(Generic[S]):
         legend: bool | dict[str, Any] = False,
         complement: dict[str, Any] | None = None,
         hover: bool | str = True,
+        title: str | None = None,
     ) -> go.Figure:
         """Render the fitted diagram to an interactive plotly figure.
 
@@ -340,6 +341,8 @@ class EulerFit(Generic[S]):
             key, its count, and -- when the fit carries :attr:`members` -- its
             member names; ``"members"`` or ``"quantities"`` restrict the
             tooltip to one of those; ``False`` disables hover.
+        title:
+            Figure title, shown in the 50 px top margin. ``None`` (default) adds none.
 
         Returns
         -------
@@ -362,6 +365,7 @@ class EulerFit(Generic[S]):
             legend=legend,
             complement=complement,
             hover=hover,
+            title=title,
         )
 
 
