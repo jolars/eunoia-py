@@ -59,7 +59,7 @@ def parse_membership_input(
     region for reproducibility) for member labels."""
     membership: dict[str, set[str]] = {}
     for set_name, members in values.items():
-        for element in set(members):
+        for element in dict.fromkeys(members):
             membership.setdefault(str(element), set()).add(set_name)
 
     counts: dict[str, float] = {}

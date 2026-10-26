@@ -310,6 +310,7 @@ class EulerFit(Generic[S]):
         legend: bool | dict[str, Any] = False,
         complement: dict[str, Any] | None = None,
         hover: bool | str = True,
+        title: str | dict[str, Any] | None = None,
     ) -> go.Figure:
         """Render the fitted diagram to an interactive plotly figure.
 
@@ -340,6 +341,17 @@ class EulerFit(Generic[S]):
             key, its count, and -- when the fit carries :attr:`members` -- its
             member names; ``"members"`` or ``"quantities"`` restrict the
             tooltip to one of those; ``False`` disables hover.
+        title:
+            Figure title, drawn in a band at the top (like matplotlib's
+            ``tight_layout``): with a fixed ``height`` the figure keeps its
+            size and the diagram shrinks to make room; without one the band is
+            added on top. Lines break only at ``<br>``. A string uses a font
+            that scales gently with ``width`` (20 px at 500 px, times
+            ``sqrt(width / 500)``) and
+            shrinks so the band takes at most a quarter of ``height``; a dict
+            such as ``{"text": "...", "fontsize": 20}`` uses that size as-is
+            (other keys go to plotly's ``layout.title``). ``None`` (default)
+            adds none.
 
         Returns
         -------
@@ -362,6 +374,7 @@ class EulerFit(Generic[S]):
             legend=legend,
             complement=complement,
             hover=hover,
+            title=title,
         )
 
 
