@@ -79,6 +79,63 @@ def test_hover_members_in_text(member_fit: eu.EulerFit[eu.Circle]) -> None:
     assert "g1" in texts and "g4" in texts
 
 
+def test_hover_overflow_warns_when_one_column_is_too_wide() -> None:
+    names = [f"member_{i:02d}_" + "x" * 300 for i in range(30)]
+    fit = eu.euler({"A": names, "B": ["other"]})
+    with pytest.warns(UserWarning, match="A: 5 left out") as warnings:
+        fig = fit.plot_plotly(width=200, height=200)
+    text = next(t.text for t in fig.data if t.hoveron == "fills" and t.name == "A")
+    assert text.endswith("+5 more")
+    assert names[24] in text
+    assert all(name not in text for name in names[25:])
+    assert all(name in str(warnings[0].message) for name in names[25:])
+
+
+@pytest.mark.parametrize("hover", ["quantities", "counts"])
+def test_hover_counts_only_does_not_report_member_omissions(hover: str) -> None:
+    from eunoia._plotly import _fit_hover_text
+
+    combo = "A" * 300
+    names = [f"member_{i:02d}" for i in range(30)]
+    text, _, dropped = _fit_hover_text(
+        combo, {combo: len(names)}, {combo: names}, hover, 170, 170
+    )
+    assert text is not None and "n = 30" in text
+    assert "+" not in text
+    assert all(name not in text for name in names)
+    assert dropped == []
+
+
+def test_hover_fitting_work_scales_with_members(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from eunoia import _plotly
+
+    names = [f"member_{i:06d}" for i in range(100_000)]
+    build_text = _plotly._hover_text
+    candidate_members = 0
+
+    def track_members(combo, values, members_map, hover, max_rows, limit=None):
+        nonlocal candidate_members
+        candidate_members += len(names) if limit is None else min(len(names), limit + 1)
+        return build_text(combo, values, members_map, hover, max_rows, limit)
+
+    monkeypatch.setattr(_plotly, "_hover_text", track_members)
+    text, size, dropped = _plotly._fit_hover_text(
+        "A", {"A": len(names)}, {"A": names}, True, 670, 670
+    )
+    assert text is not None
+    assert _plotly._hover_box_width(text, size) <= 670
+    shown = len(names) - len(dropped)
+    assert 0 < shown < len(names)
+    assert dropped == names[shown:]
+    assert names[shown - 1] in text
+    assert names[shown] not in text
+    assert text.endswith(f"+{len(dropped)} more")
+    # Count roster work instead of elapsed time to avoid machine-dependent timing.
+    assert candidate_members < 32 * len(names)
+
+
 def test_hover_disabled(simple_fit: eu.EulerFit[eu.Circle]) -> None:
     fig = simple_fit.plot_plotly(hover=False)
     assert not [t for t in fig.data if getattr(t, "hoveron", None) == "fills"]

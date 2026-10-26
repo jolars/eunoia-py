@@ -958,13 +958,21 @@ def _fit_hover_text(
 
     # Still too wide at the floor: drop columns, keeping max_rows x columns
     # items, the last of which is the "+N more" line.
-    names = (members_map or {}).get(combo) or []
-    for columns in range(-(-len(names) // max_rows) - 1, 0, -1):
+    names = (
+        (members_map or {}).get(combo, []) if hover in (True, "all", "members") else []
+    )
+    # Even empty columns need two spaces between them, so the available width
+    # bounds the search independently of the number of members.
+    column_budget = max(
+        1, int((max_width - _HOVER_BOX_PAD) // (2 * floor * _HOVER_CHAR_WIDTH)) + 1
+    )
+    limit = len(names)
+    for columns in range(min(-(-len(names) // max_rows) - 1, column_budget), 0, -1):
         limit = max_rows * columns - 1
         text = _hover_text(combo, values, members_map, hover, max_rows, limit)
         if text is not None and _hover_box_width(text, floor) <= max_width:
             return text, floor, names[limit:]
-    return text, floor, []
+    return text, floor, names[limit:]
 
 
 def _add_hover(
