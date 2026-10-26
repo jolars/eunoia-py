@@ -231,6 +231,7 @@ _MEMBER_PACKING_KEYS = frozenset(
         "precision",
         "max_attempts",
         "obstacle_policy",
+        "target_aspect_ratio",
     }
 )
 

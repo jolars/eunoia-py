@@ -93,7 +93,11 @@ fit = eu.euler({"A": ["Ada", "Grace", "Barbara"],
 
 fig, (left, right) = plt.subplots(1, 2, figsize=(9, 4))
 fit.plot(ax=left, glyphs=True, quantities=False)
-fit.plot(ax=right, members={"mode": "packed"}, quantities=False)
+fit.plot(
+    ax=right,
+    members={"mode": "packed", "target_aspect_ratio": 1.0},
+    quantities=False,
+)
 fig
 ```
 
@@ -107,6 +111,11 @@ its size floors, so a crowded region can still omit items. The default policy,
 fit.plot(glyphs={"obstacle_policy": "strict"})
 fit.plot_plotly(members={"mode": "packed", "obstacle_policy": "strict"})
 ```
+
+For packed names, `target_aspect_ratio=1.0` favors a roughly square block of
+rows; larger values favor wider blocks. This preference preserves the selected
+font scale and the number of names that fit. It applies to the uniform
+arrangement in either backend. Leave it unset to retain the original row packing.
 
 ### A set contained in the intersection of two sets
 

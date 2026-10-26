@@ -708,6 +708,7 @@ def _place_packed_members(
         max_attempts=packing.get("max_attempts"),
         obstacles=obstacles,
         obstacle_policy=packing.get("obstacle_policy"),
+        target_aspect_ratio=packing.get("target_aspect_ratio"),
     )
     if placed["unplaced"]:
         warnings.warn(

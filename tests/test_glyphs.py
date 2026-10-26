@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import math
 from collections.abc import Callable
 from typing import Any
 
@@ -98,5 +99,54 @@ def test_renderers_apply_strict_obstacles_and_warn(
             assert all(len(trace.x) == 0 for trace in plot.data)
         else:
             assert not any(type(patch).__name__ == "Circle" for patch in plot.patches)
+    finally:
+        plt.close("all")
+
+
+@pytest.mark.parametrize("ratio", [0.25, 1.0, 4.0])
+def test_balanced_rows_approach_target_ratio_without_losing_names(ratio: float) -> None:
+    sizes = {"A": [(1.0, 0.25)] * 12}
+    default = _place_glyph_boxes(SQUARE_RINGS, sizes)
+    balanced = _place_glyph_boxes(SQUARE_RINGS, sizes, target_aspect_ratio=ratio)
+
+    def aspect_ratio(boxes: list[tuple[float, float, float, float]]) -> float:
+        width = max(x + w / 2 for x, _, w, _ in boxes) - min(
+            x - w / 2 for x, _, w, _ in boxes
+        )
+        height = max(y + h / 2 for _, y, _, h in boxes) - min(
+            y - h / 2 for _, y, _, h in boxes
+        )
+        return width / height
+
+    assert balanced["scale"] == default["scale"]
+    assert len(balanced["boxes"]["A"]) == len(default["boxes"]["A"]) == 12
+    assert balanced["unplaced"] == {}
+    assert abs(math.log(aspect_ratio(balanced["boxes"]["A"]) / ratio)) < abs(
+        math.log(aspect_ratio(default["boxes"]["A"]) / ratio)
+    )
+
+
+@pytest.mark.parametrize("backend", ["matplotlib", "plotly"])
+def test_renderers_balance_member_rows(backend: str) -> None:
+    names = [f"member_{i:02d}" for i in range(12)]
+    fit = eu.venn({"A": names}, shape="square")
+
+    def member_rows(ratio: float | None) -> int:
+        plot = render(
+            fit,
+            backend,
+            labels=False,
+            quantities=False,
+            members={"mode": "packed", "target_aspect_ratio": ratio},
+        )
+        if backend == "plotly":
+            labels = [(text.text, text.y) for text in plot.layout.annotations]
+        else:
+            labels = [(text.get_text(), text.get_position()[1]) for text in plot.texts]
+        assert [name for name, _ in labels] == names
+        return len({round(y, 8) for _, y in labels})
+
+    try:
+        assert member_rows(1.0) > member_rows(None)
     finally:
         plt.close("all")

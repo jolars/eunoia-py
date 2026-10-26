@@ -875,7 +875,8 @@ fn _place_glyphs<'py>(
 #[pyfunction]
 #[pyo3(signature = (
     rings, sizes, arrangement=None, scale=None, min_scale=None, gap=None,
-    seed=None, precision=None, max_attempts=None, obstacles=None, obstacle_policy=None
+    seed=None, precision=None, max_attempts=None, obstacles=None, obstacle_policy=None,
+    target_aspect_ratio=None
 ))]
 #[allow(clippy::too_many_arguments)]
 fn _place_glyph_boxes<'py>(
@@ -891,10 +892,12 @@ fn _place_glyph_boxes<'py>(
     max_attempts: Option<u32>,
     obstacles: Option<Vec<(f64, f64, f64, f64)>>,
     obstacle_policy: Option<&str>,
+    target_aspect_ratio: Option<f64>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let regions = build_regions(&rings);
     let mut options = GlyphBoxOptions::default()
         .arrangement(parse_arrangement(arrangement)?)
+        .target_aspect_ratio(target_aspect_ratio)
         .scale(scale)
         .obstacle_policy(parse_obstacle_policy(obstacle_policy)?)
         .obstacles(rectangles(obstacles));

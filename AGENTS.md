@@ -96,6 +96,8 @@ identities exist. `plot(members=...)` newline-joins each region's names into one
 label block by default; `mode="packed"` instead measures and packs each name via
 the core's `place_glyph_boxes`. `max` caps either mode with a `"+N more"` item.
 Styled via the `members` `eunoia.options` category.
+Packed names accept `target_aspect_ratio` to balance uniform rows without
+changing the selected font scale or reducing the placed count.
 
 **Canonical keys** everywhere in returned dicts: `"B&A"` -> `"A&B"` via
 `_parse.canonicalize` (see `test_canonical_keys_in_output`).

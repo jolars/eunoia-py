@@ -289,4 +289,5 @@ def _place_glyph_boxes(
     max_attempts: int | None = None,
     obstacles: list[tuple[float, float, float, float]] | None = None,
     obstacle_policy: str | None = None,
+    target_aspect_ratio: float | None = None,
 ) -> _GlyphBoxPlacements: ...

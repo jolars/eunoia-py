@@ -260,6 +260,10 @@ class EulerFit(Generic[S]):
             clearance from label boxes. The default, ``"best_effort"``, allows
             overlap when names cannot fit while clearing the labels. Strict
             mode retains the font scale floors and warns about omitted names.
+            ``target_aspect_ratio`` balances uniform rows toward a preferred
+            width-to-height ratio (e.g. ``1.0`` for a roughly square block).
+            This preference preserves the selected font scale and placed
+            count. ``None`` (default) keeps the original row packing.
         glyphs:
             Draw one equal-sized dot per requested exclusive unit. ``False``
             (default) disables glyphs; ``True`` uses automatic sizing and a
