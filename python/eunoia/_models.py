@@ -264,13 +264,19 @@ class EulerFit(Generic[S]):
             width-to-height ratio (e.g. ``1.0`` for a roughly square block).
             This preference preserves the selected font scale and placed
             count. ``None`` (default) keeps the original row packing.
+            ``arrangement="rectangular"`` uses the same rows as ``"uniform"``;
+            ``"low_discrepancy"`` scatters names deterministically, and
+            ``"random"`` uses a seeded scatter.
         glyphs:
             Draw one equal-sized dot per requested exclusive unit. ``False``
             (default) disables glyphs; ``True`` uses automatic sizing and a
             uniform arrangement. A dict accepts ``arrangement`` (``"uniform"``
-            or ``"random"``), ``radius``, ``gap``, ``seed``, ``precision``,
-            and ``max_attempts``, plus circle style overrides. Quantities must
-            be finite, nonnegative integers; they are never rounded silently.
+            for a hexagonal lattice, ``"rectangular"`` for aligned rows and
+            columns, ``"low_discrepancy"`` for a deterministic scatter, or
+            ``"random"`` for a seeded scatter), ``radius``, ``gap``, ``seed``,
+            ``precision``, and ``max_attempts``, plus circle style overrides.
+            Quantities must be finite, nonnegative integers; they are never
+            rounded silently.
             ``obstacle_policy="strict"`` requires clearance from label boxes
             and warns about unplaced glyphs, including with automatic sizing.
             The default, ``"best_effort"``, allows overlap when necessary.

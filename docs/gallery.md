@@ -117,6 +117,26 @@ rows; larger values favor wider blocks. This preference preserves the selected
 font scale and the number of names that fit. It applies to the uniform
 arrangement in either backend. Leave it unset to retain the original row packing.
 
+Glyphs also accept `arrangement="rectangular"` for an aligned grid or
+`arrangement="low_discrepancy"` for an even scatter without a lattice. Both
+ignore the seed and give deterministic results. Packed names accept the same
+arrangements: rectangular uses uniform rows, and low-discrepancy placement
+scatters the individual names. The default remains `"uniform"`.
+
+```{code-cell} python
+glyph_fit = eu.euler({"A": 24, "B": 20, "A&B": 12}, shape="square")
+fig, axes = plt.subplots(1, 2, figsize=(9, 4))
+for ax, arrangement in zip(axes, ["rectangular", "low_discrepancy"], strict=True):
+    glyph_fit.plot(
+        ax=ax,
+        glyphs={"arrangement": arrangement},
+        labels=False,
+        quantities=False,
+    )
+    ax.set_title(arrangement.replace("_", " "))
+fig
+```
+
 ### A set contained in the intersection of two sets
 
 ```{code-cell} python

@@ -168,6 +168,9 @@ ship no (full) stubs, so both are `ignore_missing_imports` in mypy and
 **Glyphs.** `plot(glyphs=True)` reads the core-serialized requested-exclusive
 values (including the complement), requires integer counts, and calls
 `place_glyphs`; both renderers color the equal-sized marks from their region.
+Arrangements are `"uniform"` (hexagonal dots or member rows), `"rectangular"`
+(aligned dots or member rows), `"low_discrepancy"` (deterministic scatter), and
+`"random"` (seeded scatter).
 Packed member names and unit glyphs receive every measured region/set label box
 as a keep-out obstacle. Both accept `obstacle_policy="strict"` to require label
 clearance and warn about omissions, even with automatic sizing; the default is

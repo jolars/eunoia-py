@@ -664,9 +664,12 @@ fn rectangles(values: Option<Vec<(f64, f64, f64, f64)>>) -> Vec<Rectangle> {
 fn parse_arrangement(arrangement: Option<&str>) -> PyResult<GlyphArrangement> {
     match arrangement {
         Some("random") => Ok(GlyphArrangement::Random),
+        Some("rectangular") => Ok(GlyphArrangement::Rectangular),
+        Some("low_discrepancy") => Ok(GlyphArrangement::LowDiscrepancy),
         Some("uniform") | None => Ok(GlyphArrangement::Uniform),
         Some(other) => Err(EunoiaError::new_err(format!(
-            "invalid_glyph_arrangement: arrangement must be 'uniform' or 'random', got '{other}'"
+            "invalid_glyph_arrangement: arrangement must be 'uniform', 'rectangular', \
+             'low_discrepancy', or 'random', got '{other}'"
         ))),
     }
 }

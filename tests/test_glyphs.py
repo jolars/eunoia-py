@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 import math
 from collections.abc import Callable
+from itertools import pairwise
 from typing import Any
 
 import eunoia as eu
@@ -101,6 +102,81 @@ def test_renderers_apply_strict_obstacles_and_warn(
             assert not any(type(patch).__name__ == "Circle" for patch in plot.patches)
     finally:
         plt.close("all")
+
+
+@pytest.mark.parametrize("arrangement", ["rectangular", "low_discrepancy"])
+@pytest.mark.parametrize(
+    ("placer", "values", "items_key"),
+    [
+        (_place_glyphs, {"A": 12}, "positions"),
+        (_place_glyph_boxes, {"A": [(1.0, 0.5)] * 12}, "boxes"),
+    ],
+)
+def test_new_arrangements_place_all_items_independently_of_seed(
+    placer: Callable[..., Any],
+    values: dict[str, Any],
+    items_key: str,
+    arrangement: str,
+) -> None:
+    first = placer(SQUARE_RINGS, values, arrangement=arrangement, seed=1)
+    second = placer(SQUARE_RINGS, values, arrangement=arrangement, seed=99)
+    assert first == second
+    assert len(first[items_key]["A"]) == 12
+    assert first["unplaced"] == {}
+
+
+def test_rectangular_glyphs_form_an_aligned_grid() -> None:
+    placed = _place_glyphs(
+        SQUARE_RINGS, {"A": 12}, arrangement="rectangular", radius=0.3
+    )
+    points = placed["positions"]["A"]
+    assert len(points) == 12
+    xs = sorted({round(x, 8) for x, _ in points})
+    ys = sorted({round(y, 8) for _, y in points})
+    assert len(xs) > 1 and len(ys) > 1
+    step = xs[1] - xs[0]
+    assert all(b - a == pytest.approx(step) for a, b in pairwise(xs))
+    assert all(b - a == pytest.approx(step) for a, b in pairwise(ys))
+
+
+@pytest.mark.parametrize("backend", ["matplotlib", "plotly"])
+@pytest.mark.parametrize("arrangement", ["rectangular", "low_discrepancy"])
+@pytest.mark.parametrize("category", ["glyphs", "members"])
+def test_renderers_draw_new_arrangements(
+    backend: str, arrangement: str, category: str
+) -> None:
+    names = [f"member_{i:02d}" for i in range(12)]
+    fit = eu.venn({"A": names}, shape="square")
+    config = {"arrangement": arrangement}
+    if category == "members":
+        config["mode"] = "packed"
+    try:
+        plot = render(
+            fit, backend, labels=False, quantities=False, **{category: config}
+        )
+        if category == "members":
+            if backend == "plotly":
+                texts = [text.text for text in plot.layout.annotations]
+            else:
+                texts = [text.get_text() for text in plot.texts]
+            assert texts == names
+        elif backend == "plotly":
+            assert sum(len(trace.x) for trace in plot.data) == 12
+        else:
+            assert sum(type(patch).__name__ == "Circle" for patch in plot.patches) == 12
+    finally:
+        plt.close("all")
+
+
+@pytest.mark.parametrize(
+    ("placer", "values"),
+    [(_place_glyphs, {"A": 1}), (_place_glyph_boxes, {"A": [(1.0, 0.5)]})],
+)
+def test_invalid_arrangement_lists_new_choices(
+    placer: Callable[..., Any], values: dict[str, Any]
+) -> None:
+    with pytest.raises(eu.EunoiaError, match=r"'rectangular'.*'low_discrepancy'"):
+        placer(SQUARE_RINGS, values, arrangement="unknown")
 
 
 @pytest.mark.parametrize("ratio", [0.25, 1.0, 4.0])
