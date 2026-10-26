@@ -16,6 +16,7 @@ backend's reason for existing) cover regions too small for any text.
 
 from __future__ import annotations
 
+import re
 import warnings
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, cast
@@ -58,6 +59,36 @@ _PT_TO_PX = 96.0 / 72.0
 # one round.
 _PLACE_MAX_ITERS = 4
 
+# Hover box sizing. The tooltip uses a monospace font, so its width is
+# estimated as characters x glyph width, plus plotly's arrow (6) + padding (3).
+# The font steps down from plotly's default (13 px, 17 px lines) in 0.5 px
+# steps until the box fits the figure; at the floor (same 0.35 ratio as the
+# core's packed-member ``min_scale``) names are left out with a warning.
+_HOVER_FONT = "IBM Plex Mono, monospace"
+_HOVER_FONTSIZE = 13.0
+_HOVER_LINE_HEIGHT = 17.0
+_HOVER_CHAR_WIDTH = 0.6
+_HOVER_BOX_PAD = 9.0
+_HOVER_MIN_SCALE = 0.35
+_HOVER_STEP = 0.5
+
+# Title band, sized like matplotlib's tight_layout: the title's lines plus a
+# gap above the diagram (6 pt titlepad) and an edge pad (1.08 x font). With a
+# fixed ``height`` the band comes out of it and the diagram shrinks. The default
+# font scales gently with width (20 px at 500 px, times sqrt(width / 500)) and
+# steps down (not below 3 px) until each line fits the width and the band is at
+# most a quarter of the height; a user ``fontsize`` is used as-is.
+_TITLE_REF_FONTSIZE = 20.0
+_TITLE_MIN_FONTSIZE = 3.0
+_TITLE_SIDE_PAD = 10.0
+_BR_TAG = re.compile(r"<br(?:\s[^>]*)?>", re.IGNORECASE)
+_TITLE_REF_WIDTH = 500.0
+_TITLE_LINE_HEIGHT = 1.3
+_TITLE_GAP = 8.0
+_TITLE_EDGE_PAD = 1.08
+_TITLE_MAX_RATIO = 0.25
+_TITLE_STEP = 0.5
+
 _Line = tuple[str, dict[str, Any]]
 _MeasuredLine = tuple[str, dict[str, Any], float, float]
 _Bounds = tuple[float, float, float, float]
@@ -79,7 +110,7 @@ def render_plotly(
     legend: bool | dict[str, Any] = False,
     complement: dict[str, Any] | None = None,
     hover: bool | str = True,
-    title: str | None = None,
+    title: str | dict[str, Any] | None = None,
     measurer: TextMeasurer | None = None,
 ) -> Any:
     """Render an ``EulerFit`` to a plotly Figure. See ``EulerFit.plot_plotly``."""
@@ -93,6 +124,11 @@ def render_plotly(
 
     if measurer is None:
         measurer = default_measurer()
+
+    # The title band comes out of a fixed ``height``, so everything below is
+    # placed for the diagram's own height (what plotly actually draws).
+    title_layout, title_band = _title_layout(title, width, height, measurer)
+    diagram_height = None if height is None else height - title_band
 
     # ``quantities=None`` means "context default": off for a proportional
     # EulerFit, on for a topological VennFit built with supplied values.
@@ -181,7 +217,7 @@ def render_plotly(
             container_box,
             bounds,
             width,
-            height,
+            diagram_height,
             measurer,
             placement_config,
         )
@@ -196,7 +232,7 @@ def render_plotly(
             container_box,
             bounds,
             width,
-            height,
+            diagram_height,
             measurer,
             set_placement_config,
             obstacles,
@@ -212,7 +248,7 @@ def render_plotly(
             region_rings(region_pieces, include_complement=True),
             bounds,
             width,
-            height,
+            diagram_height,
             measurer,
             obstacles,
         )
@@ -229,7 +265,7 @@ def render_plotly(
             obstacles,
             bounds,
             width,
-            height,
+            diagram_height,
             opts["complement"],
         )
     if packed_result is not None:
@@ -250,7 +286,7 @@ def render_plotly(
     if legend:
         _add_legend(fig, set_names, set_colors, fill_alpha)
 
-    _finalize_layout(fig, bounds, width, height, bool(legend), title)
+    _finalize_layout(fig, bounds, width, height, bool(legend), title_layout, title_band)
     if hover:
         _add_hover(fig, fit, region_pieces, hover)
     return fig
@@ -853,11 +889,13 @@ def _hover_text(
     members_map: dict[str, list[str]] | None,
     hover: bool | str,
     max_rows: int,
+    limit: int | None = None,
 ) -> str | None:
     """Compose a region's tooltip from its key, count, and member names.
 
     ``hover=True`` shows whatever is available; a string restricts to
     ``"members"``, ``"quantities"`` (alias ``"counts"``), or ``"all"``.
+    ``limit`` caps the listed names, replacing the rest with ``"+N more"``.
     """
     want_counts = hover in (True, "all", "quantities", "counts")
     want_members = hover in (True, "all", "members")
@@ -866,6 +904,8 @@ def _hover_text(
         lines.append(f"n = {values[combo]:.3g}")
     if want_members and members_map is not None and members_map.get(combo):
         names = members_map[combo]
+        if limit is not None and len(names) > limit:
+            names = [*names[:limit], f"+{len(names) - limit} more"]
         per_line = -(-len(names) // max_rows)
         # Pad each name to its column's longest (monospace font) so columns align.
         widths = [max(len(n) for n in names[j::per_line]) for j in range(per_line)]
@@ -876,6 +916,55 @@ def _hover_text(
             ]
             lines.append("&nbsp;&nbsp;".join([*cells, row[-1]]))
     return "<br>".join(lines)
+
+
+def _hover_box_width(text: str, size: float) -> float:
+    """Estimate plotly's hover box width (px) for monospace ``text``."""
+    lines = text.replace("&nbsp;", " ").split("<br>")
+    longest = max(len(re.sub(r"<[^>]+>", "", line)) for line in lines)
+    return longest * _HOVER_CHAR_WIDTH * size + _HOVER_BOX_PAD
+
+
+def _fit_hover_text(
+    combo: str,
+    values: dict[str, float] | None,
+    members_map: dict[str, list[str]] | None,
+    hover: bool | str,
+    max_width: float,
+    max_height: float,
+) -> tuple[str | None, float, list[str]]:
+    """Fit a region's tooltip inside ``max_width`` x ``max_height``.
+
+    Tries font sizes 13, 12.5, ... down to the floor and keeps the first whose
+    box fits; at the floor, names are left out (``"+N more"``) until it fits.
+    Returns ``(text, fontsize, left_out_names)``.
+    """
+    floor = _HOVER_FONTSIZE * _HOVER_MIN_SCALE
+    sizes: list[float] = []
+    size = _HOVER_FONTSIZE
+    while size > floor:
+        sizes.append(size)
+        size -= _HOVER_STEP
+    sizes.append(floor)
+
+    max_rows = 1
+    text: str | None = None
+    for size in sizes:
+        line_height = _HOVER_LINE_HEIGHT * size / _HOVER_FONTSIZE
+        max_rows = max(1, int(max_height // line_height) - 2)
+        text = _hover_text(combo, values, members_map, hover, max_rows)
+        if text is None or _hover_box_width(text, size) <= max_width:
+            return text, size, []
+
+    # Still too wide at the floor: drop columns, keeping max_rows x columns
+    # items, the last of which is the "+N more" line.
+    names = (members_map or {}).get(combo) or []
+    for columns in range(-(-len(names) // max_rows) - 1, 0, -1):
+        limit = max_rows * columns - 1
+        text = _hover_text(combo, values, members_map, hover, max_rows, limit)
+        if text is not None and _hover_box_width(text, floor) <= max_width:
+            return text, floor, names[limit:]
+    return text, floor, []
 
 
 def _add_hover(
@@ -895,11 +984,16 @@ def _add_hover(
     values = fit.original_values or fit.fitted_values
     members_map = fit.members
     max_height = fig.layout.height - fig.layout.margin.t - 30
-    max_rows = max(1, (max_height // 17) - 2)
+    max_width = fig.layout.width - 30
+    left_out: dict[str, list[str]] = {}
     for combo, pieces in region_pieces.items():
         if combo == "":
             continue
-        text = _hover_text(combo, values, members_map, hover, max_rows)
+        text, size, dropped = _fit_hover_text(
+            combo, values, members_map, hover, max_width, max_height
+        )
+        if dropped:
+            left_out[combo] = dropped
         if not text:
             continue
         for piece in pieces:
@@ -918,9 +1012,8 @@ def _add_hover(
                     mode="lines",
                     hoveron="fills",
                     hoverinfo="text",
-                    # TEMP: font test, revert after checking.
                     hoverlabel={
-                        "font": {"family": "IBM Plex Mono, monospace"},
+                        "font": {"family": _HOVER_FONT, "size": size},
                         "align": "left",
                     },
                     text=text,
@@ -928,6 +1021,19 @@ def _add_hover(
                     showlegend=False,
                 )
             )
+    if left_out:
+        lines = [
+            f"  {' & '.join(combo.split('&'))}: {len(names)} left out "
+            f"({', '.join(names[:5])}{', ...' if len(names) > 5 else ''})"
+            for combo, names in left_out.items()
+        ]
+        warnings.warn(
+            "some member names did not fit in the hover box and were left out:\n"
+            + "\n".join(lines)
+            + "\nTry a larger figure size",
+            UserWarning,
+            stacklevel=4,
+        )
 
 
 def _add_legend(
@@ -956,27 +1062,90 @@ def _add_legend(
         )
 
 
+def _title_band(lines: int, size: float) -> float:
+    """Height (px) of a title band holding ``lines`` lines at ``size`` px."""
+    return lines * _TITLE_LINE_HEIGHT * size + _TITLE_GAP + _TITLE_EDGE_PAD * size
+
+
+def _title_layout(
+    title: str | dict[str, Any] | None,
+    width: int,
+    height: int | None,
+    measurer: TextMeasurer,
+) -> tuple[dict[str, Any] | None, int]:
+    """Resolve ``title`` to a plotly title dict and the band height it needs.
+
+    Lines break only at the user's ``<br>`` (no auto-wrap, like matplotlib).
+    A ``fontsize`` (or plotly ``font.size``) is used as-is; otherwise the font
+    scales with ``width`` and shrinks (not below 3 px) until every line fits
+    the width and the band fits a quarter of a fixed ``height``.
+    """
+    if not title:
+        return None, 0
+    cfg: dict[str, Any] = {"text": title} if isinstance(title, str) else dict(title)
+    text = str(cfg.pop("text", ""))
+    if not text:
+        return None, 0
+    font: dict[str, Any] = dict(cfg.pop("font", {}))
+    # Split the way plotly does (``<br>``, ``<BR>``, ``<br >``...), tags hidden.
+    lines = [re.sub(r"<[^>]*>", "", line) for line in _BR_TAG.split(text)]
+
+    user_size = cfg.pop("fontsize", None) or font.get("size")
+    if user_size is not None:
+        size = float(user_size)
+    else:
+        size = _TITLE_REF_FONTSIZE * (width / _TITLE_REF_WIDTH) ** 0.5
+        max_band = _TITLE_MAX_RATIO * height if height is not None else float("inf")
+        max_width = width - 2 * _TITLE_SIDE_PAD
+
+        def fits(size: float) -> bool:
+            widest = max(measurer.text_size_points(line, size)[0] for line in lines)
+            return widest <= max_width and _title_band(len(lines), size) <= max_band
+
+        while size > _TITLE_MIN_FONTSIZE and not fits(size):
+            size = max(_TITLE_MIN_FONTSIZE, size - _TITLE_STEP)
+    lines_n = len(lines)
+
+    band = round(_title_band(lines_n, size))
+    if height is not None:
+        # A user font larger than the figure just overflows; keep a diagram.
+        band = min(band, height - 1)
+    layout = {
+        "text": text,
+        "font": {**font, "size": size},
+        "x": 0.5,
+        "xanchor": "center",
+        "yref": "container",
+        "y": 1.0,
+        "yanchor": "top",
+        "pad": {"t": round(_TITLE_EDGE_PAD * size)},
+        **cfg,
+    }
+    return layout, band
+
+
 def _finalize_layout(
     fig: Any,
     bounds: _Bounds,
     width: int,
     height: int | None,
     show_legend: bool,
-    title: str | None,
+    title_layout: dict[str, Any] | None,
+    title_band: int,
 ) -> None:
     xmin, xmax, ymin, ymax = bounds
     dw = (xmax - xmin) or 1.0
     dh = (ymax - ymin) or 1.0
     pad = 0.02 * max(dw, dh)
-    title_margin = 50
     if height is None:
-        height = round(width * (dh + 2 * pad) / (dw + 2 * pad)) + title_margin
+        # No fixed height: size the diagram from width, title band on top.
+        height = round(width * (dh + 2 * pad) / (dw + 2 * pad)) + title_band
 
     fig.update_layout(
         width=width,
         height=height,
-        margin={"l": 0, "r": 0, "t": title_margin, "b": 0},
-        title=title,
+        margin={"l": 0, "r": 0, "t": title_band, "b": 0},
+        title=title_layout,
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="white",
         showlegend=show_legend,
