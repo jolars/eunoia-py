@@ -212,7 +212,7 @@ All these apply to `euler` only.
 
 ## Eunoia core API
 
-We pin `eunoia = "1.9"` in `Cargo.toml`. Key points: the public enums are
+We pin `eunoia = "1.10"` in `Cargo.toml`. Key points: the public enums are
 `#[non_exhaustive]`, so `map_err`'s `DiagramError` match and the `PlacementKind`
 match in `_place_labels` carry a `_` catch-all. The 1.x default optimizer is
 reproducible only to fp precision, not bit-exact. (Source paths below cite the
