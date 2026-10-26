@@ -1,5 +1,38 @@
 # TODO
 
+## Gallery review (2026-10-26)
+
+Findings from inspecting all 28 plots in [the gallery](docs/gallery.md) and
+rerendering its code cells. Label measurements and packed-member readability
+extend the existing rendering-report entries below. Leader routing belongs in
+the sibling [Eunoia TODO](../eunoia/TODO.md). Fits are approximate; omitting
+quantities for regions with zero fitted area is expected behavior.
+
+- [ ] **Show complement quantities in both renderers.**
+  The universe example uses `euler({"A": 10, "B": 8, "A&B": 4},
+  complement=20)` with `quantities=True`, but only `10`, `8`, and `4`
+  appear. Core already supplies the complement geometry and anchor, and stores
+  its requested count under `""` in `plot_data["requested_exclusive"]`.
+  Python's quantity sources omit it, the shared label rings exclude it by
+  default, and Plotly explicitly skips its quantity. Include the complement in
+  quantity resolution and placement, check original and fitted sources, and define
+  percentage totals consistently when the universe is included.
+
+- [ ] **Increase unit-glyph contrast against region fills.**
+  In "Unit glyphs and packed members," the default dot faces almost match
+  their backgrounds, leaving faint, thin outlines. The default glyph tint
+  of `0.45` produces a color close to the region's `alpha=0.5` fill composited
+  over white. Adjust Python's glyph styling defaults and assess the actual
+  composited colors in both backends, including custom fill opacity, while
+  respecting explicit styles.
+
+- [ ] **Display each gallery figure once.**
+  The built Sphinx page contains 35 plot images for 28 distinct figures:
+  seven paired examples appear twice. Their final `fig` expression displays
+  the figure before matplotlib's automatic notebook output displays it again.
+  Use one display mechanism per code cell and verify the rebuilt page has
+  exactly one image for each intended figure.
+
 ## Rendering report for 0.6.0
 
 Triaged from the supplied `epost-att-lv9vlQ.html` in the sibling Eunoia
@@ -43,6 +76,10 @@ Core changes and a renderer-independent Rust reproduction are tracked in
   a renderer problem for this fixture; it does not prove that every reported
   exterior collision has the same cause. Define a readable fallback when the
   viewport loop cannot converge, instead of merely raising the iteration cap.
+  The gallery's "Exterior set names and matched leaders" provides a smaller
+  reproduction: adding exterior set names after region-label placement makes
+  the final region text about 8% larger in data units than its measured boxes.
+  Check final region/set boxes together before passing obstacles to packers.
 
 - [ ] **Add columns and clearer hierarchy to list mode (items 2/3/4).**
   Both renderers currently turn each region's roster into one newline-joined
@@ -62,6 +99,10 @@ Core changes and a renderer-independent Rust reproduction are tracked in
   obstacles if the label size changes. The core `max_scale` proposal is
   separate from these renderer defaults; do not present extra rows alone as a
   guarantee that larger text will fit.
+  The gallery's sparse packed-member example renders its five names at about
+  7.4 pt despite a 9 pt reference size. Include this fixture when reviewing
+  `normalize_member_font`, the returned packing scale, and readable defaults.
+  Record the actual rendered font size and remeasure after any size change.
 
 - [ ] **Report every omitted member and offer a readable fallback
   (items 4/5/6).** Current warnings cover only core's `unplaced` output.
