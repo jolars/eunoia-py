@@ -171,6 +171,8 @@ values (including the complement), requires integer counts, and calls
 Arrangements are `"uniform"` (hexagonal dots or member rows), `"rectangular"`
 (aligned dots or member rows), `"low_discrepancy"` (deterministic scatter), and
 `"random"` (seeded scatter).
+`boundary_gap` separates dot clearance from region boundaries, holes, and label
+boxes from the spacing between dots; `None` keeps using `gap` for both.
 Packed member names and unit glyphs receive every measured region/set label box
 as a keep-out obstacle. Both accept `obstacle_policy="strict"` to require label
 clearance and warn about omissions, even with automatic sizing; the default is

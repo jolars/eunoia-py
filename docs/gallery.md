@@ -137,6 +137,15 @@ for ax, arrangement in zip(axes, ["rectangular", "low_discrepancy"], strict=True
 fig
 ```
 
+Set `boundary_gap` to control glyph clearance from region boundaries, holes,
+and label boxes separately from `gap`, which controls spacing between glyphs.
+For example, `glyphs={"gap": 0.1, "boundary_gap": 1.0}` leaves more space near
+region edges while allowing dots to sit closer to one another. Both gaps are
+fractions of the glyph radius; centers stay at least
+`radius * (1 + boundary_gap)` from region boundaries. Strict obstacle handling
+requires the same clearance from label boxes. The default, `None`, follows
+`gap`. This option works in both rendering backends.
+
 ### A set contained in the intersection of two sets
 
 ```{code-cell} python

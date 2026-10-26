@@ -764,6 +764,7 @@ def _add_glyphs(
         arrangement=placement.get("arrangement"),
         radius=placement.get("radius"),
         gap=placement.get("gap"),
+        boundary_gap=placement.get("boundary_gap"),
         seed=placement.get("seed"),
         precision=placement.get("precision"),
         max_attempts=placement.get("max_attempts"),

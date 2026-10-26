@@ -828,7 +828,7 @@ fn _place_set_labels<'py>(
 #[pyfunction]
 #[pyo3(signature = (
     rings, counts, arrangement=None, radius=None, gap=None, seed=None,
-    precision=None, max_attempts=None, obstacles=None, obstacle_policy=None
+    precision=None, max_attempts=None, obstacles=None, obstacle_policy=None, boundary_gap=None
 ))]
 #[allow(clippy::too_many_arguments)]
 fn _place_glyphs<'py>(
@@ -843,11 +843,13 @@ fn _place_glyphs<'py>(
     max_attempts: Option<u32>,
     obstacles: Option<Vec<(f64, f64, f64, f64)>>,
     obstacle_policy: Option<&str>,
+    boundary_gap: Option<f64>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let regions = build_regions(&rings);
     let mut options = GlyphOptions::default()
         .arrangement(parse_arrangement(arrangement)?)
         .radius(radius)
+        .boundary_gap(boundary_gap)
         .obstacle_policy(parse_obstacle_policy(obstacle_policy)?)
         .obstacles(rectangles(obstacles));
     if let Some(value) = gap {

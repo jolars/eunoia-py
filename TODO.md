@@ -212,9 +212,10 @@ Deferred from v0.1.0; pick whichever is most user-requested first.
 
 ## Eunoia core upstream tracking
 
-- [x] Track stable Eunoia core releases. The wrapper now pins 1.9 and exposes
+- [x] Track stable Eunoia core releases. The wrapper now pins 1.10 and exposes
       matched and exterior set-label placement, unit glyphs, and packed member
-      labels.
+      labels, including strict obstacles, balanced rows, rectangular and
+      low-discrepancy arrangements, and separate glyph boundary spacing.
 
 ## Defer until later
 

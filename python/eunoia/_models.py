@@ -273,13 +273,20 @@ class EulerFit(Generic[S]):
             uniform arrangement. A dict accepts ``arrangement`` (``"uniform"``
             for a hexagonal lattice, ``"rectangular"`` for aligned rows and
             columns, ``"low_discrepancy"`` for a deterministic scatter, or
-            ``"random"`` for a seeded scatter), ``radius``, ``gap``, ``seed``,
-            ``precision``, and ``max_attempts``, plus circle style overrides.
+            ``"random"`` for a seeded scatter), ``radius``, ``gap``,
+            ``boundary_gap``, ``seed``, ``precision``, and ``max_attempts``, plus
+            circle style overrides.
             Quantities must be finite, nonnegative integers; they are never
             rounded silently.
             ``obstacle_policy="strict"`` requires clearance from label boxes
             and warns about unplaced glyphs, including with automatic sizing.
             The default, ``"best_effort"``, allows overlap when necessary.
+            ``gap`` controls spacing between glyphs as a fraction of their
+            radius. ``boundary_gap`` separately controls clearance from region
+            boundaries, holes, and label boxes. ``None`` (default) follows
+            ``gap``. Glyph centers stay at least ``radius * (1 + boundary_gap)``
+            from region boundaries, and strict mode requires the same
+            clearance from label boxes.
         legend:
             Draw a legend mapping each set to a color swatch, useful when
             in-diagram labels overlap. ``True`` uses matplotlib defaults; a

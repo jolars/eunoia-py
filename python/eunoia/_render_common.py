@@ -308,6 +308,7 @@ _GLYPH_PLACEMENT_KEYS = frozenset(
         "arrangement",
         "radius",
         "gap",
+        "boundary_gap",
         "seed",
         "precision",
         "max_attempts",

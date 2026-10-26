@@ -270,6 +270,7 @@ def _place_glyphs(
     max_attempts: int | None = None,
     obstacles: list[tuple[float, float, float, float]] | None = None,
     obstacle_policy: str | None = None,
+    boundary_gap: float | None = None,
 ) -> _GlyphPlacements: ...
 
 class _GlyphBoxPlacements(TypedDict):

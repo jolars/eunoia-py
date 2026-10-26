@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib
 import math
 from collections.abc import Callable
-from itertools import pairwise
+from itertools import combinations, pairwise
 from typing import Any
 
 import eunoia as eu
@@ -224,5 +224,74 @@ def test_renderers_balance_member_rows(backend: str) -> None:
 
     try:
         assert member_rows(1.0) > member_rows(None)
+    finally:
+        plt.close("all")
+
+
+@pytest.mark.parametrize(
+    "arrangement", ["uniform", "rectangular", "low_discrepancy", "random"]
+)
+@pytest.mark.parametrize("gap", [0.0, 0.75])
+def test_boundary_gap_defaults_to_glyph_gap(arrangement: str, gap: float) -> None:
+    options = {"arrangement": arrangement, "gap": gap, "seed": 1}
+    default = _place_glyphs(SQUARE_RINGS, {"A": 12}, **options)
+    explicit = _place_glyphs(SQUARE_RINGS, {"A": 12}, boundary_gap=gap, **options)
+    assert default == explicit
+
+
+@pytest.mark.parametrize(
+    "arrangement", ["uniform", "rectangular", "low_discrepancy", "random"]
+)
+def test_boundary_gap_changes_clearance_independently_of_glyph_spacing(
+    arrangement: str,
+) -> None:
+    radius = 0.4
+    boundary_gap = 4.0
+    placed = _place_glyphs(
+        SQUARE_RINGS,
+        {"A": 12},
+        arrangement=arrangement,
+        radius=radius,
+        gap=0.0,
+        boundary_gap=boundary_gap,
+        seed=1,
+    )
+    points = placed["positions"]["A"]
+    assert len(points) == 12
+    assert placed["unplaced"] == {}
+    clearance = radius * (1 + boundary_gap)
+    assert all(min(x, y, 10 - x, 10 - y) >= clearance - 1e-8 for x, y in points)
+    distances = [math.dist(a, b) for a, b in combinations(points, 2)]
+    assert min(distances) >= 2 * radius - 1e-8
+    assert min(distances) < 2 * clearance
+
+
+@pytest.mark.parametrize("backend", ["matplotlib", "plotly"])
+@pytest.mark.parametrize("global_option", [False, True])
+def test_renderers_apply_boundary_gap(backend: str, global_option: bool) -> None:
+    fit = eu.venn({"A": 12}, shape="square")
+
+    def glyph_size(boundary_gap: float) -> float:
+        config = {"gap": 0.0, "boundary_gap": boundary_gap}
+        with eu.options(glyphs=config if global_option else {}):
+            plot = render(
+                fit,
+                backend,
+                labels=False,
+                quantities=False,
+                glyphs=True if global_option else config,
+            )
+        if backend == "plotly":
+            return float(next(trace.marker.size for trace in plot.data if trace.x))
+        return float(
+            next(
+                patch.radius
+                for patch in plot.patches
+                if type(patch).__name__ == "Circle"
+            )
+        )
+
+    try:
+        assert glyph_size(4.0) < glyph_size(0.0)
     finally:
         plt.close("all")
