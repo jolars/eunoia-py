@@ -243,6 +243,10 @@ class EulerFit(Generic[S]):
             "color": "dimgray", "fontsize": 8}``. ``type`` may name both
             ``"counts"`` and ``"percent"`` to stack the count above the
             percentage; any other keys are forwarded to ``ax.text``.
+            With a complement, its quantity is included. Percentages use the
+            whole universe: the exclusive input total including the complement
+            for ``"original"``, or the container's area for ``"fitted"``.
+            Inclusive input values retain their original scale.
         members:
             Show each region's member names (available only when the fit carries
             :attr:`members`, i.e. membership-list input, or array/DataFrame input

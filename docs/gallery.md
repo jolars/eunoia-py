@@ -360,6 +360,11 @@ fit = eu.euler({"A": 10, "B": 8, "A&B": 4}, complement=20)
 fit.plot(complement={"facecolor": "#eeeeee"}, quantities=True)
 ```
 
+The complement is labeled `20`. With `quantities="percent"`, each region's
+percentage uses the full universe of `42`, including the complement. Fitted
+percentages use the fitted container's area instead. Both rendering backends
+follow this rule, including when the input values are inclusive set totals.
+
 ### Colors as a sequence or a mapping
 
 `colors` accepts either a sequence (one per set, in fit order) or a mapping from

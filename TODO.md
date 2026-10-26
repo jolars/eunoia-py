@@ -8,15 +8,13 @@ extend the existing rendering-report entries below. Leader routing belongs in
 the sibling [Eunoia TODO](../eunoia/TODO.md). Fits are approximate; omitting
 quantities for regions with zero fitted area is expected behavior.
 
-- [ ] **Show complement quantities in both renderers.**
-  The universe example uses `euler({"A": 10, "B": 8, "A&B": 4},
-  complement=20)` with `quantities=True`, but only `10`, `8`, and `4`
-  appear. Core already supplies the complement geometry and anchor, and stores
-  its requested count under `""` in `plot_data["requested_exclusive"]`.
-  Python's quantity sources omit it, the shared label rings exclude it by
-  default, and Plotly explicitly skips its quantity. Include the complement in
-  quantity resolution and placement, check original and fitted sources, and define
-  percentage totals consistently when the universe is included.
+- [x] **Show complement quantities in both renderers.**
+  Both backends place complement labels using its region geometry. Original
+  counts use `plot_data["requested_exclusive"][""]`; fitted counts use the
+  drawable complement area from `plot_data["region_areas"][""]`. Percentages
+  use the exclusive requested total including the complement, or the fitted
+  container's area, so inclusive input does not double-count overlaps in the
+  denominator. The gallery example now shows `20` (or `47.6%` of `42`).
 
 - [ ] **Increase unit-glyph contrast against region fills.**
   In "Unit glyphs and packed members," the default dot faces almost match

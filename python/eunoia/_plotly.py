@@ -205,7 +205,7 @@ def render_plotly(
         set_position,
     )
 
-    rings = region_rings(region_pieces)
+    rings = region_rings(region_pieces, include_complement=True)
     bounds = _diagram_bounds(rings, container_box)
 
     placements: dict[str, Any] = {}
@@ -444,7 +444,7 @@ def _compose_labels(
     if quant is not None:
         values, fmt, q_style = quant
         for combo in region_pieces:
-            if combo == "" or combo not in values:
+            if combo not in values:
                 continue
             line_style = {**opts["quantities"], **q_style}
             region_lines.setdefault(combo, []).append((fmt(values[combo]), line_style))

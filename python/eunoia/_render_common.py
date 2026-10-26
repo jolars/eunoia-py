@@ -389,6 +389,10 @@ def resolve_quantities(
       ``"percent"``, or a sequence of both (counts on top, percent in
       parentheses below). Any remaining keys are forwarded as style overrides
       (e.g. ``color``, ``fontsize``, ``fontstyle``).
+
+    With a complement, percentages use the whole universe: the exclusive input
+    total including the complement, or the fitted container's area. Fitted
+    complement counts use the area of its drawable region.
     """
     if quantities is False:
         return None
@@ -430,8 +434,20 @@ def resolve_quantities(
             )
         text_kwargs = cfg
 
-    values = fit.original_values if source == "original" else fit.fitted_values
+    values = dict(fit.original_values if source == "original" else fit.fitted_values)
     total = sum(values.values())
+    if fit.container is not None:
+        if source == "original":
+            exclusive_values = fit.plot_data.get("requested_exclusive", {})
+            if "" in exclusive_values:
+                values[""] = float(exclusive_values[""])
+                # Inclusive set totals overlap, so the universe needs exclusive counts.
+                total = sum(exclusive_values.values())
+        else:
+            region_areas = fit.plot_data.get("region_areas", {})
+            if "" in region_areas:
+                values[""] = float(region_areas[""])
+            total = fit.container.width * fit.container.height
     show_counts = "counts" in types
     show_percent = "percent" in types
 

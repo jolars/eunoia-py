@@ -238,7 +238,7 @@ def render(
         if container is not None
         else None
     )
-    rings = _region_rings(region_pieces)
+    rings = _region_rings(region_pieces, include_complement=True)
     placements: dict[str, Any] = {}
     measured: dict[str, list[_MeasuredLine]] = {}
     if region_lines:
