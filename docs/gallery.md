@@ -97,6 +97,17 @@ fit.plot(ax=right, members={"mode": "packed"}, quantities=False)
 fig
 ```
 
+Both `.plot()` and `.plot_plotly()` accept `obstacle_policy="strict"` in the
+`glyphs` or packed `members` dict. Strict mode requires clearance from label
+boxes and warns about glyphs or names that cannot fit. Automatic sizing retains
+its size floors, so a crowded region can still omit items. The default policy,
+`"best_effort"`, allows overlap when necessary to place more items.
+
+```python
+fit.plot(glyphs={"obstacle_policy": "strict"})
+fit.plot_plotly(members={"mode": "packed", "obstacle_policy": "strict"})
+```
+
 ### A set contained in the intersection of two sets
 
 ```{code-cell} python

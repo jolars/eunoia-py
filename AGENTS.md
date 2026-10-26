@@ -167,8 +167,9 @@ ship no (full) stubs, so both are `ignore_missing_imports` in mypy and
 values (including the complement), requires integer counts, and calls
 `place_glyphs`; both renderers color the equal-sized marks from their region.
 Packed member names and unit glyphs receive every measured region/set label box
-as a keep-out obstacle. Fixed-radius or member-box overflow emits a
-`UserWarning` with the per-region shortfall.
+as a keep-out obstacle. Both accept `obstacle_policy="strict"` to require label
+clearance and warn about omissions, even with automatic sizing; the default is
+`"best_effort"`. Fixed-radius or member-box overflow also emits a `UserWarning`.
 
 **Errors:** a single `EunoiaError(ValueError)` for all `DiagramError` variants.
 The Rust binding prefixes the message with the variant name (`undefined_set: ...`,

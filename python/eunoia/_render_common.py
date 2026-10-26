@@ -230,6 +230,7 @@ _MEMBER_PACKING_KEYS = frozenset(
         "seed",
         "precision",
         "max_attempts",
+        "obstacle_policy",
     }
 )
 
@@ -302,7 +303,15 @@ def resolve_members(
 
 
 _GLYPH_PLACEMENT_KEYS = frozenset(
-    {"arrangement", "radius", "gap", "seed", "precision", "max_attempts"}
+    {
+        "arrangement",
+        "radius",
+        "gap",
+        "seed",
+        "precision",
+        "max_attempts",
+        "obstacle_policy",
+    }
 )
 
 

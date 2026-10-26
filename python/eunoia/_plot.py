@@ -616,6 +616,7 @@ def _place_packed_members(
         precision=packing.get("precision"),
         max_attempts=packing.get("max_attempts"),
         obstacles=obstacles,
+        obstacle_policy=packing.get("obstacle_policy"),
     )
     if placed["unplaced"]:
         lines = [
@@ -694,6 +695,7 @@ def _draw_glyphs(
         precision=placement.get("precision"),
         max_attempts=placement.get("max_attempts"),
         obstacles=obstacles,
+        obstacle_policy=placement.get("obstacle_policy"),
     )
     if placed["unplaced"]:
         warnings.warn(

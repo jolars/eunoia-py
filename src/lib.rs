@@ -6,9 +6,9 @@ use eunoia::geometry::traits::{DiagramShape, Polygonize};
 use eunoia::loss::LossType;
 use eunoia::plotting::{
     ElbowOptions, ExteriorPolicy, GlyphArrangement, GlyphBoxOptions, GlyphOptions, LabelPlacement,
-    LeaderStrategy, PlacementKind, PlacementStrategy, PlotOptions, RegionPiece, RegionPolygons,
-    SetLabelStrategy, TetherSource, classify_into_pieces, place_glyph_boxes, place_glyphs,
-    place_labels, place_set_labels,
+    LeaderStrategy, ObstaclePolicy, PlacementKind, PlacementStrategy, PlotOptions, RegionPiece,
+    RegionPolygons, SetLabelStrategy, TetherSource, classify_into_pieces, place_glyph_boxes,
+    place_glyphs, place_labels, place_set_labels,
 };
 use eunoia::spec::{Combination, DiagramSpec};
 use eunoia::{DiagramError, DiagramSpecBuilder, Fitter, InputType, Layout, Optimizer, VennDiagram};
@@ -671,6 +671,16 @@ fn parse_arrangement(arrangement: Option<&str>) -> PyResult<GlyphArrangement> {
     }
 }
 
+fn parse_obstacle_policy(policy: Option<&str>) -> PyResult<ObstaclePolicy> {
+    match policy {
+        Some("best_effort") | None => Ok(ObstaclePolicy::BestEffort),
+        Some("strict") => Ok(ObstaclePolicy::Strict),
+        Some(other) => Err(EunoiaError::new_err(format!(
+            "invalid_obstacle_policy: obstacle_policy must be 'best_effort' or 'strict', got '{other}'"
+        ))),
+    }
+}
+
 fn placement_to_pydict<'py>(
     py: Python<'py>,
     placement: &LabelPlacement,
@@ -815,7 +825,7 @@ fn _place_set_labels<'py>(
 #[pyfunction]
 #[pyo3(signature = (
     rings, counts, arrangement=None, radius=None, gap=None, seed=None,
-    precision=None, max_attempts=None, obstacles=None
+    precision=None, max_attempts=None, obstacles=None, obstacle_policy=None
 ))]
 #[allow(clippy::too_many_arguments)]
 fn _place_glyphs<'py>(
@@ -829,11 +839,13 @@ fn _place_glyphs<'py>(
     precision: Option<f64>,
     max_attempts: Option<u32>,
     obstacles: Option<Vec<(f64, f64, f64, f64)>>,
+    obstacle_policy: Option<&str>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let regions = build_regions(&rings);
     let mut options = GlyphOptions::default()
         .arrangement(parse_arrangement(arrangement)?)
         .radius(radius)
+        .obstacle_policy(parse_obstacle_policy(obstacle_policy)?)
         .obstacles(rectangles(obstacles));
     if let Some(value) = gap {
         options = options.gap(value);
@@ -863,7 +875,7 @@ fn _place_glyphs<'py>(
 #[pyfunction]
 #[pyo3(signature = (
     rings, sizes, arrangement=None, scale=None, min_scale=None, gap=None,
-    seed=None, precision=None, max_attempts=None, obstacles=None
+    seed=None, precision=None, max_attempts=None, obstacles=None, obstacle_policy=None
 ))]
 #[allow(clippy::too_many_arguments)]
 fn _place_glyph_boxes<'py>(
@@ -878,11 +890,13 @@ fn _place_glyph_boxes<'py>(
     precision: Option<f64>,
     max_attempts: Option<u32>,
     obstacles: Option<Vec<(f64, f64, f64, f64)>>,
+    obstacle_policy: Option<&str>,
 ) -> PyResult<Bound<'py, PyDict>> {
     let regions = build_regions(&rings);
     let mut options = GlyphBoxOptions::default()
         .arrangement(parse_arrangement(arrangement)?)
         .scale(scale)
+        .obstacle_policy(parse_obstacle_policy(obstacle_policy)?)
         .obstacles(rectangles(obstacles));
     if let Some(value) = min_scale {
         options = options.min_scale(value);

@@ -256,7 +256,10 @@ class EulerFit(Generic[S]):
             ``mode="packed"`` in the dict to pack each name individually
             inside its region. Packed mode also accepts ``arrangement``,
             ``scale``, ``min_scale``, ``gap``, ``seed``, ``precision``, and
-            ``max_attempts``.
+            ``max_attempts``. Set ``obstacle_policy="strict"`` to require
+            clearance from label boxes. The default, ``"best_effort"``, allows
+            overlap when names cannot fit while clearing the labels. Strict
+            mode retains the font scale floors and warns about omitted names.
         glyphs:
             Draw one equal-sized dot per requested exclusive unit. ``False``
             (default) disables glyphs; ``True`` uses automatic sizing and a
@@ -264,6 +267,9 @@ class EulerFit(Generic[S]):
             or ``"random"``), ``radius``, ``gap``, ``seed``, ``precision``,
             and ``max_attempts``, plus circle style overrides. Quantities must
             be finite, nonnegative integers; they are never rounded silently.
+            ``obstacle_policy="strict"`` requires clearance from label boxes
+            and warns about unplaced glyphs, including with automatic sizing.
+            The default, ``"best_effort"``, allows overlap when necessary.
         legend:
             Draw a legend mapping each set to a color swatch, useful when
             in-diagram labels overlap. ``True`` uses matplotlib defaults; a
