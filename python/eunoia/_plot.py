@@ -705,8 +705,8 @@ def _draw_glyphs(
             UserWarning,
             stacklevel=3,
         )
-    tint = float(style.pop("tint", 0.45))
-    edge_tint = float(style.pop("edge_tint", -0.35))
+    tint = float(style.pop("tint", 0.60))
+    edge_tint = float(style.pop("edge_tint", -0.40))
     for region, points in placed["positions"].items():
         base = (
             complement_style.get("facecolor", "#f0f0f0")
