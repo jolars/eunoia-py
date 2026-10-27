@@ -777,8 +777,8 @@ def _add_glyphs(
             UserWarning,
             stacklevel=3,
         )
-    tint = float(style.get("tint", 0.45))
-    edge_tint = float(style.get("edge_tint", -0.35))
+    tint = float(style.get("tint", 0.60))
+    edge_tint = float(style.get("edge_tint", -0.40))
     marker_size = 2.0 * placed["radius"] * _px_per_data(bounds, width, height)
     for region, points in placed["positions"].items():
         base = (

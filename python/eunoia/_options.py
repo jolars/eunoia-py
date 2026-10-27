@@ -43,7 +43,7 @@ _DEFAULTS: dict[str, Any] = {
     "labels": {"fontsize": 11},
     "quantities": {"fontsize": 9, "color": "dimgray"},
     "members": {"fontsize": 9},
-    "glyphs": {"tint": 0.45, "alpha": 1.0, "linewidth": 0.5},
+    "glyphs": {"tint": 0.60, "edge_tint": -0.40, "alpha": 1.0, "linewidth": 0.5},
     "legend": {},
     "complement": {"facecolor": "#f0f0f0", "edgecolor": "0.4", "linewidth": 1.0},
 }
