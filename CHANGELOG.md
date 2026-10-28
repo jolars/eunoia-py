@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.7.0](https://github.com/jolars/eunoia-py/compare/v0.6.0...v0.7.0) (2026-10-28)
+
+### Features
+
+- separate glyph boundary spacing ([`fbf7104`](https://github.com/jolars/eunoia-py/commit/fbf710479391ebc8fda121d481a9c0c15423c2eb))
+- add rectangular and low-discrepancy arrangements ([`cb8874a`](https://github.com/jolars/eunoia-py/commit/cb8874af17bf79e45f4b4adca79a0c0f19ff4c90))
+- add balanced rows for packed member names ([`9fe4593`](https://github.com/jolars/eunoia-py/commit/9fe459375bdf9ba88a4ab447b5998987da4398de))
+- add strict glyph and member obstacle handling ([`d427760`](https://github.com/jolars/eunoia-py/commit/d427760f8ca6bf41880499bf7d6af544a7aa0040))
+
+### Bug Fixes
+
+- bump eunoia to 1.10.1 ([`e2b5633`](https://github.com/jolars/eunoia-py/commit/e2b563352a79d8bc92dead4e913d36c055a9df1c))
+- show complement quantities in both renderers ([`d4f3173`](https://github.com/jolars/eunoia-py/commit/d4f317344f16859516d300be2149ebbcf0266d13))
+- bound plotly hover fallback and report omissions ([`d3ad23d`](https://github.com/jolars/eunoia-py/commit/d3ad23d16d664c365b382e80c8fb65f23f449899))
+- handle member overflow warning, plotly title/hover fixes, and stable set order (#66) ([`c434b36`](https://github.com/jolars/eunoia-py/commit/c434b36a6cf58d24db501ead9b1182dac84014d2))
+
+### Performance Improvements
+
+- bump eunoia to 1.10 ([`c366ccc`](https://github.com/jolars/eunoia-py/commit/c366ccc90d51b49f5ef48119396f8282c6e05cfe))
+
 ## [0.6.0](https://github.com/jolars/eunoia-py/compare/v0.5.0...v0.6.0) (2026-08-21)
 
 ### Features
