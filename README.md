@@ -3,6 +3,8 @@
 [![CI](https://github.com/jolars/eunoia-py/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jolars/eunoia-py/actions/workflows/ci.yml)
 [![PyPI
 version](https://badge.fury.io/py/eunoia.svg)](https://badge.fury.io/py/eunoia)
+[![Software
+DOI](https://img.shields.io/badge/Software_DOI-10.5281%2Fzenodo.20650005-blue)](https://doi.org/10.5281/zenodo.20650005)
 
 Python bindings for the [Eunoia](https://eunoia.bz), a Rust library for fitting
 area-proportional Euler and Venn diagrams. Sister package to the R package
@@ -63,6 +65,20 @@ same Rust core powers bindings in several other languages:
 Documentation for the whole family lives at
 [eunoia.bz/docs/](https://eunoia.bz/docs/); the Rust API reference is at
 [docs.rs/eunoia](https://docs.rs/eunoia/).
+
+## Citation
+
+If you use Eunoia for Python in your research, please cite [A Case Study in
+Fitting Area-Proportional Euler Diagrams with Ellipses Using
+eulerr](https://ceur-ws.org/Vol-2116/paper7.pdf).
+
+For reproducibility, also cite the software release you used. Select that
+release in the [Zenodo archive](https://doi.org/10.5281/zenodo.20650005) and
+export its citation. The concept DOI `10.5281/zenodo.20650005` identifies Eunoia
+for Python across all releases.
+
+Machine-readable software metadata and the preferred paper citation are
+available in [CITATION.cff](CITATION.cff).
 
 ## License
 
