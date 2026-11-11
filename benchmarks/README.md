@@ -25,7 +25,7 @@ Outputs:
 - `results/results.json`: machine-readable results (source of truth)
 - `../docs/_generated/benchmark_table.md`: per-group accuracy tables
 - `../docs/_generated/benchmark_timing.md`: wall-clock fit-time table
-- `../docs/_static/benchmarks/objective_groups.png`: per-group accuracy charts
+- `../docs/_static/benchmarks/objective_*.png`: one accuracy chart per objective
 - `../docs/_static/benchmarks/timing.png`: wall-clock fit-time chart
 - `../docs/_static/benchmarks/gallery.png`: fitted layouts, side by side
 

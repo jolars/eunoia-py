@@ -2,7 +2,7 @@
 
 #### Sum of squared errors
 
-*Objective: minimize Σ (fitted - target)²; scored on `stress` (lower is better).*
+*Objective: minimize $\sum_i (f_i - t_i)^2$; scored on `stress` (lower is better).*
 
 | Case | Sets | eunoia (circle) | eunoia (ellipse) | matplotlib-set-diagrams |
 |---|---|---|---|---|
@@ -20,7 +20,7 @@
 
 #### Sum of absolute errors
 
-*Objective: minimize Σ |fitted - target|; scored on `abs_error` (lower is better).*
+*Objective: minimize $\sum_i \left|f_i - t_i\right|$; scored on `abs_error` (lower is better).*
 
 | Case | Sets | eunoia (circle) | eunoia (ellipse) | matplotlib-set-diagrams |
 |---|---|---|---|---|
@@ -38,7 +38,7 @@
 
 #### Logarithmic error
 
-*Objective: minimize Σ |log(1+fitted) - log(1+target)|; scored on `log_error` (lower is better).*
+*Objective: minimize $\sum_i \left|\log(1+f_i) - \log(1+t_i)\right|$; scored on `log_error` (lower is better).*
 
 | Case | Sets | eunoia (circle) | eunoia (ellipse) | matplotlib-venn | matplotlib-set-diagrams |
 |---|---|---|---|---|---|
