@@ -9,7 +9,11 @@ description = "Area-proportional Euler and Venn diagrams"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
-authors = [{ name = "Johan Larsson", email = "johan@jolars.co" }]
+maintainers = [{ name = "Johan Larsson", email = "johan@jolars.co" }]
+authors = [
+    { name = "Johan Larsson", email = "johan@jolars.co" },
+    { name = "Nicole M. Lee" },
+]
 keywords = ["euler", "venn", "diagram", "visualization", "set"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -52,9 +56,10 @@ dev = [
 benchmark = ["matplotlib-venn>=1.1", "matplotlib-set-diagrams>=0.2"]
 
 [project.urls]
-Repository = "https://github.com/jolars/eunoia-py"
-Documentation = "https://jolars.github.io/eunoia-py"
-Issues = "https://github.com/jolars/eunoia-py/issues"
+homepage = "https://eunoia.bz"
+repository = "https://github.com/jolars/eunoia-py"
+documentation = "https://jolars.github.io/eunoia-py"
+issues = "https://github.com/jolars/eunoia-py/issues"
 
 [tool.maturin]
 module-name = "eunoia._eunoia"
