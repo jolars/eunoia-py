@@ -74,8 +74,8 @@ fn parse_optimizer(optimizer: &str) -> PyResult<Optimizer> {
         "nelder_mead" => Ok(Optimizer::NelderMead),
         "cma_es" => Ok(Optimizer::CmaEs),
         "cma_es_lm" => Ok(Optimizer::CmaEsLm),
-        "trf" => Ok(Optimizer::Trf),
-        "cma_es_trf" => Ok(Optimizer::CmaEsTrf),
+        "trf" => Ok(Optimizer::BoundedLevenbergMarquardt),
+        "cma_es_trf" => Ok(Optimizer::CmaEsBoundedLm),
         "mads" => Ok(Optimizer::Mads),
         other => Err(EunoiaError::new_err(format!(
             "invalid_optimizer: unknown optimizer '{other}'; one of \
