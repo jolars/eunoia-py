@@ -5,10 +5,6 @@ diagrams. It has two halves: a **qualitative map** of the landscape, and a
 **quantitative benchmark** of the packages that actually solve the same problem
 eunoia does: fitting *area-proportional* Euler diagrams.
 
-We deliberately leave out [eulerr](https://github.com/jolars/eulerr): it is
-eunoia's sibling for R, built on the same Rust core, so comparing the two would
-measure nothing about the Python ecosystem.
-
 ## The landscape
 
 "Draw a Venn diagram" covers several genuinely different problems, and the
