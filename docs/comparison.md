@@ -116,7 +116,7 @@ matplotlib-set-diagrams on every case, often by an order of magnitude on the
 harder specifications. eunoia's ellipses reach essentially zero error.
 
 ```{figure} _static/benchmarks/objective_squared.png
-:alt: Horizontal grouped bar chart of stress by case for fitters minimizing squared error.
+:alt: Horizontal grouped dot chart of stress by case for fitters minimizing squared error.
 :width: 100%
 
 Scale-invariant squared error (`stress`, log scale; lower is better). eunoia
@@ -130,7 +130,7 @@ lower error than matplotlib-set-diagrams on every case. Its ellipses have the
 lowest error by a wide margin.
 
 ```{figure} _static/benchmarks/objective_absolute.png
-:alt: Horizontal grouped bar chart of absolute error by case for fitters minimizing absolute error.
+:alt: Horizontal grouped dot chart of absolute error by case for fitters minimizing absolute error.
 :width: 100%
 
 Scale-invariant absolute error (log scale; lower is better). eunoia uses
@@ -143,15 +143,15 @@ This group matches matplotlib-venn's default objective. eunoia's circles achieve
 lower error than both matplotlib-venn and matplotlib-set-diagrams on every case,
 while its ellipses achieve the lowest error by a wide margin. The two
 competitors produce similar scores. matplotlib-venn supports at most three sets,
-so it has no bars for the larger cases.
+so it has no dots for the larger cases.
 
 ```{figure} _static/benchmarks/objective_logarithmic.png
-:alt: Horizontal grouped bar chart of logarithmic error by case, with matplotlib-venn limited to three sets.
+:alt: Horizontal grouped dot chart of logarithmic error by case, with matplotlib-venn limited to three sets.
 :width: 100%
 
 Scale-invariant logarithmic error (log scale; lower is better). eunoia uses
 `loss="log_sum_absolute"`, matplotlib-set-diagrams uses `"logarithmic"`, and
-matplotlib-venn uses its default objective. Missing bars mark unsupported set
+matplotlib-venn uses its default objective. Missing dots mark unsupported set
 counts.
 ```
 
@@ -172,11 +172,11 @@ eunoia's non-smooth losses, `"sum_absolute"` and `"log_sum_absolute"`, are
 markedly slower to optimize than the smooth `"sum_squared"` default shown here.
 
 ```{figure} _static/benchmarks/timing.png
-:alt: Horizontal grouped bar chart of median fit time per case, log scale.
+:alt: Horizontal grouped dot chart of median fit time per case, log scale.
 :width: 100%
 
 Median fit time per case (log scale; lower is faster). Each package uses the
-same configuration as in the gallery. Missing bars mark unsupported set counts.
+same configuration as in the gallery. Missing dots mark unsupported set counts.
 ```
 
 ### Fitted layouts

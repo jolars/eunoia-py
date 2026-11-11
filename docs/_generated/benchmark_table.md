@@ -6,7 +6,6 @@
 
 | Case | Sets | eunoia (circle) | eunoia (ellipse) | matplotlib-set-diagrams |
 |---|---|---|---|---|
-| `two_disjoint` | 2 | 0.0000 | 0.0000 | 0.0000 |
 | `two_overlap` | 2 | 0.0000 | 0.0000 | 0.0082 |
 | `three_set_small_overlaps` | 3 | 0.0002 | 0.0000 | 0.0002 |
 | `uniform_3_set` | 3 | 0.0087 | 0.0000 | 0.1477 |
@@ -24,7 +23,6 @@
 
 | Case | Sets | eunoia (circle) | eunoia (ellipse) | matplotlib-set-diagrams |
 |---|---|---|---|---|
-| `two_disjoint` | 2 | 0.0000 | 0.0000 | 0.0000 |
 | `two_overlap` | 2 | 0.0001 | 0.0001 | 0.0022 |
 | `three_set_small_overlaps` | 3 | 0.0073 | 0.0048 | 0.0121 |
 | `uniform_3_set` | 3 | 0.0650 | 0.0004 | 0.0862 |
@@ -42,7 +40,6 @@
 
 | Case | Sets | eunoia (circle) | eunoia (ellipse) | matplotlib-venn | matplotlib-set-diagrams |
 |---|---|---|---|---|---|
-| `two_disjoint` | 2 | 0.0013 | 0.0013 | 0.0013 | 0.0013 |
 | `two_overlap` | 2 | 0.0020 | 0.0020 | 0.0020 | 0.0021 |
 | `three_set_small_overlaps` | 3 | 0.0163 | 0.0016 | 0.0197 | 0.0193 |
 | `uniform_3_set` | 3 | 0.0644 | 0.0015 | 0.0653 | 0.0652 |

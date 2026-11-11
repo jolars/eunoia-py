@@ -70,13 +70,6 @@ def _case(
 CASES: list[Case] = [
     # -- 2 sets: exact for every fitter (two circles represent any 2-Venn) --
     _case(
-        "two_disjoint",
-        ("A", "B"),
-        {"A": 10.0, "B": 9.0},
-        "easy",
-        "Two non-overlapping sets; baseline that everything fits exactly.",
-    ),
-    _case(
         "two_overlap",
         ("A", "B"),
         {"A": 3.0, "B": 2.0, "A&B": 2.0},

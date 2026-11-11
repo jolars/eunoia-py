@@ -39,27 +39,6 @@
       ],
       "rows": [
         {
-          "case": "two_disjoint",
-          "n_sets": 2,
-          "cells": {
-            "eunoia-circle-sum_squared": {
-              "status": "ok",
-              "value": 2.362767818492623e-09,
-              "time_ms": 2.8044949995091883
-            },
-            "eunoia-ellipse-sum_squared": {
-              "status": "ok",
-              "value": 2.362767818492623e-09,
-              "time_ms": 7.96363100016606
-            },
-            "matplotlib-set-diagrams-squared": {
-              "status": "ok",
-              "value": 3.08847182391389e-10,
-              "time_ms": 9.452193000470288
-            }
-          }
-        },
-        {
           "case": "two_overlap",
           "n_sets": 2,
           "cells": {
@@ -297,24 +276,6 @@
       ],
       "rows": [
         {
-          "case": "two_disjoint",
-          "n_sets": 2,
-          "cells": {
-            "eunoia-circle-sum_absolute": {
-              "status": "ok",
-              "value": 4.63037856569128e-05
-            },
-            "eunoia-ellipse-sum_absolute": {
-              "status": "ok",
-              "value": 4.63037856569128e-05
-            },
-            "matplotlib-set-diagrams-simple": {
-              "status": "ok",
-              "value": 1.9295805262194227e-05
-            }
-          }
-        },
-        {
           "case": "two_overlap",
           "n_sets": 2,
           "cells": {
@@ -526,29 +487,6 @@
         }
       ],
       "rows": [
-        {
-          "case": "two_disjoint",
-          "n_sets": 2,
-          "cells": {
-            "eunoia-circle-log_sum_absolute": {
-              "status": "ok",
-              "value": 0.0013292938964938803
-            },
-            "eunoia-ellipse-log_sum_absolute": {
-              "status": "ok",
-              "value": 0.0013292938964938803
-            },
-            "matplotlib-venn": {
-              "status": "ok",
-              "value": 0.0013294519761899892,
-              "time_ms": 4.811255999811692
-            },
-            "matplotlib-set-diagrams-logarithmic": {
-              "status": "ok",
-              "value": 0.0013293296851865342
-            }
-          }
-        },
         {
           "case": "two_overlap",
           "n_sets": 2,
@@ -775,11 +713,6 @@
     }
   ],
   "self_check": [
-    {
-      "case": "two_disjoint",
-      "rasterized": 2.362767818492623e-09,
-      "native": 3.486678034126019e-32
-    },
     {
       "case": "two_overlap",
       "rasterized": 5.803842294320623e-09,

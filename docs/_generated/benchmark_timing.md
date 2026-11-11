@@ -4,7 +4,6 @@ Median end-to-end `fit` wall-clock time in *milliseconds* (median of 5 runs; low
 
 | Case | Sets | eunoia (circle) | eunoia (ellipse) | matplotlib-venn | matplotlib-set-diagrams |
 |---|---|---|---|---|---|
-| `two_disjoint` | 2 | 3 | 8 | 5 | 9 |
 | `two_overlap` | 2 | 11 | 14 | 7 | 340 |
 | `three_set_small_overlaps` | 3 | 18 | 30 | 11 | 614 |
 | `uniform_3_set` | 3 | 534 | 28 | 10 | 575 |

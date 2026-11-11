@@ -56,6 +56,14 @@ FIGURE_DIR = REPO_ROOT / "docs" / "_static" / "benchmarks"
 
 _PLOT_FLOOR = 5e-5  # log-axis floor so true zeros are still drawn
 
+# Keep each fitter's Okabe-Ito color stable when an objective omits a package.
+_FITTER_COLORS = {
+    "eunoia (circle)": "#0072B2",
+    "eunoia (ellipse)": "#E69F00",
+    "matplotlib-venn": "#56B4E9",
+    "matplotlib-set-diagrams": "#CC79A7",
+}
+
 OBJECTIVE_MATH = {
     "squared": r"\sum_i (f_i - t_i)^2",
     "absolute": r"\sum_i \left|f_i - t_i\right|",
@@ -313,21 +321,29 @@ def write_timing_table(data: dict) -> None:
 
 def make_timing_chart(data: dict) -> None:
     FIGURE_DIR.mkdir(parents=True, exist_ok=True)
-    cmap = plt.get_cmap("tab10")
     y = np.arange(len(CASES))
-    height = 0.8 / len(TIMING_MEMBERS)
     fig, ax = plt.subplots(figsize=(8, max(6, 0.6 * len(CASES) + 2)))
     for i, (gkey, mid, disp) in enumerate(TIMING_MEMBERS):
+        offset = (i - (len(TIMING_MEMBERS) - 1) / 2) * 0.08
         values, positions = [], []
         for j, case in enumerate(CASES):
             ms = _time_lookup(data, gkey, mid, case.name)
             if ms is None:
                 continue
             values.append(ms)
-            positions.append(y[j] + (i - (len(TIMING_MEMBERS) - 1) / 2) * height)
-        ax.barh(positions, values, height=height, label=disp, color=cmap(i))
+            positions.append(y[j] + offset)
+        ax.scatter(
+            values,
+            positions,
+            s=42,
+            label=disp,
+            color=_FITTER_COLORS[disp],
+            edgecolors="white",
+            linewidths=0.6,
+            zorder=3,
+        )
     ax.set_xscale("log")
-    ax.set_xlabel("median fit time (ms, log scale)")
+    ax.set_xlabel("median fit time (ms, log scale; lower is faster)")
     ax.set_yticks(y)
     ax.set_yticklabels(
         [f"{c.name}\n({c.n_sets}-set)" for c in CASES],
@@ -339,7 +355,11 @@ def make_timing_chart(data: dict) -> None:
     ax.legend(
         fontsize=9, ncol=2, loc="lower left", bbox_to_anchor=(0, 1.02), borderaxespad=0
     )
-    ax.set_title("Wall-clock fit time", fontsize=11, pad=50)
+    ax.set_title(
+        f"Wall-clock fit time\nmedian of {data['meta']['timing_repeats']} runs",
+        fontsize=11,
+        pad=50,
+    )
     fig.tight_layout()
     fig.savefig(FIGURE_DIR / "timing.png", dpi=130)
     plt.close(fig)
@@ -348,23 +368,31 @@ def make_timing_chart(data: dict) -> None:
 def make_group_charts(data: dict) -> None:
     FIGURE_DIR.mkdir(parents=True, exist_ok=True)
     groups = data["groups"]
-    cmap = plt.get_cmap("tab10")
     y = np.arange(len(CASES))
     case_index = {c.name: i for i, c in enumerate(CASES)}
     for group in groups:
         fig, ax = plt.subplots(figsize=(8, max(6, 0.6 * len(CASES) + 2)))
         members = group["members"]
-        height = 0.8 / max(len(members), 1)
         rows = {r["case"]: r for r in group["rows"]}
         for i, m in enumerate(members):
+            offset = (i - (len(members) - 1) / 2) * 0.08
             values, positions = [], []
             for cname, j in case_index.items():
                 cell = rows[cname]["cells"][m["id"]]
                 if cell.get("status") != "ok":
                     continue
                 values.append(max(cell["value"], _PLOT_FLOOR))
-                positions.append(y[j] + (i - (len(members) - 1) / 2) * height)
-            ax.barh(positions, values, height=height, label=m["display"], color=cmap(i))
+                positions.append(y[j] + offset)
+            ax.scatter(
+                values,
+                positions,
+                s=42,
+                label=m["display"],
+                color=_FITTER_COLORS[m["display"]],
+                edgecolors="white",
+                linewidths=0.6,
+                zorder=3,
+            )
         ax.set_xscale("log")
         ax.set_xlabel(f"{group['metric']} (log scale; lower is better)")
         ax.set_title(
@@ -380,7 +408,6 @@ def make_group_charts(data: dict) -> None:
         ax.invert_yaxis()
         ax.set_axisbelow(True)
         ax.grid(axis="x", color="0.9", linewidth=0.6)
-        ax.axvline(_PLOT_FLOOR, color="0.85", lw=0.6)
         ax.legend(
             fontsize=9,
             ncol=2,
