@@ -211,21 +211,6 @@ loss; set-diagrams under `"squared"`). The four-, five-, and six-set rows show
 where the circle columns visibly distort.
 ```
 
-## When to reach for what
-
-- **eunoia** when you want the most faithful diagram, especially with ellipses,
-  with four or more sets, when you need to choose the objective (`loss=`) to
-  suit your data, or when you need the residuals and goodness-of-fit numbers to
-  judge whether the diagram can be trusted at all. MIT-licensed.
-- **matplotlib-venn** for a quick, dependency-light two- or three-circle Venn
-  where exactness is not critical. Also MIT.
-- **matplotlib-set-diagrams** if you specifically want its word-cloud subset
-  labels and are comfortable with GPL-3, and be prepared to try its
-  `cost_function_objective` options, since the default (`"inverse"`) fits
-  area-dominated diagrams poorly.
-- **supervenn** when exact proportionality matters more than the Euler-diagram
-  shape, e.g. many sets with complex overlaps.
-
 ## Reproducing
 
 ```bash
