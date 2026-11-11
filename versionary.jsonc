@@ -6,7 +6,7 @@
     "python",
     "rust"
   ],
-  "bump-minor-pre-major": true,
+  "allow-stable-major": true,
   "include-commit-authors": true,
   "release-reference-comments": "best-effort",
   "packages": {
