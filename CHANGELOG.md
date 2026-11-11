@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.0](https://github.com/jolars/eunoia-py/compare/v0.7.0...v1.0.0) (2026-11-11)
+
+### Bug Fixes
+
+- update to eunoia 1.10.2 ([`046c0d4`](https://github.com/jolars/eunoia-py/commit/046c0d4231a09b76200015cc3e4e8af045553f95))
+
 ## [0.7.0](https://github.com/jolars/eunoia-py/compare/v0.6.0...v0.7.0) (2026-10-28)
 
 ### Features
