@@ -37,11 +37,11 @@ fit.plot()
 plt.show()
 ```
 
-`euler()` also accepts inclusive counts, DataFrames, and NumPy arrays;
-`shape=` switches between circles, ellipses, squares, and rectangles;
-`venn()` draws topological diagrams; `plot(glyphs=True)` adds one countable dot
-per unit; `plot(members={"mode": "packed"})` packs retained member names into
-their regions; and `eunoia.options(...)` sets global plotting defaults. See the
+`euler()` also accepts inclusive counts, DataFrames, and NumPy arrays; `shape=`
+switches between circles, ellipses, squares, and rectangles; `venn()` draws
+topological diagrams; `plot(glyphs=True)` adds one countable dot per unit;
+`plot(members={"mode": "packed"})` packs retained member names into their
+regions; and `eunoia.options(...)` sets global plotting defaults. See the
 documentation for the full API.
 
 ## Documentation
@@ -110,8 +110,8 @@ If you use Eunoia for Python in your research, please cite the paper:
 
 For reproducibility, also cite the software release you used. Select that
 release in the [Zenodo archive](https://doi.org/10.5281/zenodo.20650005) and
-export its citation. The concept DOI `10.5281/zenodo.20650005` identifies
-Eunoia for Python across all releases.
+export its citation. The concept DOI `10.5281/zenodo.20650005` identifies Eunoia
+for Python across all releases.
 
 [CITATION.cff](CITATION.cff) contains the software metadata and preferred paper
 citation. The [Eunoia citation page](https://eunoia.bz/cite/) renders the paper
